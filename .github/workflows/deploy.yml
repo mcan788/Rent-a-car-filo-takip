@@ -1,0 +1,24 @@
+﻿name: Deploy Rent A Car to Windows Server
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Deploy Python App
+        run: |
+          Copy-Item -Path "*", ".env*" -Destination 'C:\SUNUCU_PAKETI\RentACar_Sistem' -Recurse -Force -Exclude ".git", ".github"
+          
+      - name: Install Python Dependencies and Restart
+        working-directory: 'C:\SUNUCU_PAKETI\RentACar_Sistem'
+        run: |
+          pip install -r requirements.txt
+          pm2 restart all || echo "PM2'de yeniden baslatilacak aktif uygulama bulunamadi."
