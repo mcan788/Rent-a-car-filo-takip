@@ -1,0 +1,639 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+  :root {
+    --support-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    --accent-blue: #3b82f6;
+    --accent-light: #eff6ff;
+  }
+
+  .support-header {
+    background: var(--support-gradient);
+    border-radius: 20px;
+    padding: 2.5rem;
+    color: white;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .support-header::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+    z-index: 1;
+  }
+
+  .support-header-content {
+    position: relative;
+    z-index: 2;
+  }
+
+  .btn-new-ticket {
+    background: white;
+    color: #0f172a;
+    font-weight: 800;
+    padding: 1rem 2rem;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  .btn-new-ticket:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+    color: var(--accent-blue);
+  }
+
+  .support-container {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 1.5rem;
+    height: 600px;
+    margin-bottom: 2rem;
+  }
+
+  /* Left Pane */
+  .ticket-list-pane {
+    background: white;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  }
+
+  .pane-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 1.1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .ticket-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+  }
+
+  .ticket-item {
+    padding: 1.25rem;
+    border-radius: 12px;
+    border: 1px solid #f1f5f9;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+  }
+
+  .ticket-item:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+  }
+
+  .ticket-item.active {
+    background: var(--accent-light);
+    border-color: #bfdbfe;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+  }
+
+  .ticket-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+  }
+
+  .ticket-title {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .ticket-meta {
+    font-size: 0.75rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  /* Right Pane */
+  .ticket-detail-pane {
+    background: white;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    position: relative;
+  }
+
+  .empty-state {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    z-index: 10;
+    color: #94a3b8;
+  }
+  
+  .empty-state i {
+    font-size: 4rem;
+    color: #cbd5e1;
+    margin-bottom: 1rem;
+  }
+
+  .chat-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;
+    background: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .msg-wrapper {
+    display: flex;
+    flex-direction: column;
+    max-width: 75%;
+  }
+
+  .msg-wrapper.user {
+    align-self: flex-end;
+  }
+
+  .msg-wrapper.system {
+    align-self: flex-start;
+  }
+
+  .msg-meta {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .msg-wrapper.user .msg-meta {
+    flex-direction: row-reverse;
+  }
+
+  .msg-bubble {
+    padding: 1.25rem;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+  }
+
+  .msg-wrapper.user .msg-bubble {
+    background: var(--accent-blue);
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+
+  .msg-wrapper.system .msg-bubble {
+    background: white;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+    border-bottom-left-radius: 4px;
+  }
+
+  .msg-wrapper.system.master .msg-bubble {
+    background: #fef3c7;
+    border-color: #fde68a;
+    color: #92400e;
+  }
+
+  .chat-input-area {
+    padding: 1.5rem;
+    background: white;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .chat-input-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .chat-textarea {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+    resize: none;
+    outline: none;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+
+  .chat-textarea:focus {
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .status-badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+
+  .status-acik { background: #fee2e2; color: #dc2626; }
+  .status-yanitlandi { background: #dcfce7; color: #16a34a; }
+  .status-kapali { background: #f1f5f9; color: #64748b; }
+
+  /* Premium Modal for New Ticket */
+  .custom-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .custom-modal {
+    background: white;
+    width: 100%;
+    max-width: 600px;
+    border-radius: 24px;
+    padding: 2.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    transform: scale(0.9);
+    animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes modalIn { to { transform: scale(1); } }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+    background: #f8fafc;
+    outline: none;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+
+  .form-control:focus {
+    background: white;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  @media (max-width: 992px) {
+    .support-container {
+      grid-template-columns: 1fr;
+      height: auto;
+    }
+    .ticket-list-pane {
+      height: 400px;
+    }
+    .ticket-detail-pane {
+      height: 600px;
+      display: none; /* Mobile view logic */
+    }
+    .ticket-detail-pane.active-mobile {
+      display: flex;
+    }
+    .ticket-list-pane.hidden-mobile {
+      display: none;
+    }
+    .mobile-back-btn {
+      display: block !important;
+    }
+  }
+
+  .mobile-back-btn {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    color: #64748b;
+    cursor: pointer;
+    margin-right: 1rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="support-header">
+  <div class="support-header-content">
+    <h1 style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem;">Destek Merkezi</h1>
+    <p style="font-size: 1.05rem; opacity: 0.9; max-width: 500px;">Sistem kullanımı, lisanslama veya teknik sorunlarınız için bize ulaşın. Ekibimiz en kısa sürede size yardımcı olacaktır.</p>
+  </div>
+  <button onclick="openNewTicketModal()" class="btn-new-ticket">
+    <i class="fas fa-plus-circle"></i> Yeni Talep
+  </button>
+</div>
+
+<div class="support-container">
+  <!-- Sol Panel: Talep Listesi -->
+  <div class="ticket-list-pane" id="ticketListPane">
+    <div class="pane-header">
+      <span>Talepleriniz</span>
+      <span style="background: #e2e8f0; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem;">{{ tickets|length }}</span>
+    </div>
+    <div class="ticket-list">
+      {% if tickets %}
+        {% for ticket in tickets %}
+          <div class="ticket-item" id="ticket-item-{{ ticket.id }}" onclick="showTicketDetail('{{ ticket.id }}')">
+            <div class="ticket-item-header">
+              <div class="ticket-title">{{ ticket.subject }}</div>
+              <div>
+                {% if ticket.status == 'Açık' %}
+                  <span class="status-badge status-acik">Açık</span>
+                {% elif ticket.status == 'Yanıtlandı' %}
+                  <span class="status-badge status-yanitlandi">Yanıtlandı</span>
+                {% else %}
+                  <span class="status-badge status-kapali">Kapalı</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="ticket-meta">
+              <span><i class="fas fa-hashtag"></i> TKT-{{ ticket.id[:6]|upper }}</span>
+              <span>&bull;</span>
+              <span>{{ ticket.updated_at.strftime('%d.%m.%Y') }}</span>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div style="text-align: center; padding: 2rem; color: #94a3b8; font-size: 0.9rem;">
+          <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 1rem; color: #cbd5e1;"></i>
+          <p>Henüz destek talebiniz bulunmuyor.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Sağ Panel: Detay ve Chat -->
+  <div class="ticket-detail-pane" id="ticketDetailPane">
+    <div class="empty-state" id="emptyState">
+      <i class="fas fa-comments"></i>
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #475569;">Bir Talep Seçin</h3>
+      <p>Detayları görmek ve mesaj göndermek için listeden bir talep seçin.</p>
+    </div>
+
+    {% for ticket in tickets %}
+    <div class="ticket-view-content" id="ticket-view-{{ ticket.id }}" style="display: none; height: 100%; flex-direction: column;">
+      <div class="chat-header">
+        <div style="display: flex; align-items: center;">
+          <button class="mobile-back-btn" onclick="hideTicketDetail()"><i class="fas fa-arrow-left"></i></button>
+          <div>
+            <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">{{ ticket.subject }}</h3>
+            <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.2rem;">
+              {{ ticket.category }} &bull; TKT-{{ ticket.id[:8]|upper }}
+            </div>
+          </div>
+        </div>
+        <div>
+          {% if ticket.status == 'Kapalı' %}
+            <span style="font-size: 0.85rem; color: #ef4444; font-weight: 700;"><i class="fas fa-lock"></i> Kapatıldı</span>
+          {% endif %}
+        </div>
+      </div>
+      
+      <div class="chat-messages" id="chat-messages-{{ ticket.id }}">
+        {% for msg in ticket.messages %}
+          {% set is_mine = msg.sender_id == current_user.id %}
+          <div class="msg-wrapper {{ 'user' if is_mine else 'system' }} {{ 'master' if msg.is_master else '' }}">
+            <div class="msg-meta">
+              <i class="fas {{ 'fa-user' if is_mine else 'fa-headset' }}"></i>
+              <span style="font-weight: 700;">{{ 'Siz' if is_mine else ('Sistem Yöneticisi' if msg.is_master else (msg.sender.name or msg.sender.username)) }}</span>
+              <span style="opacity: 0.7;">{{ msg.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+            </div>
+            <div class="msg-bubble">
+              <div style="white-space: pre-wrap;">{{ msg.message }}</div>
+              {% if msg.attachment_path %}
+              <div style="margin-top: 1rem; border-top: 1px dashed rgba(0,0,0,0.1); padding-top: 0.75rem;">
+                <a href="{{ msg.attachment_path }}" target="_blank" style="color: inherit; font-size: 0.85rem; font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+                  <i class="fas fa-paperclip"></i> Ekli Dosyayı İncele
+                </a>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      {% if ticket.status != 'Kapalı' %}
+      <div class="chat-input-area">
+        <form action="{{ url_for('support.cevap_yaz', ticket_id=ticket.id) }}" method="POST" enctype="multipart/form-data" class="chat-input-form" onsubmit="saveActiveTicket('{{ ticket.id }}')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <textarea name="message" class="chat-textarea" rows="2" placeholder="Mesajınızı yazın..." required></textarea>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label style="font-size: 0.85rem; font-weight: 700; color: #64748b; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fas fa-paperclip"></i> Dosya Ekle
+              <input type="file" name="attachment" style="display: none;" onchange="this.nextElementSibling.style.display='inline'; this.nextElementSibling.textContent = this.files[0].name">
+              <span style="display: none; color: var(--accent-blue); font-size: 0.75rem;"></span>
+            </label>
+            <button type="submit" class="btn-new-ticket" style="padding: 0.75rem 1.5rem; background: var(--accent-blue); color: white; border-radius: 10px;">
+              Gönder <i class="fas fa-paper-plane"></i>
+            </button>
+          </div>
+        </form>
+      </div>
+      {% else %}
+      <div class="chat-input-area" style="text-align: center; background: #f8fafc;">
+        <p style="color: #64748b; font-weight: 600; margin: 0;"><i class="fas fa-info-circle"></i> Bu talep kapatıldığı için yeni mesaj gönderilemez.</p>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Yeni Talep Modalı -->
+<div id="newTicketModal" class="custom-modal-overlay">
+  <div class="custom-modal">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+      <h2 style="margin:0; font-weight: 800; font-size: 1.5rem; color: #0f172a;">Yeni Destek Talebi</h2>
+      <button onclick="closeNewTicketModal()" style="background: #f1f5f9; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 1.25rem; color: #64748b; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'; this.style.color='#ef4444'">&times;</button>
+    </div>
+    
+    <form action="{{ url_for('support.yeni_talep') }}" method="POST" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <div>
+          <label class="form-label">Departman</label>
+          <select name="category" required class="form-control" style="appearance: none; background-image: url('data:image/svg+xml;utf8,<svg fill=%22%2364748b%22 height=%2224%22 viewBox=%220 0 24 24%22 width=%2224%22 xmlns=%22http://www.w3.org/2000/svg%22><path d=%22M7 10l5 5 5-5z%22/></svg>'); background-repeat: no-repeat; background-position: right 1rem center;">
+            <option value="Teknik Destek">Teknik Destek</option>
+            <option value="Muhasebe / Faturalandırma">Muhasebe / Faturalandırma</option>
+            <option value="Lisans İşlemleri">Lisans İşlemleri</option>
+            <option value="Diğer">Diğer</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Öncelik</label>
+          <select name="priority" required class="form-control" style="appearance: none; background-image: url('data:image/svg+xml;utf8,<svg fill=%22%2364748b%22 height=%2224%22 viewBox=%220 0 24 24%22 width=%2224%22 xmlns=%22http://www.w3.org/2000/svg%22><path d=%22M7 10l5 5 5-5z%22/></svg>'); background-repeat: no-repeat; background-position: right 1rem center;">
+            <option value="Düşük">Düşük</option>
+            <option value="Normal" selected>Normal</option>
+            <option value="Yüksek">Yüksek</option>
+            <option value="Acil">Acil</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Konu Başlığı</label>
+        <input type="text" name="subject" required class="form-control" placeholder="Kısaca sorununuz nedir?">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Mesajınız</label>
+        <textarea name="message" required class="form-control" rows="4" placeholder="Lütfen detaylı bilgi verin..."></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label style="font-size: 0.85rem; font-weight: 700; color: #475569; display: flex; align-items: center; cursor: pointer; padding: 1rem; border: 2px dashed #cbd5e1; border-radius: 12px; justify-content: center; transition: all 0.2s;" onmouseover="this.style.borderColor='#3b82f6'; this.style.color='#3b82f6'" onmouseout="this.style.borderColor='#cbd5e1'; this.style.color='#475569'">
+          <i class="fas fa-cloud-upload-alt" style="margin-right: 0.5rem; font-size: 1.25rem;"></i> Ekran Görüntüsü / Dosya Ekle
+          <input type="file" name="attachment" style="display: none;" onchange="this.nextElementSibling.style.display='block'; this.nextElementSibling.textContent = 'Seçilen dosya: ' + this.files[0].name">
+          <div style="display: none; width: 100%; text-align: center; font-size: 0.8rem; margin-top: 0.5rem; color: #3b82f6;"></div>
+        </label>
+      </div>
+      
+      <button type="submit" class="btn-new-ticket" style="width: 100%; justify-content: center; background: #0f172a; color: white;">
+        Talebi Gönder <i class="fas fa-arrow-right"></i>
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function openNewTicketModal() {
+    document.getElementById('newTicketModal').style.display = 'flex';
+  }
+  
+  function closeNewTicketModal() {
+    document.getElementById('newTicketModal').style.display = 'none';
+  }
+  
+  function saveActiveTicket(id) {
+    localStorage.setItem('activeTicketId', id);
+  }
+
+  function showTicketDetail(id) {
+    // Tüm ticket içeriklerini gizle
+    document.querySelectorAll('.ticket-view-content').forEach(el => {
+      el.style.display = 'none';
+    });
+    
+    // Empty state'i gizle
+    document.getElementById('emptyState').style.display = 'none';
+    
+    // Seçili ticket'ı göster
+    const target = document.getElementById('ticket-view-' + id);
+    if (target) {
+      target.style.display = 'flex';
+      // Scroll to bottom of chat
+      const chatMessages = document.getElementById('chat-messages-' + id);
+      if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    }
+    
+    // Aktif ticket styling
+    document.querySelectorAll('.ticket-item').forEach(el => {
+      el.classList.remove('active');
+    });
+    const activeItem = document.getElementById('ticket-item-' + id);
+    if (activeItem) {
+      activeItem.classList.add('active');
+    }
+
+    // Mobil görünüm için class işlemleri
+    if (window.innerWidth <= 992) {
+      document.getElementById('ticketListPane').classList.add('hidden-mobile');
+      document.getElementById('ticketDetailPane').classList.add('active-mobile');
+    }
+    
+    saveActiveTicket(id);
+  }
+
+  function hideTicketDetail() {
+    document.getElementById('ticketListPane').classList.remove('hidden-mobile');
+    document.getElementById('ticketDetailPane').classList.remove('active-mobile');
+    localStorage.removeItem('activeTicketId');
+  }
+
+  window.addEventListener('click', function(event) {
+    const modal = document.getElementById('newTicketModal');
+    if (event.target === modal) {
+      closeNewTicketModal();
+    }
+  });
+
+  // Sayfa yüklendiğinde eski açık ticket'ı hatırla
+  document.addEventListener('DOMContentLoaded', function() {
+    const activeId = localStorage.getItem('activeTicketId');
+    if (activeId && document.getElementById('ticket-view-' + activeId)) {
+      showTicketDetail(activeId);
+    }
+  });
+</script>
+{% endblock %}

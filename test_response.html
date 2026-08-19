@@ -1,0 +1,4153 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>ZYRONOVA — Kurumsal SaaS Platformu</title>
+    
+    <!-- SEO (Arama Motoru Optimizasyonu) Ayarları -->
+    <meta name="description" content="Zyronova Kurumsal Operasyon Platformu. Rent a Car (Filo Yönetimi) ve Tur Takip sistemlerini tek merkezden, yüksek hız ve üst düzey güvenlikle yönetin." />
+    <meta name="keywords" content="rent a car yazılımı, tur takip sistemi, acente yazılımı, filo yönetimi, zyronova, kurumsal yazılım, bulut bilişim" />
+    <meta name="author" content="Zyronova Enterprise" />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:title" content="ZYRONOVA — Kurumsal SaaS Platformu" />
+    <meta property="og:description" content="Kurumsal filo yönetimi ve tur operasyonlarını tek merkezden yönetin." />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #03050b;
+            --panel: #0c101d;
+            --line: rgba(255, 255, 255, 0.07);
+            --text: #fff;
+            --muted: #9097b2;
+
+            --blue: #4d79ff;
+            --blueGlow: rgba(77, 121, 255, .45);
+
+            --pink: #ff4fd8;
+            --pinkGlow: rgba(255, 79, 216, .40);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            width: 100%;
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            font-family: 'Inter', sans-serif;
+            background:
+                radial-gradient(circle at top left, #101935 0%, #05070f 35%, #020308 100%);
+            color: white;
+            position: relative;
+        }
+
+        /* ===== animated background ===== */
+
+        .noise {
+            position: absolute;
+            inset: 0;
+            opacity: .03;
+            background-image: url("/noise.svg");
+            pointer-events: none;
+        }
+
+        .grid {
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(rgba(255, 255, 255, .03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, .03) 1px, transparent 1px);
+
+            background-size: 80px 80px;
+            mask-image: radial-gradient(circle at center, black 20%, transparent 85%);
+            opacity: .25;
+        }
+
+        /* ===== ambient glow ===== */
+
+        .glow {
+            position: absolute;
+            width: 700px;
+            height: 700px;
+            border-radius: 50%;
+            filter: blur(140px);
+            opacity: .18;
+            animation: float 8s ease-in-out infinite;
+            will-change: transform;
+            transform: translate3d(0,0,0);
+            backface-visibility: hidden;
+        }
+
+        .glow-left {
+            background: var(--blue);
+            left: -250px;
+            top: -200px;
+        }
+
+        .glow-right {
+            background: var(--pink);
+            right: -250px;
+            bottom: -250px;
+            animation-delay: 3s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translate3d(0, 0px, 0);
+            }
+
+            50% {
+                transform: translate3d(0, 40px, 0);
+            }
+        }
+
+        /* ===== navbar ===== */
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 50px;
+            background: rgba(3, 5, 11, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* ===== MOBİL BOTTOM ACTION BAR ===== */
+        .mobile-action-bar {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            /* Üst navbar — sadece logo */
+            .navbar {
+                padding: 14px 16px;
+                justify-content: flex-start;
+            }
+
+            /* Butonları üstten gizle */
+            .navbar-actions {
+                display: none !important;
+            }
+
+            /* Hero padding ayarı (artık fixed navbar var) */
+            .hero {
+                padding-top: 80px !important;
+            }
+
+            /* Alt sticky bar göster */
+            .mobile-action-bar {
+                display: flex;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                z-index: 200;
+                background: rgba(6, 9, 20, 0.92);
+                backdrop-filter: blur(24px);
+                -webkit-backdrop-filter: blur(24px);
+                border-top: 1px solid rgba(255,255,255,0.08);
+                padding: 10px 12px;
+                padding-bottom: calc(10px + env(safe-area-inset-bottom));
+                gap: 8px;
+                align-items: center;
+            }
+
+            .mob-btn {
+                flex: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                height: 44px;
+                border-radius: 14px;
+                font-size: 0.72rem;
+                font-weight: 700;
+                cursor: pointer;
+                text-decoration: none;
+                border: none;
+                white-space: nowrap;
+                font-family: 'Inter', sans-serif;
+                transition: transform 0.2s, opacity 0.2s;
+            }
+            .mob-btn:active { transform: scale(0.96); opacity: 0.85; }
+
+            .mob-btn-wa {
+                background: rgba(37, 211, 102, 0.15);
+                border: 1px solid rgba(37, 211, 102, 0.35);
+                color: #25D366;
+            }
+            .mob-btn-demo {
+                background: rgba(77, 121, 255, 0.15);
+                border: 1px solid rgba(77, 121, 255, 0.4);
+                color: #4d79ff;
+            }
+            .mob-btn-giris {
+                background: linear-gradient(135deg, #4d79ff, #a855f7);
+                color: white;
+                box-shadow: 0 4px 15px rgba(77, 121, 255, 0.35);
+            }
+
+            /* İçerik alt bar'a gömülmesin */
+            body { padding-bottom: 80px; }
+        }
+
+        @media (min-width: 769px) {
+            .mobile-action-bar { display: none !important; }
+        }
+
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo-symbol {
+            width: 18px;
+            height: 18px;
+            border: 2px solid white;
+            transform: rotate(45deg);
+            border-radius: 4px;
+            box-shadow: 0 0 20px rgba(255, 255, 255, .35);
+        }
+
+        .logo h2 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 4px;
+        }
+
+        .nav-btn {
+            height: 48px;
+            padding: 0 24px;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+
+            background: rgba(255, 255, 255, .04);
+
+            color: white;
+            cursor: pointer;
+
+            backdrop-filter: blur(20px);
+
+            transition: .35s;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255, 255, 255, .08);
+        }
+
+        /* ===== main ===== */
+
+        .hero {
+            width: 100%;
+            min-height: 100vh;
+            height: auto;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+
+            position: relative;
+            z-index: 10;
+            padding-top: 100px;
+            padding-bottom: 80px;
+        }
+
+        /* ===== top text ===== */
+
+        .eyebrow {
+            margin-bottom: 20px;
+
+            color: #b6c1ea;
+
+            letter-spacing: 5px;
+            font-size: .78rem;
+
+            padding: 12px 18px;
+            border-radius: 100px;
+
+            border: 1px solid rgba(255, 255, 255, .06);
+
+            background: rgba(255, 255, 255, .03);
+
+            backdrop-filter: blur(10px);
+        }
+
+        .title {
+            font-size: 6rem;
+            font-weight: 800;
+            line-height: 1;
+            text-align: center;
+            letter-spacing: -4px;
+        }
+
+        .title span {
+            background: linear-gradient(90deg, #4d79ff, #ff4fd8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .desc {
+            margin-top: 24px;
+            max-width: 720px;
+            text-align: center;
+            color: var(--muted);
+            line-height: 1.9;
+            font-size: 1.05rem;
+        }
+
+        /* ===== command center ===== */
+
+        .center-stage {
+            margin-top: 70px;
+
+            width: 1200px;
+            height: 520px;
+
+            display: flex;
+            gap: 35px;
+
+            position: relative;
+        }
+
+        /* ===== panels ===== */
+
+        .panel {
+            flex: 1;
+
+            position: relative;
+
+            border-radius: 34px;
+
+            overflow: hidden;
+
+            border: 1px solid rgba(255, 255, 255, .08);
+
+            background:
+                linear-gradient(180deg,
+                    rgba(255, 255, 255, .06),
+                    rgba(255, 255, 255, .02));
+
+            backdrop-filter: blur(24px);
+
+            cursor: pointer;
+
+            transition:
+                transform .45s cubic-bezier(.17, .67, .22, 1.2),
+                box-shadow .45s ease,
+                border-color .45s;
+        }
+
+        /* cinematic hover */
+
+        .panel:hover {
+            transform: translateY(-10px) scale(1.02);
+        }
+
+        .rent:hover {
+            border-color: rgba(77, 121, 255, .45);
+
+            box-shadow:
+                0 0 40px rgba(77, 121, 255, .25),
+                0 0 120px rgba(77, 121, 255, .12);
+        }
+
+        .tour:hover {
+            border-color: rgba(255, 79, 216, .45);
+
+            box-shadow:
+                0 0 40px rgba(255, 79, 216, .22),
+                0 0 120px rgba(255, 79, 216, .10);
+        }
+
+        /* ===== cinematic overlays ===== */
+
+        .panel::before {
+            content: "";
+
+            position: absolute;
+            inset: 0;
+
+            background:
+                radial-gradient(circle at top left,
+                    rgba(255, 255, 255, .08),
+                    transparent 40%);
+
+            z-index: 1;
+        }
+
+        .panel::after {
+            content: "";
+
+            position: absolute;
+
+            inset: 0;
+
+            background:
+                linear-gradient(180deg,
+                    transparent,
+                    rgba(0, 0, 0, .65));
+
+            z-index: 2;
+        }
+
+        /* ===== moving lights ===== */
+
+        .light {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            filter: blur(70px);
+            opacity: .22;
+            animation: moveLight 5s ease-in-out infinite;
+        }
+
+        .rent .light {
+            background: var(--blue);
+            top: -80px;
+            left: -80px;
+        }
+
+        .tour .light {
+            background: var(--pink);
+            bottom: -80px;
+            right: -80px;
+        }
+
+        @keyframes moveLight {
+
+            0%,
+            100% {
+                transform: translate(0, 0);
+            }
+
+            50% {
+                transform: translate(30px, 25px);
+            }
+        }
+
+        /* ===== particles ===== */
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: white;
+            border-radius: 50%;
+            opacity: .5;
+            animation: particle 4s linear infinite;
+        }
+
+        @keyframes particle {
+            from {
+                transform: translateY(0px);
+                opacity: 0;
+            }
+
+            20% {
+                opacity: .6;
+            }
+
+            to {
+                transform: translateY(-120px);
+                opacity: 0;
+            }
+        }
+
+        /* ===== content ===== */
+
+        .content {
+            position: absolute;
+            inset: 0;
+
+            z-index: 10;
+
+            padding: 42px;
+
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-icon {
+            width: 84px;
+            height: 84px;
+
+            border-radius: 28px;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-size: 2rem;
+
+            border: 1px solid rgba(255, 255, 255, .08);
+
+            background: rgba(255, 255, 255, .05);
+
+            backdrop-filter: blur(20px);
+        }
+
+        .rent .top-icon {
+            box-shadow: 0 0 40px rgba(77, 121, 255, .18);
+        }
+
+        .tour .top-icon {
+            box-shadow: 0 0 40px rgba(255, 79, 216, .18);
+        }
+
+        .panel small {
+            margin-top: 30px;
+
+            letter-spacing: 4px;
+
+            color: #97a4d6;
+        }
+
+        .panel h2 {
+            margin-top: 14px;
+
+            font-size: 3.2rem;
+            line-height: 1;
+
+            letter-spacing: -2px;
+        }
+
+        .panel p {
+            margin-top: 20px;
+
+            color: #9aa4c7;
+
+            max-width: 420px;
+
+            line-height: 1.9;
+        }
+
+        /* ===== footer ===== */
+
+        .panel-footer {
+            margin-top: auto;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tags {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            height: 38px;
+            padding: 0 16px;
+
+            border-radius: 100px;
+
+            border: 1px solid rgba(255, 255, 255, .08);
+
+            display: flex;
+            align-items: center;
+
+            font-size: .82rem;
+
+            color: #c8d0f3;
+
+            background: rgba(255, 255, 255, .04);
+        }
+
+        .enter {
+            width: 68px;
+            height: 68px;
+
+            border-radius: 50%;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            font-size: 1.4rem;
+
+            border: 1px solid rgba(255, 255, 255, .08);
+
+            background: rgba(255, 255, 255, .05);
+
+            transition: .35s;
+        }
+
+        .panel:hover .enter {
+            transform: translateX(6px);
+        }
+
+        /* ===== login ===== */
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+
+            background: rgba(3, 5, 12, .82);
+
+            backdrop-filter: blur(35px);
+
+            z-index: 999;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            opacity: 0;
+            visibility: hidden;
+
+            transition: .45s;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .login {
+            width: 460px;
+
+            border-radius: 34px;
+
+            padding: 42px;
+
+            background:
+                linear-gradient(180deg,
+                    rgba(255, 255, 255, .08),
+                    rgba(255, 255, 255, .03));
+
+            border: 1px solid rgba(255, 255, 255, .08);
+
+            backdrop-filter: blur(25px);
+
+            transform: translateY(40px);
+
+            transition: .5s;
+        }
+
+        .overlay.active .login {
+            transform: translateY(0);
+        }
+
+        .login h3 {
+            font-size: 2.3rem;
+            margin-bottom: 10px;
+        }
+
+        .login p {
+            color: #97a3cb;
+            margin-bottom: 32px;
+        }
+
+        .input {
+            width: 100%;
+            height: 64px;
+
+            border: none;
+            outline: none;
+
+            border-radius: 18px;
+
+            padding: 0 20px;
+
+            margin-bottom: 18px;
+
+            background: rgba(255, 255, 255, .05);
+
+            border: 1px solid rgba(255, 255, 255, .08);
+
+            color: white;
+        }
+
+        .input:focus {
+            border-color: #4d79ff;
+            box-shadow: 0 0 25px rgba(77, 121, 255, .18);
+        }
+
+        .captcha-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 18px;
+        }
+
+        .captcha-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, .05);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 18px;
+            padding: 0 20px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+            min-width: 120px;
+            letter-spacing: 2px;
+        }
+
+        .captcha-input {
+            margin-bottom: 0;
+            flex: 1;
+        }
+
+        .login-btn {
+            width: 100%;
+            height: 64px;
+
+            border: none;
+
+            border-radius: 18px;
+
+            background:
+                linear-gradient(90deg,
+                    #4d79ff,
+                    #ff4fd8);
+
+            color: white;
+
+            font-weight: 700;
+            font-size: 1rem;
+
+            cursor: pointer;
+
+            transition: .35s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .close {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+
+            width: 52px;
+            height: 52px;
+
+            border-radius: 50%;
+
+            border: none;
+
+            background: rgba(255, 255, 255, .06);
+
+            color: white;
+
+            cursor: pointer;
+            z-index: 1001;
+        }
+
+        /* ===== demo simulation split screen ===== */
+        .demo-modal-container {
+            transform: translateY(40px);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform;
+        }
+        .overlay.active .demo-modal-container {
+            transform: translateY(0);
+        }
+        .demo-card {
+            transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), border-color 0.4s, box-shadow 0.4s;
+            will-change: transform, border-color, box-shadow;
+        }
+        .demo-card:hover {
+            transform: translateY(-8px) scale(1.02);
+        }
+        .rent-demo-card:hover {
+            border-color: rgba(77, 121, 255, 0.5) !important;
+            box-shadow: 0 0 40px rgba(77, 121, 255, 0.25);
+        }
+        .tour-demo-card:hover {
+            border-color: rgba(255, 79, 216, 0.5) !important;
+            box-shadow: 0 0 40px rgba(255, 79, 216, 0.25);
+        }
+        .demo-card:hover .demo-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+        
+        /* High Performance GPU rendering for silky smooth scroll */
+        .glow {
+            will-change: transform;
+            transform: translate3d(0,0,0);
+            backface-visibility: hidden;
+            perspective: 1000px;
+        }
+        .visual-mockup, .panel, .pricing-card, .core-card {
+            will-change: transform;
+            backface-visibility: hidden;
+            transform: translateZ(0);
+        }
+
+        /* ===== KAPSAMLI MOBİL RESPONSIVE FİX ===== */
+
+        /* Taşma engelleyici — tüm elementlerin sağa çıkmasını engelle */
+        html, body {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        @media(max-width: 1200px) {
+            body { overflow-x: hidden; }
+
+            .hero {
+                padding: 130px 20px 60px;
+                height: auto;
+            }
+
+            .title { font-size: 3.2rem; }
+
+            .center-stage {
+                width: 100%;
+                height: auto;
+                flex-direction: column;
+            }
+
+            .panel { min-height: 420px; }
+
+            .navbar {
+                left: 20px;
+                right: 20px;
+            }
+        }
+
+        @media(max-width: 768px) {
+            /* ── GENEL ── */
+            * { max-width: 100%; }
+
+            /* Glow'lar taşmasın */
+            .glow {
+                width: 300px;
+                height: 300px;
+                opacity: 0.10;
+            }
+            .glow-left  { left: -100px; }
+            .glow-right { right: -100px; }
+
+            /* ── NAVBAR ── */
+            .navbar {
+                top: 16px;
+                left: 12px;
+                right: 12px;
+                flex-wrap: nowrap;
+                gap: 8px;
+            }
+
+            .logo h2 { font-size: 0.9rem; letter-spacing: 2px; }
+            .logo-symbol { width: 14px; height: 14px; }
+
+            .nav-btn {
+                height: 36px;
+                padding: 0 12px;
+                font-size: 0.72rem;
+                border-radius: 10px;
+            }
+
+            /* ── HERO ── */
+            .hero {
+                padding: 100px 16px 50px;
+                text-align: center;
+            }
+
+            .title {
+                font-size: clamp(2rem, 8vw, 3rem);
+                letter-spacing: -2px;
+            }
+
+            .desc {
+                font-size: 0.92rem;
+                padding: 0 8px;
+            }
+
+            .eyebrow { font-size: 0.65rem; letter-spacing: 3px; }
+
+            /* Hero paneller */
+            .center-stage {
+                width: 100%;
+                gap: 20px;
+                padding: 0;
+            }
+
+            .panel {
+                min-height: 320px;
+                border-radius: 22px;
+            }
+
+            .content { padding: 24px; }
+
+            .panel h2 {
+                font-size: 2.2rem;
+                letter-spacing: -1px;
+            }
+
+            .panel p { font-size: 0.85rem; }
+
+            .top-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+                border-radius: 18px;
+            }
+
+            .enter {
+                width: 50px;
+                height: 50px;
+                font-size: 1.1rem;
+            }
+
+            .tags { gap: 8px; }
+            .tag  { height: 32px; padding: 0 12px; font-size: 0.75rem; }
+
+            /* ── SHOWCASE SECTION ── */
+            .showcase-section { padding: 60px 0; }
+
+            .showcase-container { padding: 0 16px; }
+
+            .section-header { margin-bottom: 50px; }
+
+            .section-title {
+                font-size: clamp(1.6rem, 6vw, 2.5rem);
+                letter-spacing: -1px;
+            }
+
+            .section-desc { font-size: 0.9rem; }
+
+            /* ── MODULE ROWS ── */
+            .module-showcase { gap: 40px; margin-bottom: 60px; }
+
+            .module-row,
+            .module-row.reverse {
+                flex-direction: column;
+                gap: 24px;
+            }
+
+            .module-info {
+                padding: 28px 20px;
+                border-radius: 20px;
+            }
+
+            .module-info h3 {
+                font-size: 1.6rem;
+                letter-spacing: -0.5px;
+            }
+
+            .module-body-text { font-size: 0.88rem; }
+
+            /* Görsel mockup mobilde responsive tasarım */
+            .module-visual {
+                display: flex !important;
+                min-height: auto !important;
+                padding: 20px 10px !important;
+            }
+            .visual-mockup {
+                width: 100% !important;
+            }
+            .mockup-body {
+                padding: 16px 12px !important;
+            }
+            .mockup-widget-grid {
+                grid-template-columns: 1fr !important;
+                gap: 8px !important;
+                margin-bottom: 16px !important;
+            }
+            .mockup-widget {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                text-align: left !important;
+                padding: 10px 14px !important;
+            }
+            .mockup-widget.blue { border-left: 3px solid var(--blue) !important; }
+            .mockup-widget.green { border-left: 3px solid #10b981 !important; }
+            .mockup-widget.yellow { border-left: 3px solid #f59e0b !important; }
+            .mockup-widget .m-label {
+                margin-bottom: 0 !important;
+                font-size: 0.65rem !important;
+            }
+            .mockup-widget .m-val {
+                font-size: 0.85rem !important;
+            }
+            .mockup-chart {
+                height: 90px !important;
+                gap: 8px !important;
+            }
+
+            /* ── FEATURES / CORE GRID ── */
+            .core-grid {
+                grid-template-columns: 1fr !important;
+                gap: 16px !important;
+            }
+
+            /* ── PRICING ── */
+            .pricing-grid {
+                grid-template-columns: 1fr !important;
+                gap: 20px !important;
+            }
+
+            .pricing-section { padding: 60px 0; }
+
+            /* Lisans yapılandırıcı mobil */
+            .sliders-grid {
+                grid-template-columns: 1fr !important;
+                gap: 20px !important;
+            }
+
+            .plans-selector-mobile { overflow-x: auto; }
+
+            /* ── LOGIN MODAL ── */
+            .login {
+                width: calc(100vw - 32px);
+                padding: 28px 20px;
+                border-radius: 22px;
+            }
+
+            .login h3 { font-size: 1.6rem; }
+
+            .input { height: 52px; border-radius: 14px; }
+
+            .login-btn { height: 52px; border-radius: 14px; font-size: 0.95rem; }
+
+            .close { top: 16px; right: 16px; width: 42px; height: 42px; font-size: 1rem; }
+
+            /* ── DEMO MODAL ── */
+            .demo-modal-container {
+                padding: 0 12px !important;
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+
+            .demo-modal-container h2 {
+                font-size: clamp(1.4rem, 5vw, 2rem) !important;
+                letter-spacing: -0.5px !important;
+            }
+
+            .demo-modal-container > p {
+                font-size: 0.85rem !important;
+                margin-bottom: 24px !important;
+            }
+
+            .demo-cards-grid {
+                grid-template-columns: 1fr !important;
+                gap: 16px !important;
+            }
+
+            .demo-card {
+                height: auto !important;
+                min-height: 260px !important;
+                padding: 24px !important;
+                border-radius: 20px !important;
+            }
+
+            /* Demo kapat butonu mobil */
+            #demoOverlay > button.close {
+                top: 16px !important;
+                right: 16px !important;
+                width: 44px !important;
+                height: 44px !important;
+                font-size: 1.2rem !important;
+            }
+
+            /* ── STATUS BADGE ── */
+            .status-badge-container { padding: 8px 12px !important; }
+
+            /* ── CHATBOT ── */
+            .chatbot-box {
+                width: calc(100vw - 24px) !important;
+                right: 12px !important;
+                left: 12px !important;
+                bottom: 80px !important;
+                max-height: 65vh !important;
+            }
+
+            /* ── FOOTER ── */
+            .footer-bottom {
+                flex-direction: column !important;
+                gap: 16px !important;
+                text-align: center !important;
+            }
+
+            .footer-links {
+                flex-wrap: wrap !important;
+                justify-content: center !important;
+            }
+
+            /* ── SECURITY SIM BÖLÜMÜ ── */
+            .sec-sim-container {
+                flex-direction: column !important;
+                gap: 20px !important;
+            }
+
+            .sec-feature-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        /* ── KÜÇÜK EKRANLAR (480px altı) ── */
+        @media(max-width: 480px) {
+            .title { font-size: clamp(1.7rem, 7vw, 2.5rem); }
+
+            .navbar { gap: 6px; }
+
+            .nav-btn {
+                height: 32px;
+                padding: 0 10px;
+                font-size: 0.68rem;
+            }
+
+            .logo h2 { font-size: 0.82rem; }
+
+            .showcase-container { padding: 0 12px; }
+
+            .module-info { padding: 20px 16px; }
+        }
+
+        /* ===== Discover Scroll Down Indicator ===== */
+        .discover-scroll {
+            margin-top: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            z-index: 15;
+            transition: all 0.3s;
+            opacity: 0.6;
+        }
+
+        .discover-scroll:hover {
+            opacity: 1;
+            transform: translateY(3px);
+        }
+
+        .discover-scroll p {
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--muted);
+            font-weight: 700;
+        }
+
+        .discover-scroll .mouse {
+            width: 22px;
+            height: 36px;
+            border: 2px solid var(--muted);
+            border-radius: 20px;
+            position: relative;
+            display: block;
+        }
+
+        .discover-scroll .wheel {
+            width: 4px;
+            height: 8px;
+            background: #fff;
+            border-radius: 4px;
+            position: absolute;
+            top: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: scrollWheel 1.5s infinite;
+        }
+
+        @keyframes scrollWheel {
+            0% { opacity: 1; top: 6px; }
+            100% { opacity: 0; top: 18px; }
+        }
+
+        /* ===== Showcase Section CSS ===== */
+        .showcase-section {
+            width: 100%;
+            background: #020306;
+            position: relative;
+            z-index: 20;
+            padding: 120px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .showcase-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto 100px;
+        }
+
+        .section-header .badge {
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+            color: var(--blue);
+            background: rgba(77, 121, 255, 0.1);
+            border: 1px solid rgba(77, 121, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-weight: 700;
+            text-transform: uppercase;
+            display: inline-block;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            letter-spacing: -2px;
+            margin-bottom: 24px;
+        }
+
+        .section-title span {
+            background: linear-gradient(90deg, #4d79ff, #ff4fd8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section-desc {
+            color: var(--muted);
+            font-size: 1.05rem;
+            line-height: 1.8;
+        }
+
+        /* ===== Module Showcase Layout ===== */
+        .module-showcase {
+            display: flex;
+            flex-direction: column;
+            gap: 100px;
+            margin-bottom: 120px;
+        }
+
+        .module-row {
+            display: flex;
+            align-items: stretch;
+            gap: 50px;
+        }
+
+        .module-row.reverse {
+            flex-direction: row-reverse;
+        }
+
+        .module-info {
+            flex: 1.2;
+            padding: 50px;
+            border-radius: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .module-info::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        }
+
+        .rent-highlight { border-color: rgba(77, 121, 255, 0.15); }
+        .tour-highlight { border-color: rgba(255, 79, 216, 0.15); }
+        .tech-highlight { border-color: rgba(34, 211, 238, 0.15); }
+
+        .icon-box {
+            width: 64px;
+            height: 64px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .rent-icon { background: rgba(77, 121, 255, 0.1); border: 1px solid rgba(77, 121, 255, 0.2); }
+        .tour-icon { background: rgba(255, 79, 216, 0.1); border: 1px solid rgba(255, 79, 216, 0.2); }
+        .tech-icon { background: rgba(34, 211, 238, 0.1); border: 1px solid rgba(34, 211, 238, 0.2); }
+
+        .module-info h3 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: -1px;
+        }
+
+        .module-tagline {
+            color: var(--blue);
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 24px;
+        }
+
+        .tour-highlight .module-tagline { color: var(--pink); }
+        .tech-highlight .module-tagline { color: #22d3ee; }
+
+        .module-body-text {
+            color: var(--muted);
+            font-size: 1rem;
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+
+        .feature-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #b6c1ea;
+        }
+
+        .feature-list li i {
+            color: #10b981;
+            margin-top: 4px;
+            font-size: 1rem;
+        }
+
+        /* ===== Module Visual Mockups (Pure CSS High-End) ===== */
+        .module-visual {
+            flex: 0.8;
+            border-radius: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            min-height: 480px;
+        }
+
+        .visual-glow {
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            z-index: 1;
+        }
+
+        .glow-blue { background: var(--blue); top: 10%; right: 10%; }
+        .glow-pink { background: var(--pink); bottom: 10%; left: 10%; }
+        .glow-cyan { background: #22d3ee; top: 20%; left: 20%; }
+
+        .visual-mockup {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            z-index: 2;
+            backdrop-filter: blur(12px);
+            transition: transform 0.5s ease;
+        }
+
+        .module-visual:hover .visual-mockup {
+            transform: translateY(-8px) rotate(-1deg);
+        }
+
+        .mockup-header {
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mockup-header .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .mockup-header .dot.red { background: #ef4444; }
+        .mockup-header .dot.yellow { background: #f59e0b; }
+        .mockup-header .dot.green { background: #10b981; }
+
+        .mockup-title {
+            font-size: 0.75rem;
+            color: var(--muted);
+            font-weight: 600;
+            margin-left: auto;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .mockup-body {
+            padding: 24px;
+        }
+
+        .mockup-widget-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .mockup-widget {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 14px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .mockup-widget.blue { border-left: 3px solid var(--blue); }
+        .mockup-widget.green { border-left: 3px solid #10b981; }
+        .mockup-widget.yellow { border-left: 3px solid #f59e0b; }
+
+        .mockup-widget .m-label {
+            font-size: 0.65rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
+        .mockup-widget .m-val {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .mockup-chart {
+            height: 130px;
+            display: flex;
+            align-items: flex-end;
+            gap: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 10px;
+        }
+
+        .chart-bar-mock {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 4px 4px 0 0;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .chart-bar-mock span {
+            position: absolute;
+            bottom: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.65rem;
+            color: var(--muted);
+        }
+
+        .chart-bar-mock.active {
+            background: linear-gradient(180deg, var(--pink) 0%, var(--blue) 100%);
+            box-shadow: 0 0 15px rgba(77, 121, 255, 0.3);
+        }
+
+        /* Agency list mockup */
+        .mockup-agency-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .mockup-agency-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .m-a-logo {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255, 79, 216, 0.1);
+            color: var(--pink);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .mockup-agency-item:first-child .m-a-logo {
+            background: rgba(77, 121, 255, 0.1);
+            color: var(--blue);
+        }
+
+        .m-a-info {
+            flex: 1;
+        }
+
+        .m-a-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 2px;
+        }
+
+        .m-a-sub {
+            font-size: 0.7rem;
+            color: var(--muted);
+        }
+
+        .m-a-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 100px;
+            text-transform: uppercase;
+        }
+
+        .m-a-badge.green { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .m-a-badge.warning { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+
+        /* Security List Mockup */
+        .security-body {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .sec-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            color: #b6c1ea;
+        }
+
+        .sec-item i { font-size: 1rem; }
+        .text-cyan { color: #22d3ee; }
+        .text-blue { color: var(--blue); }
+        .text-green { color: #10b981; }
+
+        .sec-status {
+            text-align: center;
+            padding: 10px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: #10b981;
+            letter-spacing: 1px;
+            background: rgba(16, 185, 129, 0.06);
+            border-radius: 10px;
+            border: 1px solid rgba(16, 185, 129, 0.15);
+            margin-top: 10px;
+        }
+
+        /* ===== Core Features Grid CSS ===== */
+        .features-grid-title {
+            text-align: center;
+            margin-top: 80px;
+            margin-bottom: 50px;
+        }
+
+        .features-grid-title h3 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .features-grid-title h3 span {
+            background: linear-gradient(90deg, #4d79ff, #ff4fd8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .core-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .core-card {
+            padding: 30px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, transparent 100%);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .core-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.12);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, transparent 100%);
+        }
+
+        .core-card i {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #4d79ff, #ff4fd8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+
+        .core-card h4 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: white;
+        }
+
+        .core-card p {
+            font-size: 0.85rem;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        /* ===== Premium Footer CSS ===== */
+        .premium-footer {
+            width: 100%;
+            background: #010204;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 60px 0 40px;
+            position: relative;
+            z-index: 20;
+        }
+
+        .footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+
+        .footer-brand {
+            margin-bottom: 40px;
+        }
+
+        .footer-brand p {
+            color: var(--muted);
+            margin-top: 12px;
+            font-size: 0.9rem;
+            max-width: 400px;
+            line-height: 1.6;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .footer-links a {
+            color: var(--muted);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        /* Media queries adjustment for scrolling version */
+        @media(max-width: 992px) {
+            .module-row, .module-row.reverse {
+                flex-direction: column;
+                gap: 30px;
+            }
+            .core-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .section-title {
+                font-size: 2.8rem;
+            }
+        }
+
+        @media(max-width: 600px) {
+            .core-grid {
+                grid-template-columns: 1fr;
+            }
+            .section-title {
+                font-size: 2.2rem;
+            }
+            .showcase-container {
+                padding: 0 20px;
+            }
+        }
+
+        /* ===== FEATURE 1: Pricing Section CSS ===== */
+        .pricing-section {
+            width: 100%;
+            background: #03050a;
+            position: relative;
+            z-index: 20;
+            padding: 120px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .calc-container {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border-radius: 32px;
+            padding: 40px;
+            margin-bottom: 60px;
+        }
+
+        .calc-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 40px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 30px;
+        }
+
+        .calc-title h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .calc-title p {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .billing-toggle {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 6px 12px;
+            border-radius: 100px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .billing-toggle span {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .billing-toggle span.active {
+            color: white;
+        }
+
+        .toggle-switch {
+            width: 50px;
+            height: 26px;
+            background: rgba(255, 79, 216, 0.2);
+            border: 1px solid rgba(255, 79, 216, 0.4);
+            border-radius: 100px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch::after {
+            content: "";
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            top: 3px;
+            left: 4px;
+            transition: transform 0.3s;
+            box-shadow: 0 0 10px rgba(255, 79, 216, 0.8);
+        }
+
+        .billing-toggle.annual .toggle-switch {
+            background: rgba(77, 121, 255, 0.2);
+            border-color: rgba(77, 121, 255, 0.4);
+        }
+
+        .billing-toggle.annual .toggle-switch::after {
+            transform: translateX(22px);
+            box-shadow: 0 0 10px rgba(77, 121, 255, 0.8);
+        }
+
+        .discount-badge {
+            background: linear-gradient(135deg, var(--pink), var(--blue));
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 100px;
+            margin-left: 5px;
+        }
+
+        .sliders-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+        }
+
+        @media(max-width: 768px) {
+            .sliders-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-between: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .slider-label-text {
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .slider-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: white;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .custom-range {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 100px;
+            background: rgba(255, 255, 255, 0.1);
+            outline: none;
+            transition: background 0.3s;
+        }
+
+        .custom-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            transition: transform 0.2s;
+        }
+
+        .custom-range::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .rent-slider::-webkit-slider-runnable-track {
+            background: linear-gradient(90deg, rgba(77, 121, 255, 0.1), rgba(77, 121, 255, 0.8));
+            border-radius: 100px;
+        }
+
+        .tour-slider::-webkit-slider-runnable-track {
+            background: linear-gradient(90deg, rgba(255, 79, 216, 0.1), rgba(255, 79, 216, 0.8));
+            border-radius: 100px;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+        }
+
+        @media(max-width: 992px) {
+            .pricing-grid {
+                grid-template-columns: 1fr;
+                max-width: 500px;
+                margin: 0 auto;
+            }
+        }
+
+        .pricing-card {
+            border-radius: 24px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+        }
+
+        .pricing-card::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        }
+
+        .pricing-card.starter { border-color: rgba(77, 121, 255, 0.15); }
+        .pricing-card.premium { 
+            border-color: rgba(255, 79, 216, 0.3); 
+            background: linear-gradient(180deg, rgba(255, 79, 216, 0.02) 0%, transparent 100%);
+        }
+        .pricing-card.enterprise { border-color: rgba(34, 211, 238, 0.15); }
+
+        .popular-badge {
+            position: absolute;
+            top: 15px; right: 15px;
+            background: var(--pink);
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 100px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .price-header h4 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .price-header p {
+            color: var(--muted);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .price-amount {
+            margin: 30px 0;
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
+        }
+
+        .price-amount .currency {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .price-amount .amount {
+            font-size: 3.2rem;
+            font-weight: 800;
+            letter-spacing: -2px;
+            transition: all 0.3s;
+        }
+
+        .price-amount .period {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .price-features {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 30px;
+            margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            flex-grow: 1;
+        }
+
+        .price-features li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .price-features li i {
+            color: var(--green);
+            font-size: 0.95rem;
+        }
+
+        .price-features li.disabled {
+            opacity: 0.4;
+        }
+
+        .price-features li.disabled i {
+            color: var(--muted);
+        }
+
+        .price-btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            text-decoration: none;
+        }
+
+        .price-btn:hover {
+            background: white;
+            color: black;
+            transform: translateY(-2px);
+        }
+
+        .pricing-card.premium .price-btn {
+            background: linear-gradient(135deg, var(--pink), var(--blue));
+            border: none;
+            box-shadow: 0 4px 15px rgba(255, 79, 216, 0.3);
+        }
+
+        .pricing-card.premium .price-btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+            color: white;
+        }
+
+        /* ===== FEATURE 2: Live Service Status (Navbar Status LED) ===== */
+        .status-badge-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 6px 14px;
+            border-radius: 100px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .status-badge-container:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .status-led {
+            width: 8px;
+            height: 8px;
+            background: var(--green);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--green);
+            animation: pulseStatus 2s infinite;
+        }
+
+        @keyframes pulseStatus {
+            0% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 14px var(--green); }
+            100% { transform: scale(1); opacity: 0.7; }
+        }
+
+        .status-badge-container span {
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: var(--green);
+        }
+
+        /* Tooltip Dropdown */
+        .status-tooltip {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 10px;
+            width: 250px;
+            background: rgba(3, 5, 10, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 16px;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(10px) translateZ(0);
+            transition: all 0.3s;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .status-badge-container:hover .status-tooltip {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0) translateZ(0);
+        }
+
+        .status-tooltip-header {
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: white;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 8px;
+            margin-bottom: 4px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+        }
+
+        .status-item .name {
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-item .ping {
+            color: var(--green);
+            font-family: monospace;
+            font-weight: 600;
+        }
+
+        /* ===== FEATURE 3: Glassmorphic AI Chatbot ===== */
+        .chatbot-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--pink), var(--blue));
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(255, 79, 216, 0.4);
+            z-index: 150;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            will-change: transform;
+            transform: translateZ(0);
+        }
+
+        /* Mobilde chatbot, alt bar'ın üzerinde dursun */
+        @media (max-width: 768px) {
+            .chatbot-btn {
+                bottom: 84px;
+                right: 16px;
+                width: 48px;
+                height: 48px;
+            }
+            .chatbot-box {
+                bottom: 150px !important;
+                right: 12px !important;
+            }
+        }
+
+        .chatbot-btn:hover {
+            transform: scale(1.1) translateY(-3px) translateZ(0);
+            box-shadow: 0 15px 30px rgba(255, 79, 216, 0.6);
+        }
+
+        .chatbot-btn i {
+            color: white;
+            font-size: 1.4rem;
+        }
+
+        .chatbot-btn .status-dot {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 14px;
+            height: 14px;
+            background: var(--green);
+            border: 3px solid #03050a;
+            border-radius: 50%;
+        }
+
+        .chatbot-box {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            width: 380px;
+            height: 520px;
+            background: rgba(3, 5, 10, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+            z-index: 998;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(20px) scale(0.95) translateZ(0);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            backdrop-filter: blur(16px);
+        }
+
+        .chatbot-box.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0) scale(1) translateZ(0);
+        }
+
+        .chatbot-header {
+            background: linear-gradient(90deg, rgba(255, 79, 216, 0.1), rgba(77, 121, 255, 0.1));
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chatbot-avatar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .bot-logo {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--pink), var(--blue));
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+
+        .bot-status-details p {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .bot-status-details span {
+            font-size: 0.7rem;
+            color: var(--green);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .chatbot-close {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: color 0.3s;
+        }
+
+        .chatbot-close:hover {
+            color: white;
+        }
+
+        .chatbot-messages {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chat-msg {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            line-height: 1.5;
+        }
+
+        .chat-msg.bot {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: white;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .chat-msg.user {
+            background: linear-gradient(135deg, var(--pink), var(--blue));
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-tags-container {
+            padding: 15px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .chat-tag {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: var(--muted);
+            padding: 6px 12px;
+            border-radius: 100px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .chat-tag:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        /* Typing Indicator Animation */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            border-bottom-left-radius: 4px;
+            align-self: flex-start;
+            width: fit-content;
+        }
+
+        .typing-indicator span {
+            width: 6px;
+            height: 6px;
+            background: var(--muted);
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        /* ===== FEATURE 4: Interactive Sandbox Terminal CSS ===== */
+        .sec-console {
+            background: rgba(3, 5, 10, 0.8) !important;
+            border: 1px solid rgba(34, 211, 238, 0.2) !important;
+            padding: 20px !important;
+            .demo-card { border-radius: 24px !important; }
+        
+        /* Demo kartları mobilde tek sütun */
+        @media (max-width: 700px) {
+            .demo-cards-grid {
+                grid-template-columns: 1fr !important;
+            }
+            .demo-card {
+                height: auto !important;
+                min-height: 320px !important;
+            }
+            .demo-modal-container {
+                padding: 0 8px !important;
+            }
+        }
+            font-family: monospace;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .console-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.7rem;
+            color: var(--cyan);
+            border-bottom: 1px solid rgba(34, 211, 238, 0.1);
+            padding-bottom: 8px;
+            margin-bottom: 5px;
+        }
+
+        .console-logs {
+            height: 110px;
+            overflow-y: auto;
+            font-size: 0.75rem;
+            color: #d1d5db;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .console-log {
+            line-height: 1.4;
+            display: flex;
+            gap: 8px;
+        }
+
+        .console-log .timestamp {
+            color: var(--muted);
+        }
+
+        .console-log .success { color: var(--green); }
+        .console-log .info { color: var(--cyan); }
+        .console-log .warn { color: var(--pink); }
+
+        .sec-sim-btn {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.1), rgba(77, 121, 255, 0.1));
+            border: 1px solid rgba(34, 211, 238, 0.3);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .sec-sim-btn:hover {
+            background: linear-gradient(135deg, rgba(34, 211, 238, 0.25), rgba(77, 121, 255, 0.25));
+            border-color: rgba(34, 211, 238, 0.6);
+            transform: translateY(-1px);
+        }
+
+        .sec-status-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            margin-top: 5px;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .db-lock-animation {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 6px var(--green);
+            animation: pulseStatus 1s infinite;
+        }
+
+        .db-lock-animation.isolating {
+            background: var(--pink);
+            box-shadow: 0 0 6px var(--pink);
+        }
+
+        /* Prevent ambient glows from expanding scroll boundaries and boost performance */
+        .bg-container {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+        /* Premium Global Notification Toasts */
+        .toast-container {
+            position: fixed;
+            top: 40px;
+            right: 40px;
+            z-index: 100000 !important;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            pointer-events: none;
+        }
+        .toast-item {
+            min-width: 320px;
+            max-width: 450px;
+            background: rgba(12, 16, 29, 0.90);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: white;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            transform: translateX(50px) translateZ(0);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: auto;
+            will-change: transform, opacity;
+        }
+        .toast-item.active {
+            transform: translateX(0) translateZ(0);
+            opacity: 1;
+        }
+        .toast-item.fade-out {
+            transform: translateY(-20px) translateZ(0);
+            opacity: 0;
+        }
+        .toast-item.success {
+            border-color: rgba(16, 185, 129, 0.3);
+            background: rgba(16, 185, 129, 0.05);
+        }
+        .toast-item.success i { color: #10b981; }
+        .toast-item.error {
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.05);
+        }
+        .toast-item.error i { color: #ef4444; }
+        .toast-item.info {
+            border-color: rgba(77, 121, 255, 0.3);
+            background: rgba(77, 121, 255, 0.05);
+        }
+        .toast-item.info i { color: #4d79ff; }
+        
+        .toast-icon {
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .toast-content {
+            font-size: 0.85rem;
+            font-weight: 500;
+            line-height: 1.5;
+            flex-grow: 1;
+        }
+        .toast-close {
+            font-size: 0.9rem;
+            color: var(--muted);
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .toast-close:hover {
+            color: white;
+        }
+
+        .plan-select-card {
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            background: rgba(255, 255, 255, 0.01) !important;
+            transition: all 0.3s ease !important;
+        }
+        .plan-select-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(77, 121, 255, 0.3) !important;
+            background: rgba(77, 121, 255, 0.06) !important;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        .plan-select-card.active {
+            border-color: var(--blue) !important;
+            background: rgba(77, 121, 255, 0.12) !important;
+            box-shadow: 0 0 25px rgba(77, 121, 255, 0.3) !important;
+            transform: scale(1.03) translateY(-2px);
+        }
+        @media (max-width: 768px) {
+            .plans-selector-mobile {
+                order: 2 !important;
+            }
+        }
+        .whatsapp-nav-badge:hover {
+            transform: translateY(-2px) scale(1.05);
+            background: rgba(37, 211, 102, 0.25) !important;
+            border-color: rgba(37, 211, 102, 0.6) !important;
+            box-shadow: 0 0 25px rgba(37, 211, 102, 0.5) !important;
+        }
+
+        /* ── NAVBAR MOBİL: Tüm butonlar sığsın ── */
+        @media (max-width: 768px) {
+            .navbar-actions {
+                gap: 6px !important;
+            }
+
+            /* WhatsApp: sadece ikon */
+            .whatsapp-label {
+                display: none !important;
+            }
+            .whatsapp-nav-badge {
+                padding: 8px 10px !important;
+            }
+
+            /* Demo badge: metni gizle, sadece led + kısa yazı */
+            .demo-label {
+                display: none !important;
+            }
+            .status-badge-container {
+                padding: 8px 10px !important;
+                gap: 4px !important;
+            }
+
+            /* Yönetim Paneli butonu */
+            .nav-btn {
+                height: 36px !important;
+                padding: 0 10px !important;
+                font-size: 0.7rem !important;
+                white-space: nowrap !important;
+            }
+        }
+
+        @media (max-width: 420px) {
+            /* Çok küçük ekranlarda Demo badge da kısalt */
+            .status-badge-container .status-led {
+                width: 7px !important;
+                height: 7px !important;
+            }
+            .nav-btn {
+                font-size: 0.65rem !important;
+                padding: 0 8px !important;
+            }
+        }
+
+    
+        .chat-input-container {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            gap: 10px;
+        }
+        .chat-input-container input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .chat-input-container button {
+            background: var(--blue);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 35px;
+            height: 35px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+        }
+        .chat-input-container button:hover {
+            transform: scale(1.1);
+        }
+
+    
+        /* AI Chatbot Custom Input */
+        .chat-input-container {
+            display: flex !important;
+            align-items: center !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+            border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+            padding: 10px 15px !important;
+            gap: 12px !important;
+            margin-top: auto; /* Push to bottom */
+        }
+        #chatInput {
+            flex: 1 !important;
+            background: transparent !important;
+            border: none !important;
+            color: #ffffff !important;
+            font-size: 0.95rem !important;
+            outline: none !important;
+            padding: 5px !important;
+        }
+        #chatInput::placeholder {
+            color: rgba(255, 255, 255, 0.5) !important;
+        }
+        #sendAiBtn {
+            background: var(--blue) !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 50% !important;
+            width: 36px !important;
+            height: 36px !important;
+            min-width: 36px !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: all 0.3s ease !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            box-shadow: 0 4px 15px rgba(77, 121, 255, 0.4) !important;
+        }
+        #sendAiBtn i {
+            color: #ffffff !important;
+            font-size: 0.9rem !important;
+            margin-left: -2px !important;
+        }
+        #sendAiBtn:hover {
+            transform: scale(1.1) !important;
+            background: #6b8eff !important;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <div class="bg-container">
+        <div class="noise"></div>
+        <div class="grid"></div>
+
+        <div class="glow glow-left"></div>
+        <div class="glow glow-right"></div>
+    </div>
+
+    <!-- NAVBAR -->
+    <div class="navbar">
+        <div class="logo">
+            <div class="logo-symbol"></div>
+            <h2>ZYRONOVA</h2>
+        </div>
+
+        <div class="navbar-actions">
+            <!-- WhatsApp -->
+            <a href="https://wa.me/905449116807?text=Merhaba,%20Zyronova%20SaaS%20sistemleri%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum." target="_blank" class="status-badge-container whatsapp-nav-badge" style="background:rgba(37,211,102,0.15);border:1px solid rgba(37,211,102,0.35);box-shadow:0 0 15px rgba(37,211,102,0.3);display:flex;align-items:center;gap:8px;text-decoration:none;cursor:pointer;padding:10px 18px;border-radius:100px;transition:all 0.3s;">
+                <i class="fab fa-whatsapp" style="color:#25D366;font-size:1.15rem;"></i>
+                <span class="whatsapp-label" style="color:#25D366;font-weight:800;font-size:0.75rem;letter-spacing:0.5px;text-transform:uppercase;">WHATSAPP DESTEK</span>
+            </a>
+
+            <!-- Demo -->
+            <div class="status-badge-container demo-badge" onclick="openDemoSimulation()" style="background:rgba(77,121,255,0.15);border:1px solid rgba(77,121,255,0.35);box-shadow:0 0 15px rgba(77,121,255,0.3);cursor:pointer;position:relative;">
+                <div class="status-led" style="background:var(--blue);box-shadow:0 0 10px var(--blue);animation:pulseStatus 2s infinite;"></div>
+                <span class="demo-label" style="color:var(--blue);font-weight:800;">DEMO SİMÜLASYONU</span>
+                <div class="status-tooltip">
+                    <div class="status-tooltip-header">DEMO KAPASİTESİ</div>
+                    <div class="status-item"><span class="name"><i class="fas fa-circle-nodes text-blue"></i> Rent A Car Sahibi:</span><span class="ping" style="color:var(--blue);">Aktif</span></div>
+                    <div class="status-item"><span class="name"><i class="fas fa-route text-pink"></i> Tur Acentesi:</span><span class="ping" style="color:var(--pink);">Aktif</span></div>
+                    <div class="status-item" style="border-top:1px solid rgba(255,255,255,0.05);margin-top:4px;padding-top:4px;"><span class="name" style="font-size:0.65rem;color:var(--muted);">Tıklayarak Simülasyonu Başlatın</span></div>
+                </div>
+            </div>
+
+            <!-- Yönetim Paneli — her zaman görünür -->
+            <button class="nav-btn yonetim-btn" onclick="openLogin('Sistem Yönetimi (Master)')">
+                Yönetim Paneli
+            </button>
+        </div>
+
+    </div>
+
+    <!-- HERO -->
+
+    <section class="hero">
+
+        <div class="eyebrow">
+            KURUMSAL OPERASYON PLATFORMU
+        </div>
+
+        <h1 class="title">
+            Operasyonların <span>Geleceği</span>
+        </h1>
+
+        <p class="desc">
+            Kurumsal filo yönetimi ve tur operasyonlarını tek merkezden yönetin.
+            Gerçek zamanlı kontrol, premium deneyim ve yeni nesil yönetim altyapısı.
+        </p>
+
+        <!-- CENTER -->
+
+        <div class="center-stage">
+
+            <!-- RENT -->
+
+            <div class="panel rent" onclick="openLogin('Rent a Car Yönetim Sistemi')">
+
+                <div class="light"></div>
+
+                <div class="particle" style="left:20%; bottom:20%; animation-delay:0s;"></div>
+                <div class="particle" style="left:40%; bottom:15%; animation-delay:1s;"></div>
+                <div class="particle" style="left:70%; bottom:10%; animation-delay:2s;"></div>
+
+                <div class="content">
+
+                    <div class="top-icon">
+                        🚘
+                    </div>
+
+                    <small>FİLO • REZERVASYON • CRM</small>
+
+                    <h2>
+                        Rent a Car
+                    </h2>
+
+                    <p>
+                        Filo yönetimi, rezervasyon süreçleri,
+                        müşteri operasyonları ve finansal analiz altyapısı.
+                    </p>
+
+                    <div class="panel-footer">
+
+                        <div class="tags">
+                            <div class="tag">Canlı Takip</div>
+                            <div class="tag">Gelişmiş Analiz</div>
+                        </div>
+
+                        <div class="enter">
+                            →
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- TOUR -->
+
+            <div class="panel tour" onclick="openLogin('Tur Takip Sistemi')">
+
+                <div class="light"></div>
+
+                <div class="particle" style="left:25%; bottom:20%; animation-delay:0s;"></div>
+                <div class="particle" style="left:60%; bottom:10%; animation-delay:1.5s;"></div>
+                <div class="particle" style="left:80%; bottom:18%; animation-delay:2.3s;"></div>
+
+                <div class="content">
+
+                    <div class="top-icon">
+                        🌍
+                    </div>
+
+                    <small>TUR • ACENTE • TAKİP</small>
+
+                    <h2>
+                        Tur Takip
+                    </h2>
+
+                    <p>
+                        Operasyon yönetimi, tur planlama,
+                        rehber koordinasyonu ve gerçek zamanlı takip sistemi.
+                    </p>
+
+                    <div class="panel-footer">
+
+                        <div class="tags">
+                            <div class="tag">Gerçek Zamanlı</div>
+                            <div class="tag">Rota Sistemi</div>
+                        </div>
+
+                        <div class="enter">
+                            →
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- MOUSE SCROLL INDICATOR -->
+        <div class="discover-scroll" onclick="document.getElementById('discover').scrollIntoView({behavior: 'smooth'})">
+            <span class="mouse">
+                <span class="wheel"></span>
+            </span>
+            <p>Özellikleri Keşfedin</p>
+        </div>
+
+    </section>
+
+    <!-- SHOWCASE SECTION -->
+    <section id="discover" class="showcase-section">
+        <div class="showcase-container">
+            <div class="section-header">
+                <span class="badge">EKOSİSTEM DETAYLARI</span>
+                <h2 class="section-title">Gelişmiş Teknolojik <span>Çözümler</span></h2>
+                <p class="section-desc">Zyronova, en karmaşık operasyonel süreçleri kolaylaştırmak, üst düzey güvenlik sunmak ve işletmenizi geleceğe taşımak için modern mimarilerle inşa edilmiştir.</p>
+            </div>
+
+            <!-- MODÜL DETAYLARI -->
+            <div class="module-showcase">
+                <!-- RENT A CAR MODÜLÜ -->
+                <div class="module-row">
+                    <div class="module-info glass rent-highlight">
+                        <div class="icon-box rent-icon">🚘</div>
+                        <h3>Rent a Car SaaS</h3>
+                        <p class="module-tagline">Kurumsal Filo ve Gelir-Maliyet Yönetimi</p>
+                        <p class="module-body-text">Rent a Car modülü, araçlarınızın kiralama operasyonlarından bakım, sigorta ve vize muayene sürelerine kadar tüm detayları saniye saniye takip eder. Akıllı telemetri ve finansal raporlama motoru sayesinde araçlarınızın ürettiği ciro ve kar marjlarını anlık grafiklerle izleyebilirsiniz.</p>
+                        <ul class="feature-list">
+                            <li><i class="fas fa-check-circle"></i> <strong>Fiziksel Veritabanı İzolasyonu:</strong> Her şirket (tenant) için bağımsız veritabanı oluşturularak veri güvenliği %100 oranında izole edilir.</li>
+                            <li><i class="fas fa-check-circle"></i> <strong>Ciro ve Kar Analizi:</strong> Gelişmiş finansal ciro analiz grafikleri ile gelir-gider dengesini kontrol edin.</li>
+                            <li><i class="fas fa-check-circle"></i> <strong>Otomatik Alarm Sistemi:</strong> Yaklaşan sigorta, muayene ve periyodik servis kilometrelerini size anlık bildirimlerle hatırlatır.</li>
+                            <li><i class="fas fa-check-circle"></i> <strong>PWA (Mobil Uyumlu App):</strong> Bilgisayar, tablet ve telefonlardan yerel mobil uygulama hızında kesintisiz erişim sağlayın.</li>
+                        </ul>
+                    </div>
+                    <div class="module-visual glass">
+                        <div class="visual-glow glow-blue"></div>
+                        <div class="visual-mockup">
+                            <div class="mockup-header">
+                                <span class="dot red"></span>
+                                <span class="dot yellow"></span>
+                                <span class="dot green"></span>
+                                <span class="mockup-title">Rent a Car Dashboard</span>
+                            </div>
+                            <div class="mockup-body">
+                                <div class="mockup-widget-grid">
+                                    <div class="mockup-widget blue">
+                                        <div class="m-label">Toplam Filo</div>
+                                        <div class="m-val">24 Araç</div>
+                                    </div>
+                                    <div class="mockup-widget green">
+                                        <div class="m-label">Aktif Kiralama</div>
+                                        <div class="m-val">18 Adet</div>
+                                    </div>
+                                    <div class="mockup-widget yellow">
+                                        <div class="m-label">Aylık Net Kar</div>
+                                        <div class="m-val">₺142.500</div>
+                                    </div>
+                                </div>
+                                <div class="mockup-chart">
+                                    <div class="chart-bar-mock" style="height: 40%"><span>Pzt</span></div>
+                                    <div class="chart-bar-mock" style="height: 60%"><span>Sal</span></div>
+                                    <div class="chart-bar-mock" style="height: 85%"><span>Çar</span></div>
+                                    <div class="chart-bar-mock active" style="height: 95%"><span>Per</span></div>
+                                    <div class="chart-bar-mock" style="height: 70%"><span>Cum</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TUR TAKİP MODÜLÜ -->
+                <div class="module-row reverse">
+                    <div class="module-info glass tour-highlight">
+                        <div class="icon-box tour-icon">🌍</div>
+                        <h3>Tur Takip SaaS</h3>
+                        <p class="module-tagline">Seyahat Operasyonu ve Acente Yönetimi</p>
+                        <p class="module-body-text">Tur Takip modülü, turizm acentelerinin operasyonel yükünü hafifletmek için tasarlanmıştır. Merkez ofis, şubeler (branch) ve saha personeli arasındaki veri akışını koordine ederek, rezervasyonları, turları, rehberleri ve ödemeleri tek panelden yönetmenizi sağlar.</p>
+                        <ul class="feature-list">
+                            <li><i class="fas fa-check-circle"></i> <strong>Merkez ve Şube Hiyerarşisi:</strong> Ana merkez ile şubeler arasında veri izolasyonunu fiziksel seviyede koruyarak şube performansını izleyin.</li>
+                            <li><i class="fas fa-check-circle"></i> <strong>Personel Yetkilendirme:</strong> Hangi personelin hangi raporları veya ciro ekranlarını görebileceğini detaylıca yetkilendirin.</li>
+                            <li><i class="fas fa-check-circle"></i> <strong>Haftalık Büyüme Analizi:</strong> Sisteme katılan acentelerin ve oluşturulan operasyonların haftalık büyüme grafiklerini takip edin.</li>
+                            <li><i class="fas fa-check-circle"></i> <strong>Akıllı Bildirim Sistemi:</strong> Lisans süreleri, yaklaşan rezervasyonlar ve sistem güncellemelerinden anında haberdar olun.</li>
+                        </ul>
+                    </div>
+                    <div class="module-visual glass">
+                        <div class="visual-glow glow-pink"></div>
+                        <div class="visual-mockup">
+                            <div class="mockup-header">
+                                <span class="dot red"></span>
+                                <span class="dot yellow"></span>
+                                <span class="dot green"></span>
+                                <span class="mockup-title">Acente Operasyon Merkezi</span>
+                            </div>
+                            <div class="mockup-body">
+                                <div class="mockup-agency-list">
+                                    <div class="mockup-agency-item">
+                                        <div class="m-a-logo">M</div>
+                                        <div class="m-a-info">
+                                            <p class="m-a-name">Melis Turizm</p>
+                                            <p class="m-a-sub">Acente Lisansı: Aktif</p>
+                                        </div>
+                                        <div class="m-a-badge green">Aktif</div>
+                                    </div>
+                                    <div class="mockup-agency-item">
+                                        <div class="m-a-logo">O</div>
+                                        <div class="m-a-info">
+                                            <p class="m-a-name">Olimpos Seyahat</p>
+                                            <p class="m-a-sub">Acente Lisansı: Aktif</p>
+                                        </div>
+                                        <div class="m-a-badge green">Aktif</div>
+                                    </div>
+                                    <div class="mockup-agency-item">
+                                        <div class="m-a-logo">B</div>
+                                        <div class="m-a-info">
+                                            <p class="m-a-name">Bodrum Şube</p>
+                                            <p class="m-a-sub">Lisans Bitiş: 14 Gün Kaldı</p>
+                                        </div>
+                                        <div class="m-a-badge warning">Kritik</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ALTYAPI VE TEKNOLOJİ GÜVENLİĞİ -->
+                <div class="module-row">
+                    <div class="module-info glass tech-highlight">
+                        <div class="icon-box tech-icon">🛡️</div>
+                        <h3>Sistem Altyapısı & Güvenlik</h3>
+                        <p class="module-tagline">Yüksek Performans, Güvenli ve Ölçeklenebilir Mimari</p>
+                        <p class="module-body-text">Zyronova, hızdan ödün vermeden en üst düzey kurumsal veri güvenliğini hedefler. Modern web teknolojilerinin bir araya getirilmesiyle oluşturulan hibrit mimarisi, siber tehditlere karşı korumalı ve sunucu kaynaklarını en verimli kullanan yapılardan biridir.</p>
+                        <ul class="feature-list">
+                            <li><i class="fas fa-check-circle"></i> <strong>Merkezi SSO (Single Sign-On):</strong> Node.js tabanlı JWT bilet doğrulama ile tek oturumla modüller arası kesintisiz geçiş.</li>
+                            <li><i class="fas fa-check-circle"></i> <strong>Helmet & CSP Güvenlik Kalkanı:</strong> Siteler arası script çalıştırma (XSS) ve veri enjeksiyonlarına karşı tarayıcı koruması.</li>
+                            <li><i class="fas fa-check-circle"></i> <strong>Stateless CAPTCHA Koruması:</strong> Kriptografik AES-256 şifrelemeli CAPTCHA ile sunucu belleğini yormayan bot koruması.</li>
+                            <li><i class="fas fa-check-circle"></i> <strong>SQL Server & SQLite Hibrit Yapı:</strong> Master DB'de kurumsal güç, dinamik Tenant DB'lerde ise ultra hızlı SQLite performans dengesi.</li>
+                        </ul>
+                    </div>
+                    <div class="module-visual glass">
+                        <div class="visual-glow glow-cyan"></div>
+                        <div class="visual-mockup">
+                            <div class="mockup-header">
+                                <span class="dot red"></span>
+                                <span class="dot yellow"></span>
+                                <span class="dot green"></span>
+                                <span class="mockup-title">Zyronova Sandbox Terminal</span>
+                            </div>
+                            <div class="mockup-body sec-console">
+                                <div class="console-header">
+                                    <span>SYSTEM BACKEND TELEMETRY</span>
+                                    <span>STATUS: ONLINE</span>
+                                </div>
+                                <div class="console-logs" id="sandboxLogs">
+                                    <div class="console-log"><span class="timestamp">[12:45:01]</span> <span class="info">System loaded successfully.</span></div>
+                                    <div class="console-log"><span class="timestamp">[12:45:02]</span> <span class="success">SSL certified. CSP filters active.</span></div>
+                                    <div class="console-log"><span class="timestamp">[12:45:02]</span> <span class="info">Tenant veritabanı yolları hazırlandı.</span></div>
+                                </div>
+                                <div class="sec-status-bar">
+                                    <span>İzole SQLite Havuzu</span>
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <span id="sandboxStatusText" style="color: var(--green);">Korumalı Havuz</span>
+                                        <div class="db-lock-animation" id="sandboxLed"></div>
+                                    </div>
+                                </div>
+                                <button class="sec-sim-btn" onclick="startDBSandboxSimulation()">
+                                    <i class="fas fa-microchip"></i> Veritabanı İzolasyonunu Simüle Et
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CORE FEATURES GRID -->
+            <div class="features-grid-title">
+                <h3>Genel Platform <span>Yetenekleri</span></h3>
+            </div>
+            <div class="core-grid">
+                <div class="core-card glass">
+                    <i class="fas fa-bolt"></i>
+                    <h4>Ultra Hızlı Motor</h4>
+                    <p>Milimetrik olarak optimize edilmiş arka plan motorları sayesinde sorgular ve analizler mikro saniyeler içinde tamamlanır.</p>
+                </div>
+                <div class="core-card glass">
+                    <i class="fas fa-cloud"></i>
+                    <h4>%100 Bulut Uyumlu</h4>
+                    <p>Herhangi bir yerel kuruluma gerek kalmadan, internetin olduğu her yerden sisteminizi anında yayına alabilir ve yönetebilirsiniz.</p>
+                </div>
+                <div class="core-card glass">
+                    <i class="fas fa-chart-pie"></i>
+                    <h4>Dinamik Grafikler</h4>
+                    <p>Çapraz kur, ciro ve operasyon grafiklerini etkileşimli bileşenlerle analiz ederek iş kararlarınızı verilere dayandırın.</p>
+                </div>
+                <div class="core-card glass">
+                    <i class="fas fa-file-shield"></i>
+                    <h4>Veri Yedekliliği</h4>
+                    <p>Fiziksel veri izolasyonu ve günlük otomatik yedekleme senaryoları ile hiçbir veriniz asla kaybolmaz, sızdırılmaz.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING SECTION & CALCULATOR -->
+    <section id="pricing" class="pricing-section">
+        <div class="showcase-container">
+            <div class="section-header">
+                <span class="badge">LİSANS & TEKLİF YÖNETİCİSİ</span>
+                <h2 class="section-title">Dinamik <span>Lisans Oluşturucu</span></h2>
+                <p class="section-desc">SaaS limitlerinizi istediğiniz kapasiteye göre şekillendirin. Zyronova felsefesinde güvenlik bir opsiyon değil, tüm planlarda sarsılmaz bir standarttır.</p>
+            </div>
+
+            <div class="calc-container" style="background: rgba(12, 16, 29, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 32px; padding: 40px; margin-bottom: 50px;">
+                <div class="calc-header" style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+                    <div class="calc-title">
+                        <h3 style="font-size: 1.6rem; font-weight: 800; color: white; letter-spacing: -0.5px;">Kurumsal Lisans Süre Yapılandırıcısı</h3>
+                        <p style="color: var(--muted); font-size: 0.9rem; margin-top: 4px;">Sistemde tanımlı resmi lisans sürelerinden birini seçin, kriptografik lisans imzanızı anında görüntüleyin.</p>
+                    </div>
+                </div>
+
+                <div class="sliders-grid" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 30px; align-items: center;">
+                    <!-- Plans Selector Deck -->
+                    <div style="display: flex; flex-direction: column; gap: 12px;" class="plans-selector-mobile">
+                        <span style="font-size: 0.8rem; font-weight: 700; color: var(--blue); letter-spacing: 1px; text-transform: uppercase;">LİSANS SÜRESİ VE PAKET SEÇİN:</span>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px;">
+                            <div class="plan-select-card active" onclick="selectLicensePlan('0.5', 0, '15D')" data-months="0.5" style="border-radius: 16px; padding: 16px; cursor: pointer; text-align: center;">
+                                <h4 style="font-size: 0.95rem; font-weight: 800; color: white;">15 Gün</h4>
+                                <p style="font-size: 0.75rem; color: var(--muted); margin-top: 4px;">Deneme Sürümü</p>
+                                <span style="font-size: 0.9rem; font-weight: 800; color: var(--cyan); display: block; margin-top: 8px;">Ücretsiz</span>
+                            </div>
+                            <div class="plan-select-card" onclick="selectLicensePlan('1', 3000, '30D')" data-months="1" style="border-radius: 16px; padding: 16px; cursor: pointer; text-align: center;">
+                                <h4 style="font-size: 0.95rem; font-weight: 800; color: white;">1 Ay</h4>
+                                <p style="font-size: 0.75rem; color: var(--muted); margin-top: 4px;">Standart</p>
+                                <span style="font-size: 0.9rem; font-weight: 800; color: var(--cyan); display: block; margin-top: 8px;">3.000 ₺</span>
+                            </div>
+                            <div class="plan-select-card" onclick="selectLicensePlan('3', 7000, '90D')" data-months="3" style="border-radius: 16px; padding: 16px; cursor: pointer; text-align: center;">
+                                <h4 style="font-size: 0.95rem; font-weight: 800; color: white;">3 Ay</h4>
+                                <p style="font-size: 0.75rem; color: var(--muted); margin-top: 4px;">Avantajlı</p>
+                                <span style="font-size: 0.9rem; font-weight: 800; color: var(--cyan); display: block; margin-top: 8px;">7.000 ₺</span>
+                            </div>
+                            <div class="plan-select-card" onclick="selectLicensePlan('6', 15000, '180D')" data-months="6" style="border-radius: 16px; padding: 16px; cursor: pointer; text-align: center;">
+                                <h4 style="font-size: 0.95rem; font-weight: 800; color: white;">6 Ay</h4>
+                                <p style="font-size: 0.75rem; color: var(--muted); margin-top: 4px;">Profesyonel</p>
+                                <span style="font-size: 0.9rem; font-weight: 800; color: var(--cyan); display: block; margin-top: 8px;">15.000 ₺</span>
+                            </div>
+                            <div class="plan-select-card" onclick="selectLicensePlan('12', 30000, '365D')" data-months="12" style="border-radius: 16px; padding: 16px; cursor: pointer; text-align: center;">
+                                <h4 style="font-size: 0.95rem; font-weight: 800; color: white;">12 Ay</h4>
+                                <p style="font-size: 0.75rem; color: var(--muted); margin-top: 4px;">Yıllık Kurumsal</p>
+                                <span style="font-size: 0.9rem; font-weight: 800; color: var(--pink); display: block; margin-top: 8px;">30.000 ₺</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cryptographic License Signature Card -->
+                    <div class="glass" style="border: 1px dashed rgba(77, 121, 255, 0.3); border-radius: 24px; padding: 30px; display: flex; flex-direction: column; justify-content: space-between; background: rgba(3, 5, 10, 0.4); min-height: 200px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <span style="font-size: 0.75rem; font-weight: 700; color: var(--blue); letter-spacing: 1px; text-transform: uppercase;"><i class="fas fa-key"></i> DİNAMİK LİSANS İMZASI</span>
+                            <span style="font-size: 0.65rem; color: var(--green); background: rgba(16, 185, 129, 0.1); padding: 4px 10px; border-radius: 100px; font-weight: 800;"><i class="fas fa-shield-halved"></i> %100 DB İZOLASYONU</span>
+                        </div>
+                        <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 18px; font-family: monospace; font-size: 0.9rem; color: var(--cyan); letter-spacing: 0.5px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); text-align: center; font-weight: 700; word-break: break-all;" id="cryptoLicenseKey">
+                            ZY-LCS-[PLAN:0.5M]-[EXP:15D]-[SIG:2CA4]
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--muted); margin-top: 15px; line-height: 1.5;">
+                            * Lisans imzası, şirketinizin fiziksel izole veritabanı yollarını kriptografik olarak doğrular ve yetkisiz erişimi engeller.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pricing-grid">
+                <!-- STARTER CARD -->
+                <div class="pricing-card starter">
+                    <div class="price-header">
+                        <h4>Aylık Standart</h4>
+                        <p>Tek acente veya başlangıç aşamasındaki operasyonlar için ideal paket.</p>
+                    </div>
+                    <div class="price-amount">
+                        <span class="currency">₺</span>
+                        <span class="amount">3.000</span>
+                        <span class="period">/ Ay</span>
+                    </div>
+                    <ul class="price-features">
+                        <li><i class="fas fa-circle-check"></i> <strong>1 Ay</strong> Lisanslama Süresi</li>
+                        <li><i class="fas fa-circle-check"></i> %100 Bağımsız SQLite DB İzolasyonu</li>
+                        <li><i class="fas fa-circle-check"></i> Limitsiz Personel ve Araç Ekleme</li>
+                        <li><i class="fas fa-circle-check"></i> SSL Güvenlik ve Şifreli Veri Aktarımı</li>
+                        <li class="disabled"><i class="fas fa-circle-xmark"></i> 7/24 Telefon SLA Desteği</li>
+                    </ul>
+                    <a href="https://wa.me/905449116807?text=Merhaba,%20Zyronova%20SaaS%20Ayl%C4%B1k%20Standart%20paketi%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum." target="_blank" class="price-btn" style="display: block; text-align: center; text-decoration: none; width: 100%; border: none; box-sizing: border-box;">Bize Ulaşın</a>
+                </div>
+
+                <!-- PROFESSIONAL CARD -->
+                <div class="pricing-card premium">
+                    <div class="popular-badge">En Popüler</div>
+                    <div class="price-header">
+                        <h4>6 Aylık Profesyonel</h4>
+                        <p>Hızlı büyüyen ve orta ölçekli SaaS organizasyonları için en verimli plan.</p>
+                    </div>
+                    <div class="price-amount">
+                        <span class="currency">₺</span>
+                        <span class="amount">15.000</span>
+                        <span class="period">/ 6 Ay</span>
+                    </div>
+                    <ul class="price-features">
+                        <li><i class="fas fa-circle-check"></i> <strong>6 Ay</strong> Lisanslama Süresi</li>
+                        <li><i class="fas fa-circle-check"></i> Avantajlı Paket İndirimi</li>
+                        <li><i class="fas fa-circle-check"></i> SQLite Bulut Sunucu Altyapısı</li>
+                        <li><i class="fas fa-circle-check"></i> Haftalık Otomatik Bulut Yedekleme</li>
+                        <li><i class="fas fa-circle-check"></i> Gelişmiş Şube Senkronizasyon Modülü</li>
+                    </ul>
+                    <a href="https://wa.me/905449116807?text=Merhaba,%20Zyronova%20SaaS%20Profesyonel%20paketi%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum." target="_blank" class="price-btn" style="display: block; text-align: center; text-decoration: none; width: 100%; border: none; box-sizing: border-box;">Bize Ulaşın</a>
+                </div>
+
+                <!-- ENTERPRISE CARD -->
+                <div class="pricing-card enterprise">
+                    <div class="price-header">
+                        <h4>Yıllık Kurumsal</h4>
+                        <p>Büyük filolar ve uluslararası operasyon yürüten acente zincirleri için tam koruma.</p>
+                    </div>
+                    <div class="price-amount">
+                        <span class="currency">₺</span>
+                        <span class="amount">30.000</span>
+                        <span class="period">/ Yıl</span>
+                    </div>
+                    <ul class="price-features">
+                        <li><i class="fas fa-circle-check"></i> <strong>12 Ay</strong> Lisanslama Süresi</li>
+                        <li><i class="fas fa-circle-check"></i> <strong>%20 Net Yıllık İndirim</strong></li>
+                        <li><i class="fas fa-circle-check"></i> High-Availability Dedicated MS SQL Server</li>
+                        <li><i class="fas fa-circle-check"></i> 7/24 Öncelikli Telefon ve Canlı Destek</li>
+                        <li><i class="fas fa-circle-check"></i> Özel SLA ve API Entegrasyon İzinleri</li>
+                    </ul>
+                    <a href="https://wa.me/905449116807?text=Merhaba,%20Zyronova%20SaaS%20Enterprise%20paketi%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum." target="_blank" class="price-btn" style="display: block; text-align: center; text-decoration: none; width: 100%; border: none; box-sizing: border-box;">Bize Ulaşın</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- INTERACTIVE CHATBOT (AI ASSISTANT) -->
+    <div class="chatbot-btn" onclick="toggleChatbot()">
+        <i class="fas fa-comments"></i>
+        <div class="status-dot"></div>
+    </div>
+
+    <div class="chatbot-box" id="chatbotBox">
+        <div class="chatbot-header">
+            <div class="chatbot-avatar">
+                <div class="bot-logo"><i class="fas fa-robot text-white"></i></div>
+                <div class="bot-status-details">
+                    <p>Zyronova Asistanı</p>
+                    <span><i class="fas fa-circle" style="font-size: 6px;"></i> Aktif ve Canlı</span>
+                </div>
+            </div>
+            <button class="chatbot-close" onclick="toggleChatbot()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="chatbot-messages" id="chatMessages">
+            <div class="chat-msg bot">
+                Merhaba! Ben Zyronova Yapay Zeka Asistanı. Sistemlerimiz ve kurumsal SaaS çözümlerimiz hakkında bilgi almak ister misiniz? Aşağıdaki sorulardan birine tıklayabilirsiniz.
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+              <input type="text" id="chatInput" placeholder="Bir mesaj yazın..." onkeypress="handleChatKeyPress(event)">
+              <button id="sendAiBtn" onclick="sendAiMessage()"><i class="fas fa-paper-plane"></i></button>
+          </div>
+
+            
+            
+            
+        </div>
+    </div>
+
+    <!-- DEMO SIMULATION OVERLAY -->
+    <div class="overlay" id="demoOverlay" style="display: none; position: fixed; inset: 0; background: rgba(3, 5, 11, 0.90); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px); z-index: 10000 !important; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 40px 10px; opacity: 0; transition: opacity 0.4s ease;">
+        <button class="close" onclick="closeDemoSimulation()" style="position: absolute; top: 40px; right: 40px; width: 60px; height: 60px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.15); background: rgba(255, 255, 255, 0.07); color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; transition: all 0.3s; z-index: 10002 !important;" onmouseover="this.style.background='rgba(255,255,255,0.15)'; this.style.transform='scale(1.1)';" onmouseout="this.style.background='rgba(255,255,255,0.07)'; this.style.transform='scale(1)';">✕</button>
+        
+        <div class="demo-modal-container" style="max-width: 1100px; width: 90%; text-align: center; z-index: 10001;">
+            <span style="font-size: 0.8rem; letter-spacing: 3px; color: var(--blue); background: rgba(77, 121, 255, 0.1); border: 1px solid rgba(77, 121, 255, 0.2); padding: 8px 16px; border-radius: 100px; font-weight: 700; text-transform: uppercase; display: inline-block; margin-bottom: 20px;">ZYRONOVA ENTERPRISE SIMULATION</span>
+            <h2 style="font-size: 2.75rem; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 12px; color: white;">Demo Simülasyonu Seçim Ekranı</h2>
+            <p style="color: var(--muted); font-size: 1.05rem; margin-bottom: 40px; max-width: 700px; margin-left: auto; margin-right: auto;">SaaS platformumuzun her iki sistemini de doğrudan test edebileceğiniz yetkilendirilmiş demo profilleri aşağıda listelenmiştir. Lütfen simüle etmek istediğiniz sisteme giriş yapın.</p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; text-align: left;" class="demo-cards-grid">
+                <!-- Rent a Car Card -->
+                <div class="demo-card rent-demo-card" onclick="runDemoSimulation('RENT_A_CAR')" style="background: linear-gradient(180deg, rgba(77, 121, 255, 0.05) 0%, rgba(3, 5, 11, 0.6) 100%); border: 1px solid rgba(77, 121, 255, 0.15); border-radius: 32px; padding: 40px; cursor: pointer; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; height: 440px;">
+                    <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(77, 121, 255, 0.15) 0%, transparent 70%); pointer-events: none;"></div>
+                    <div>
+                        <div class="demo-icon" style="width: 70px; height: 70px; border-radius: 20px; background: rgba(77, 121, 255, 0.15); border: 2px solid rgba(77, 121, 255, 0.35); display: flex; align-items: center; justify-content: center; font-size: 2.4rem; color: #4d79ff; margin-bottom: 20px; box-shadow: 0 0 20px rgba(77, 121, 255, 0.2); transition: all 0.4s;"><i class="fas fa-car-side"></i></div>
+                        <h3 style="font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; color: white;">Rent A Car (Filo Yönetimi)</h3>
+                        <p style="color: var(--muted); font-size: 0.85rem; line-height: 1.5; margin-bottom: 16px;">Araç kiralama operasyonları, sözleşmeler, hasar durumları, telemetri ve ciro analiz modüllerinin tamamı açık olarak simüle edilir.</p>
+                        
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(77, 121, 255, 0.2); border-radius: 14px; padding: 10px 15px; font-size: 0.75rem; color: #b6c1ea; display: flex; flex-direction: column; gap: 4px; pointer-events: auto;" onclick="event.stopPropagation();">
+                            <div style="display: flex; justify-content: space-between;"><span><strong>Kullanıcı Adı:</strong> Rent A Car demo</span> <span style="cursor: pointer; opacity: 0.7;" onclick="navigator.clipboard.writeText('Rent A Car demo'); alert('Kullanıcı adı kopyalandı!')"><i class="fas fa-copy"></i></span></div>
+                            <div style="display: flex; justify-content: space-between;"><span><strong>Şifre:</strong> demo123</span> <span style="cursor: pointer; opacity: 0.7;" onclick="navigator.clipboard.writeText('demo123'); alert('Şifre kopyalandı!')"><i class="fas fa-copy"></i></span></div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; color: var(--blue); font-weight: 700; font-size: 0.85rem; margin-top: 15px;">
+                        <span>Simülasyona Giriş Yap</span>
+                        <i class="fas fa-arrow-right" style="font-size: 0.75rem; transition: transform 0.3s;"></i>
+                    </div>
+                </div>
+                
+                <!-- Tur Takip Card -->
+                <div class="demo-card tour-demo-card" onclick="runDemoSimulation('TUR_TAKIP')" style="background: linear-gradient(180deg, rgba(255, 79, 216, 0.05) 0%, rgba(3, 5, 11, 0.6) 100%); border: 1px solid rgba(255, 79, 216, 0.15); border-radius: 32px; padding: 40px; cursor: pointer; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; height: 440px;">
+                    <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(255, 79, 216, 0.15) 0%, transparent 70%); pointer-events: none;"></div>
+                    <div>
+                        <div class="demo-icon" style="width: 70px; height: 70px; border-radius: 20px; background: rgba(255, 79, 216, 0.15); border: 2px solid rgba(255, 79, 216, 0.35); display: flex; align-items: center; justify-content: center; font-size: 2.4rem; color: #ff4fd8; margin-bottom: 20px; box-shadow: 0 0 20px rgba(255, 79, 216, 0.2); transition: all 0.4s;"><i class="fas fa-route"></i></div>
+                        <h3 style="font-size: 1.6rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; color: white;">Tur Takip Otomasyonu</h3>
+                        <p style="color: var(--muted); font-size: 0.85rem; line-height: 1.5; margin-bottom: 16px;">Tur operasyonları, rehber/otel atamaları, koltuk rezervasyon şemaları, şubeler arası finansal muhasebe takibini simüle eder.</p>
+                        
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255, 79, 216, 0.2); border-radius: 14px; padding: 10px 15px; font-size: 0.75rem; color: #fcc2eb; display: flex; flex-direction: column; gap: 4px; pointer-events: auto;" onclick="event.stopPropagation();">
+                            <div style="display: flex; justify-content: space-between;"><span><strong>Kullanıcı Adı:</strong> TurTakipDemo</span> <span style="cursor: pointer; opacity: 0.7;" onclick="navigator.clipboard.writeText('TurTakipDemo'); alert('Kullanıcı adı kopyalandı!')"><i class="fas fa-copy"></i></span></div>
+                            <div style="display: flex; justify-content: space-between;"><span><strong>Şifre:</strong> demo123</span> <span style="cursor: pointer; opacity: 0.7;" onclick="navigator.clipboard.writeText('demo123'); alert('Şifre kopyalandı!')"><i class="fas fa-copy"></i></span></div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; color: var(--pink); font-weight: 700; font-size: 0.85rem; margin-top: 15px;">
+                        <span>Simülasyona Giriş Yap</span>
+                        <i class="fas fa-arrow-right" style="font-size: 0.75rem; transition: transform 0.3s;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PREMIUM FOOTER -->
+    <footer class="premium-footer">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <div class="logo">
+                    <div class="logo-symbol"></div>
+                    <h2>ZYRONOVA</h2>
+                </div>
+                <p>Kurumsal operasyonların ve filo yönetiminin geleceğini şekillendiriyoruz.</p>
+                <p style="margin-top: 12px; font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-envelope" style="color: var(--blue);"></i>
+                    <a href="mailto:info@zyronova.com" style="color: var(--muted); text-decoration: none; transition: color 0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color=''">info@zyronova.com</a>
+                </p>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Zyronova Software Group. Tüm Hakları Saklıdır.</p>
+                <div class="footer-links">
+                    <a href="#discover">Özellikler</a>
+                    <a href="mailto:info@zyronova.com"><i class="fas fa-envelope" style="color: var(--blue); margin-right: 4px;"></i> info@zyronova.com</a>
+                    <a href="https://wa.me/905449116807?text=Merhaba,%20Zyronova%20destek%20ekibinden%20bilgi%20almak%20istiyorum." target="_blank"><i class="fab fa-whatsapp" style="color: #25D366; margin-right: 4px;"></i> WhatsApp Ulaşım</a>
+                    <a href="#" onclick="openLogin('Sistem Yönetimi (Master)')">Yönetim Girişi</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MOBİL ALT NAVİGASYON ÇUBUĞU -->
+    <div class="mobile-action-bar">
+        <!-- WhatsApp -->
+        <a href="https://wa.me/905449116807?text=Merhaba,%20Zyronova%20SaaS%20sistemleri%20hakk%C4%B1nda%20bilgi%20almak%20istiyorum."
+           target="_blank" class="mob-btn mob-btn-wa">
+            <i class="fab fa-whatsapp" style="font-size:1rem;"></i>
+            <span>WhatsApp</span>
+        </a>
+        <!-- Demo Simülasyonu -->
+        <button class="mob-btn mob-btn-demo" onclick="openDemoSimulation()">
+            <i class="fas fa-play-circle" style="font-size:0.9rem;"></i>
+            <span>Demo</span>
+        </button>
+        <!-- Yönetim Paneli -->
+        <button class="mob-btn mob-btn-giris" onclick="openLogin('Sistem Yönetimi (Master)')">
+            <i class="fas fa-lock" style="font-size:0.85rem;"></i>
+            <span>Yönetim Paneli</span>
+        </button>
+    </div>
+
+    <!-- LOGIN -->
+
+    <div class="overlay" id="overlay">
+
+        <button class="close" onclick="closeLogin()">
+            ✕
+        </button>
+
+        <div class="login">
+
+            <h3 id="loginTitle">
+                Hoş Geldiniz
+            </h3>
+
+            <!-- Giriş Yap Bölümü -->
+            <div id="loginFormSection" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+                <p>
+                    Devam etmek için sistem giriş bilgilerinizi girin.
+                </p>
+
+                <input type="text" class="input" id="loginUsername" placeholder="Kullanıcı Adı">
+
+                <input type="password" class="input" id="loginPassword" placeholder="Şifre">
+                
+                <div class="captcha-group">
+                    <div class="captcha-badge" id="captchaQuestion">? + ? =</div>
+                    <input type="number" class="input captcha-input" id="captchaAnswer" placeholder="Sonuç">
+                    <input type="hidden" id="captchaToken">
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; width: 100%; margin-bottom: 15px; margin-top: -5px;">
+                    <a href="javascript:void(0)" onclick="toggleSection('forgot')" style="color: var(--pink); font-size: 0.85rem; text-decoration: none; font-weight: 600;">Şifremi Unuttum?</a>
+                </div>
+
+                <button class="login-btn">
+                    Sisteme Giriş Yap
+                </button>
+            </div>
+
+            <!-- Şifre Sıfırlama Bölümü -->
+            <div id="forgotFormSection" style="width: 100%; display: none; flex-direction: column; align-items: center;">
+                <p>
+                    Hesabınıza bağlı e-posta adresini girerek geçici şifrenizi alabilirsiniz.
+                </p>
+
+                <input type="email" class="input" id="forgotEmail" placeholder="E-posta Adresi" style="margin-bottom: 15px;">
+
+                <button class="forgot-btn" onclick="triggerForgotPassword()" style="width: 100%; padding: 12px; border: none; border-radius: 8px; background: linear-gradient(135deg, var(--pink) 0%, #dc2626 100%); color: white; font-weight: 700; cursor: pointer; font-size: 0.95rem; margin-bottom: 15px; transition: all 0.3s;">
+                    Kod Gönder / Şifre Sıfırla
+                </button>
+
+                <div style="display: flex; justify-content: center; width: 100%;">
+                    <a href="javascript:void(0)" onclick="toggleSection('login')" style="color: var(--blue); font-size: 0.85rem; text-decoration: none; font-weight: 600;">Giriş Ekranına Dön</a>
+                </div>
+            </div>
+
+            <!-- Zorunlu Şifre Değiştirme Bölümü -->
+            <div id="changePasswordSection" style="width: 100%; display: none; flex-direction: column; align-items: center;">
+                <p style="color: #3b82f6; font-weight: 600; margin-bottom: 20px;">
+                    Güvenliğiniz için sisteme devam etmeden önce lütfen yeni bir şifre belirleyin.
+                </p>
+
+                <input type="password" class="input" id="newPassword" placeholder="Yeni Şifre (En az 8 Karakter)">
+                <input type="password" class="input" id="confirmNewPassword" placeholder="Yeni Şifreyi Doğrula">
+
+                <button class="login-btn" onclick="submitNewPassword()" id="btnChangePassword" style="margin-bottom: 15px;">
+                    Şifreyi Güncelle ve Sisteme Gir
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // ─── DİNAMİK SUNUCU ADRESİ: Telefon/başka cihazdan erişimde localhost yerine bilgisayarın IP'si ───
+        const _host = window.location.hostname; // "localhost" veya "192.168.x.x"
+        const API_BASE = window.location.origin;
+        const PYTHON_APP_URL = window.location.origin;
+        const REACT_APP_URL = window.location.origin;
+
+        async function fetchCaptcha() {
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/captcha`, { cache: 'no-store' });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                if(data.captchaToken) {
+                    document.getElementById('captchaQuestion').innerText = data.question;
+                    document.getElementById('captchaToken').value = data.captchaToken;
+                    document.getElementById('captchaAnswer').value = '';
+                }
+            } catch (err) {
+                console.error("Captcha çekilemedi:", err.message);
+                // Fallback: Statik basit soru (server erişilemezse)
+                const a = Math.floor(Math.random() * 9) + 1;
+                const b = Math.floor(Math.random() * 9) + 1;
+                document.getElementById('captchaQuestion').innerText = `${a} + ${b} = ?`;
+                document.getElementById('captchaToken').value = `STATIC:${a + b}`;
+                document.getElementById('captchaAnswer').value = '';
+            }
+        }
+
+        function openLogin(module) {
+            document.getElementById("overlay").classList.add("active");
+            document.getElementById("loginTitle").innerText = module;
+            
+            // Form durumunu sıfırla
+            toggleSection('login');
+            
+            // Güvenlik sorusunu (CAPTCHA) API'den çek
+            fetchCaptcha();
+            
+            const loginBtn = document.querySelector('.login-btn');
+            loginBtn.onclick = function() { triggerSSOLogin(module); };
+            loginBtn.innerText = "Sisteme Giriş Yap";
+            loginBtn.style.background = ""; 
+        }
+
+        function closeLogin() {
+            document.getElementById("overlay").classList.remove("active");
+        }
+
+        function toggleSection(sectionName) {
+            document.getElementById('loginFormSection').style.display = 'none';
+            document.getElementById('forgotFormSection').style.display = 'none';
+            document.getElementById('changePasswordSection').style.display = 'none';
+            
+            if (sectionName === 'forgot') {
+                document.getElementById('forgotFormSection').style.display = 'flex';
+                document.getElementById('forgotEmail').value = '';
+            } else if (sectionName === 'changePassword') {
+                document.getElementById('changePasswordSection').style.display = 'flex';
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmNewPassword').value = '';
+            } else {
+                document.getElementById('loginFormSection').style.display = 'flex';
+            }
+        }
+
+        async function triggerForgotPassword() {
+            const btn = document.querySelector('.forgot-btn');
+            const email = document.getElementById('forgotEmail').value;
+            
+            if(!email) {
+                btn.innerText = "E-posta alanı boş bırakılamaz!";
+                btn.style.background = "#e11d48";
+                setTimeout(() => { btn.innerText = "Kod Gönder / Şifre Sıfırla"; btn.style.background = ""; }, 2000);
+                return;
+            }
+
+            btn.innerText = "Gönderiliyor...";
+            btn.style.opacity = "0.8";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Şifre sıfırlama işlemi başarısız.");
+                }
+
+                btn.innerText = "Şifre E-postanıza Gönderildi!";
+                btn.style.background = "#10b981";
+                btn.style.opacity = "1";
+                
+                setTimeout(() => {
+                    toggleSection('login');
+                    btn.innerText = "Kod Gönder / Şifre Sıfırla";
+                    btn.style.background = "";
+                    btn.disabled = false;
+                }, 2500);
+
+            } catch (err) {
+                btn.innerText = err.message;
+                btn.style.background = "#e11d48";
+                btn.disabled = false;
+                setTimeout(() => { 
+                    btn.innerText = "Kod Gönder / Şifre Sıfırla"; 
+                    btn.style.background = ""; 
+                }, 3000);
+            }
+        }
+
+        async function triggerSSOLogin(moduleName) {
+            const btn = document.querySelector('.login-btn');
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            const captchaAnswer = document.getElementById('captchaAnswer').value;
+            const captchaToken = document.getElementById('captchaToken').value;
+            
+            if(!username || !password || !captchaAnswer) {
+                btn.innerText = "Tüm alanları doldurun!";
+                btn.style.background = "#e11d48";
+                setTimeout(() => { btn.innerText = "Sisteme Giriş Yap"; btn.style.background = ""; }, 2000);
+                return;
+            }
+
+            btn.innerText = "Doğrulanıyor...";
+            btn.style.opacity = "0.8";
+            
+            // Hangi sisteme girmek istediğini belirle
+            let requestedModule = "TOUR_TRACKING";
+            let authUrl = `${API_BASE}/api/auth/login`; // Node.js (Port 5000)
+            
+            if (moduleName.includes("Rent")) {
+                requestedModule = "RENT_A_CAR";
+                authUrl = `${PYTHON_APP_URL}/api/auth/login`; // Flask (Port 5001) - dinamik IP
+            } else if (moduleName.includes("Master") || moduleName.includes("Sistem Yönetimi")) {
+                requestedModule = "MASTER";
+            } else if (moduleName.includes("Tur")) {
+                requestedModule = "TOUR_TRACKING";
+            }
+
+            try {
+                // 1. Doğrulama İstediğini Gönder (Rent A Car -> Flask, Tur -> Node.js)
+                const response = await fetch(authUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        captchaAnswer,
+                        captchaToken,
+                        requestedModule
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Giriş başarısız.");
+                }
+
+                // Eğer 2FA aktifse
+                if (data.require2FA) {
+                    alert("Hesabınızda İki Aşamalı Doğrulama (2FA) aktif. Lütfen ana sistemden girin.");
+                    return;
+                }
+
+                if (data.mustChangePassword) {
+                    pendingLoginData = data;
+                    pendingModule = requestedModule;
+                    toggleSection('changePassword');
+                    return;
+                }
+
+                btn.innerText = "Giriş Başarılı!";
+                btn.style.background = "#10b981";
+                btn.style.opacity = "1";
+
+                // 2. Yönlendirme (SSO)
+                executeSSORedirect(data, requestedModule);
+            } catch (err) {
+                btn.innerText = err.message;
+                btn.style.background = "#e11d48";
+                setTimeout(() => { 
+                    btn.innerText = "Sisteme Giriş Yap"; 
+                    btn.style.background = ""; 
+                    fetchCaptcha(); // Hatalı girişte captchayı yenile
+                }, 2500);
+            }
+        }
+
+        let pendingLoginData = null;
+        let pendingModule = null;
+
+        function executeSSORedirect(data, requestedModule) {
+            setTimeout(() => {
+                // SÜPER ADMIN (MASTER) GİRİŞİ
+                if (data.role === 'SUPERADMIN' || data.role === 'Admin') {
+                    // Sadece Node.js için yedek olarak kaydet
+                    localStorage.setItem('zyronova_token', data.token);
+                    localStorage.setItem('zyronova_user', JSON.stringify(data));
+                    
+                    window.location.href = `${REACT_APP_URL}/super-admin?token=${data.token}&role=${data.role}`;
+                    return;
+                }
+
+                // ACENTE / PERSONEL GİRİŞİ
+                if (requestedModule === "RENT_A_CAR") {
+                    // Python sunucusuna SSO Token ile yönlendir
+                    window.location.href = `${API_BASE}/sso-login?token=${data.token}`;
+                } else {
+                    let redirectUrl = `${REACT_APP_URL}/agency?token=${data.token}&role=${data.role}`;
+                    if (data.agencyId) redirectUrl += `&agencyId=${data.agencyId}`;
+                    if (data.agencyName) redirectUrl += `&agencyName=${encodeURIComponent(data.agencyName)}`;
+                    if (data.username) redirectUrl += `&username=${encodeURIComponent(data.username)}`;
+                    if (data.fullName) redirectUrl += `&fullName=${encodeURIComponent(data.fullName)}`;
+                    if (data.isBranch) redirectUrl += `&isBranch=${data.isBranch}`;
+                    if (data.assignedOfficeId) redirectUrl += `&assignedOfficeId=${data.assignedOfficeId}`;
+                    if (data.isStaff) redirectUrl += `&isStaff=${data.isStaff}`;
+                    if (data.staffId) redirectUrl += `&staffId=${data.staffId}`;
+                    
+                    window.location.href = redirectUrl;
+                }
+            }, 1000);
+        }
+
+        async function submitNewPassword() {
+            const btn = document.getElementById('btnChangePassword');
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmNewPassword').value;
+            
+            if (newPassword.length < 8) {
+                btn.innerText = "Şifre en az 8 karakter olmalı!";
+                btn.style.background = "#e11d48";
+                setTimeout(() => { btn.innerText = "Şifreyi Güncelle ve Sisteme Gir"; btn.style.background = ""; }, 2000);
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                btn.innerText = "Şifreler uyuşmuyor!";
+                btn.style.background = "#e11d48";
+                setTimeout(() => { btn.innerText = "Şifreyi Güncelle ve Sisteme Gir"; btn.style.background = ""; }, 2000);
+                return;
+            }
+
+            btn.innerText = "Güncelleniyor...";
+            btn.style.opacity = "0.8";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/auth/change-password`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${pendingLoginData.token}`
+                    },
+                    body: JSON.stringify({ 
+                        agencyId: pendingLoginData.agencyId, 
+                        newPassword 
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Şifre güncellenemedi.");
+                }
+
+                btn.innerText = "Şifre Başarıyla Güncellendi!";
+                btn.style.background = "#10b981";
+                btn.style.opacity = "1";
+
+                // Şifre güncellendikten sonra giriş yap
+                executeSSORedirect(pendingLoginData, pendingModule);
+
+            } catch (err) {
+                btn.innerText = err.message;
+                btn.style.background = "#e11d48";
+                setTimeout(() => { 
+                    btn.innerText = "Şifreyi Güncelle ve Sisteme Gir"; 
+                    btn.style.background = ""; 
+                    btn.disabled = false;
+                }, 3000);
+            }
+        }
+        setInterval(() => {
+            const nodes = ["pingNode", "pingSQLite", "pingMSSQL"];
+            nodes.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) {
+                    const currentVal = parseInt(el.innerText);
+                    const dev = Math.floor(Math.random() * 5) - 2; // -2 to +2 variation
+                    let newVal = currentVal + dev;
+                    if (newVal < 4) newVal = 4;
+                    if (newVal > 40) newVal = 25;
+                    el.innerText = newVal + "ms";
+                }
+            });
+        }, 3000);
+
+        // ===== FEATURE 1: Kurumsal Lisans Seçim Sihirbazı =====
+        let activePlanMonths = "0.5";
+        let activePlanPrice = 0;
+        let activePlanExpiry = "15D";
+
+        function selectLicensePlan(months, price, expiry) {
+            activePlanMonths = months;
+            activePlanPrice = price;
+            activePlanExpiry = expiry;
+
+            // Highlight active select card
+            const cards = document.querySelectorAll(".plan-select-card");
+            cards.forEach(c => {
+                if (c.getAttribute("data-months") === months) {
+                    c.classList.add("active");
+                } else {
+                    c.classList.remove("active");
+                }
+            });
+
+            calculatePricing();
+        }
+
+        function calculatePricing() {
+            let rentVal = 25;
+            let tourVal = 3;
+            let isAnnual = false;
+
+            // Haritalama
+            if (activePlanMonths === "0.5") {
+                rentVal = 25; tourVal = 3; isAnnual = false;
+            } else if (activePlanMonths === "1") {
+                rentVal = 50; tourVal = 5; isAnnual = false;
+            } else if (activePlanMonths === "3") {
+                rentVal = 100; tourVal = 10; isAnnual = false;
+            } else if (activePlanMonths === "6") {
+                rentVal = 150; tourVal = 15; isAnnual = false;
+            } else if (activePlanMonths === "12") {
+                rentVal = 200; tourVal = 20; isAnnual = true;
+            }
+
+            // Dinamik Lisans İmza Anahtarı Oluşturucu
+            const pseudoHash = Math.abs((rentVal * 29) + (tourVal * 149) * 2048).toString(16).toUpperCase();
+            const licenseKey = `ZY-LCS-[PLAN:${activePlanMonths}M]-[EXP:${activePlanExpiry}]-[RC:${rentVal}]-[TT:${tourVal}]-[SIG:${pseudoHash}]`;
+            
+            const licenseEl = document.getElementById("cryptoLicenseKey");
+            if (licenseEl) {
+                licenseEl.innerText = licenseKey;
+            }
+
+            // Gerçek Kriptografik İmzalama için Sunucuya İstek At (Debounced)
+            fetchLicenseSignature(rentVal, tourVal, isAnnual);
+        }
+
+        let signTimeout = null;
+        async function fetchLicenseSignature(rentVal, tourVal, isAnnual) {
+            if (signTimeout) clearTimeout(signTimeout);
+            
+            signTimeout = setTimeout(async () => {
+                try {
+                    const response = await fetch(`${API_BASE}/api/auth/license-sign`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            rentLimit: rentVal,
+                            tourLimit: tourVal,
+                            isAnnual: isAnnual
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.success && data.licenseKey) {
+                        const licenseEl = document.getElementById("cryptoLicenseKey");
+                        if (licenseEl) {
+                            licenseEl.innerText = data.licenseKey;
+                            licenseEl.style.color = "#10b981";
+                            setTimeout(() => { licenseEl.style.color = ""; }, 600);
+                        }
+                    }
+                } catch (err) {
+                    console.warn("Sunucu kriptografik lisans imzalama servisi aktif değil veya ulaşılamıyor. Güvenli simülasyon modu devrede.", err);
+                }
+            }, 250); // 250ms gecikme (Debounce)
+        }
+        
+        // Sayfa ilk yüklendiğinde bir kez hesapla
+        document.addEventListener("DOMContentLoaded", () => {
+            calculatePricing();
+        });
+
+        // ===== FEATURE 4: Sandbox İzolasyon Simülasyonu =====
+        let isSimulating = false;
+        function startDBSandboxSimulation() {
+            if (isSimulating) return;
+            isSimulating = true;
+            
+            const btn = document.querySelector(".sec-sim-btn");
+            const logs = document.getElementById("sandboxLogs");
+            const led = document.getElementById("sandboxLed");
+            const status = document.getElementById("sandboxStatusText");
+            
+            btn.innerText = "Simülasyon Çalıştırılıyor...";
+            btn.style.opacity = "0.7";
+            led.className = "db-lock-animation isolating";
+            status.innerText = "İzolasyon Devrede...";
+            status.style.color = "var(--pink)";
+            
+            // Logları temizle ve başlangıç ekle
+            logs.innerHTML = `<div class="console-log"><span class="timestamp">[${new Date().toLocaleTimeString()}]</span> <span class="warn">İzolasyon protokolü başlatıldı...</span></div>`;
+            
+            const steps = [
+                { text: "SSO kimlik belgesi JWT üzerinden doğrulandı.", type: "success", delay: 1000 },
+                { text: "SQLite Dynamic Pool yükleniyor...", type: "info", delay: 2000 },
+                { text: "SELECT * FROM tenant_keys WHERE state='active' sorgusu çalıştırıldı.", type: "info", delay: 3000 },
+                { text: "Fiziksel SQL dosyaları birbirinden şifreli hashlerle ayrıldı.", type: "success", delay: 4200 },
+                { text: "Tenant AES-256 veritabanı kilitleri kilitlendi.", type: "success", delay: 5300 },
+                { text: "Sistem güvenli: Veri izolasyonu başarıyla tamamlandı!", type: "success", delay: 6500 }
+            ];
+            
+            steps.forEach(step => {
+                setTimeout(() => {
+                    const time = new Date().toLocaleTimeString();
+                    const logDiv = document.createElement("div");
+                    logDiv.className = "console-log";
+                    logDiv.innerHTML = `<span class="timestamp">[${time}]</span> <span class="${step.type}">${step.text}</span>`;
+                    logs.appendChild(logDiv);
+                    logs.scrollTop = logs.scrollHeight;
+                    
+                    if(step.text.includes("başarıyla tamamlandı")) {
+                        btn.innerText = "Simülasyon Tamamlandı! (Yeniden Başlat)";
+                        btn.style.opacity = "1";
+                        led.className = "db-lock-animation";
+                        status.innerText = "Güvenli İzole Pool";
+                        status.style.color = "var(--green)";
+                        isSimulating = false;
+                    }
+                }, step.delay);
+            });
+        }
+
+        // ===== FEATURE 3: Yapay Zeka Canlı Destek Botu =====
+        function toggleChatbot() {
+            const box = document.getElementById("chatbotBox");
+            box.classList.toggle("active");
+        }
+
+        
+        async function sendAiMessage() {
+            const inputField = document.getElementById('chatInput');
+            const question = inputField.value.trim();
+            if(!question) return;
+            
+            inputField.value = '';
+            
+            const messages = document.getElementById('chatMessages');
+            
+            const userMsg = document.createElement('div');
+            userMsg.className = 'chat-msg user';
+            userMsg.innerText = question;
+            messages.appendChild(userMsg);
+            
+            const typing = document.createElement('div');
+            typing.className = 'typing-indicator';
+            typing.id = 'botTyping';
+            typing.innerHTML = '<span></span><span></span><span></span>';
+            messages.appendChild(typing);
+            messages.scrollTop = messages.scrollHeight;
+            
+            try {
+                const response = await fetch('/py-api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: question })
+                });
+                
+                const data = await response.json();
+                
+                const typingIndicator = document.getElementById('botTyping');
+                if(typingIndicator) typingIndicator.remove();
+                
+                const botMsg = document.createElement('div');
+                botMsg.className = 'chat-msg bot';
+                botMsg.innerText = data.reply || 'Asistan geçici olarak hizmet dışıdır.';
+                messages.appendChild(botMsg);
+                messages.scrollTop = messages.scrollHeight;
+            } catch(e) {
+                const typingIndicator = document.getElementById('botTyping');
+                if(typingIndicator) typingIndicator.remove();
+                
+                const botMsg = document.createElement('div');
+                botMsg.className = 'chat-msg bot';
+                botMsg.innerText = 'Bağlantı hatası oluştu. Lütfen tekrar deneyin.';
+                messages.appendChild(botMsg);
+                messages.scrollTop = messages.scrollHeight;
+            }
+        }
+        
+        function handleChatKeyPress(e) {
+            if (e.key === 'Enter') {
+                sendAiMessage();
+            }
+        }
+
+        function askBot(question, type) {
+            const messages = document.getElementById("chatMessages");
+            
+            // Kullanıcı sorusunu ekle
+            const userMsg = document.createElement("div");
+            userMsg.className = "chat-msg user";
+            userMsg.innerText = question;
+            messages.appendChild(userMsg);
+            
+            // Typing Indicator ekle
+            const typing = document.createElement("div");
+            typing.className = "typing-indicator";
+            typing.id = "botTyping";
+            typing.innerHTML = "<span></span><span></span><span></span>";
+            messages.appendChild(typing);
+            messages.scrollTop = messages.scrollHeight;
+            
+            // Cevapları tanımla
+            let responseText = "";
+            if (type === 'rent') {
+                responseText = "🚘 Zyronova Rent a Car, çok şubeli filolar için tasarlanmış profesyonel araç takip yazılımıdır. Rezervasyon yönetimi, kiralama sözleşmeleri, hasar/bakım takibi, ciro analizleri ve gelişmiş finansal tabloları tek panelde sunar.";
+            } else if (type === 'tour') {
+                responseText = "🌍 Zyronova Tur Takip Sistemi; seyahat acenteleri, tur operatörleri ve taşımacılık firmaları için özel tasarlanmıştır. Tur rezervasyonları, otel/rehber atamaları, koltuk şemaları, şube muhasebesi ve canlı operasyon takibini saniyeler içinde gerçekleştirmenizi sağlar.";
+            } else if (type === 'security') {
+                responseText = "🛡️ Veri güvenliği Zyronova'nın en hassas olduğu alandır. Node.js + JWT SSO mimarisi ile her kullanıcı sadece yetkili olduğu modüllere erişebilir. Sistemimiz, her bir acente verisini bağımsız SQLite veritabanlarında (Physical DB Isolation) fiziksel olarak ayırarak en üst düzey izolasyonu ve hız avantajını sağlar.";
+            } else if (type === 'pricing') {
+                responseText = "₺ Zyronova, son derece şeffaf ve resmi lisanslama planlarına sahiptir. 15 Günlük Ücretsiz Deneme sürümünden başlayarak; Aylık (3.000 ₺), 3 Aylık (7.000 ₺), 6 Aylık (15.000 ₺) ve Yıllık Kurumsal (30.000 ₺) paketlerden dilediğinizi yukarıdaki 'Kurumsal Lisans Süre Yapılandırıcısı' aracılığıyla inceleyebilir ve kriptografik lisans imzanızı anında alabilirsiniz!";
+            }
+            
+            setTimeout(() => {
+                // Typing kaldır
+                const typingIndicator = document.getElementById("botTyping");
+                if(typingIndicator) typingIndicator.remove();
+                
+                // Bot cevabını ekle
+                const botMsg = document.createElement("div");
+                botMsg.className = "chat-msg bot";
+                botMsg.innerText = responseText;
+                messages.appendChild(botMsg);
+                messages.scrollTop = messages.scrollHeight;
+            }, 1200);
+        }
+
+        // ===== DEMO SIMULATION OVERLAY FUNCTIONS =====
+        function openDemoSimulation() {
+            const overlay = document.getElementById("demoOverlay");
+            overlay.style.display = "flex";
+            setTimeout(() => {
+                overlay.classList.add("active");
+                overlay.style.opacity = "1";
+            }, 50);
+        }
+
+        function closeDemoSimulation() {
+            const overlay = document.getElementById("demoOverlay");
+            overlay.classList.remove("active");
+            overlay.style.opacity = "0";
+            setTimeout(() => {
+                overlay.style.display = "none";
+            }, 400);
+        }
+
+        async function runDemoSimulation(moduleName) {
+            const overlay = document.getElementById("demoOverlay");
+            const container = overlay.querySelector(".demo-modal-container");
+            
+            // Show premium loading state inside the simulation container
+            container.style.opacity = "0.3";
+            container.style.pointerEvents = "none";
+            
+            try {
+                const reqModule = moduleName === 'TUR_TAKIP' ? 'TOUR_TRACKING' : 'RENT_A_CAR';
+                // Call our backend API to authorize the demo SSO token
+                const response = await fetch('/api/auth/demo-login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ requestedModule: reqModule })
+                });
+                
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Demo Girişi Başarısız.');
+                }
+                
+                showToast("Simülasyon Başlatıldı! Yönlendiriliyorsunuz...", "success");
+                
+                setTimeout(() => {
+                    if (moduleName === "RENT_A_CAR") {
+                        // Rent A Car: Python sunucusuna yönlendir
+                        window.location.href = `${API_BASE}/sso-login?token=${data.token}`;
+                    } else {
+                        // Tur Takip (React): dinamik IP ile yönlendir
+                        let redirectUrl = `${REACT_APP_URL}/agency?token=${data.token}&role=${data.role}`;
+                        if (data.agencyId)   redirectUrl += `&agencyId=${data.agencyId}`;
+                        if (data.agencyName) redirectUrl += `&agencyName=${encodeURIComponent(data.agencyName)}`;
+                        if (data.username)   redirectUrl += `&username=${encodeURIComponent(data.username)}`;
+                        if (data.fullName)   redirectUrl += `&fullName=${encodeURIComponent(data.fullName)}`;
+                        if (data.isBranch)   redirectUrl += `&isBranch=${data.isBranch}`;
+                        
+                        window.location.href = redirectUrl;
+                    }
+                }, 1000);
+            } catch (err) {
+                showToast("🚨 Simülasyon Hatası: " + err.message, "error");
+                container.style.opacity = "1";
+                container.style.pointerEvents = "auto";
+            }
+        }
+
+        // Global Premium Notification Toast Function
+        function showToast(message, type = 'info') {
+            let container = document.querySelector('.toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.className = 'toast-container';
+                document.body.appendChild(container);
+            }
+            
+            const toast = document.createElement('div');
+            toast.className = `toast-item ${type}`;
+            const icon = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle');
+            
+            toast.innerHTML = `
+                <div class="toast-icon"><i class="fas ${icon}"></i></div>
+                <div class="toast-content"></div>
+                <div class="toast-close"><i class="fas fa-times"></i></div>
+            `;
+            toast.querySelector('.toast-content').textContent = message;
+            
+            container.appendChild(toast);
+            
+            // Force reflow for transitions
+            toast.offsetHeight;
+            toast.classList.add('active');
+            
+            toast.querySelector('.toast-close').onclick = () => {
+                toast.classList.add('fade-out');
+                setTimeout(() => toast.remove(), 400);
+            };
+            
+            let dismissTimeout;
+            
+            const startDismissTimer = () => {
+                dismissTimeout = setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.classList.add('fade-out');
+                        setTimeout(() => toast.remove(), 400);
+                    }
+                }, 30000); // 30 saniye
+            };
+            
+            const stopDismissTimer = () => {
+                clearTimeout(dismissTimeout);
+            };
+            
+            toast.onmouseenter = stopDismissTimer;
+            toast.onmouseleave = startDismissTimer;
+            
+            startDismissTimer();
+        }
+
+        // Enter Key Support for Forms
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                const activeElement = document.activeElement;
+                if (!activeElement || activeElement.tagName !== 'INPUT') return;
+
+                const loginSection = document.getElementById('loginFormSection');
+                const forgotSection = document.getElementById('forgotFormSection');
+                const changePasswordSection = document.getElementById('changePasswordSection');
+
+                if (loginSection && loginSection.style.display !== 'none') {
+                    if (['loginUsername', 'loginPassword', 'captchaAnswer'].includes(activeElement.id)) {
+                        const loginBtn = loginSection.querySelector('.login-btn');
+                        if (loginBtn) loginBtn.click();
+                    }
+                } else if (forgotSection && forgotSection.style.display !== 'none') {
+                    if (activeElement.id === 'forgotEmail') {
+                        const forgotBtn = forgotSection.querySelector('.forgot-btn');
+                        if (forgotBtn) forgotBtn.click();
+                    }
+                } else if (changePasswordSection && changePasswordSection.style.display !== 'none') {
+                    if (['newPassword', 'confirmNewPassword'].includes(activeElement.id)) {
+                        const changeBtn = document.getElementById('btnChangePassword');
+                        if (changeBtn) changeBtn.click();
+                    }
+                }
+            }
+        });
+    </script>
+
+</body>
+
+</html>

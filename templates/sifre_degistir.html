@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Şifrenizi Güncelleyin - ZYRONOVA</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body { background: #f8fafc; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: 'DM Sans', sans-serif; }
+    .auth-card { background: white; padding: 2.5rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 400px; text-align: center; }
+    .auth-logo { font-size: 2rem; color: #1e293b; font-weight: 800; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.75rem; }
+    .auth-logo i { color: #2563eb; }
+    .auth-title { font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem; }
+    .auth-desc { color: #64748b; font-size: 0.9rem; margin-bottom: 2rem; line-height: 1.5; }
+    .alert { padding: 0.75rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.85rem; }
+    .alert-error { background: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; }
+    .alert-success { background: #f0fdf4; color: #16a34a; border: 1px solid #dcfce7; }
+    .form-group { text-align: left; margin-bottom: 1.5rem; }
+    .form-label { display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem; }
+    .form-input { width: 100%; padding: 0.75rem; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.95rem; transition: all 0.2s; box-sizing: border-box; }
+    .form-input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+    .btn-auth { width: 100%; padding: 0.85rem; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; }
+    .btn-auth:hover { background: #1d4ed8; transform: translateY(-1px); }
+  </style>
+</head>
+<body>
+  <div class="auth-card">
+    <div class="auth-logo">
+      <i class="fas fa-shield-alt"></i>
+      <span>ZYRONOVA</span>
+    </div>
+    <h2 class="auth-title">Şifrenizi Güncelleyin</h2>
+    <p class="auth-desc">Hesap güvenliğiniz için ilk girişte şifrenizi değiştirmeniz gerekmektedir.</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group">
+        <label class="form-label">Yeni Şifre</label>
+        <input type="password" name="new_password" class="form-input" placeholder="••••••••" required autofocus>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Şifreyi Onayla</label>
+        <input type="password" name="confirm_password" class="form-input" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="btn-auth">Şifreyi Güncelle</button>
+    </form>
+    
+    <div style="margin-top: 1.5rem;">
+      <a href="{{ url_for('auth.logout') }}" style="color: #64748b; font-size: 0.85rem; text-decoration: none;">
+        <i class="fas fa-sign-out-alt"></i> Çıkış Yap
+      </a>
+    </div>
+  </div>
+</body>
+</html>

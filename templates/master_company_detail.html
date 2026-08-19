@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+
+  .detail-card {
+    background: white;
+    border-radius: 24px;
+    padding: 2.5rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  }
+
+  .stat-mini-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .stat-mini-box {
+    background: #f8fafc;
+    border-radius: 20px;
+    padding: 1.5rem;
+    text-align: center;
+    border: 1px solid #f1f5f9;
+  }
+
+  .form-group { margin-bottom: 1.5rem; }
+  .form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 0.5rem;
+  }
+  .form-control {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    outline: none;
+    transition: all 0.2s;
+  }
+  .form-control:focus { border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
+
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #64748b;
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    transition: color 0.2s;
+  }
+  .back-btn:hover { color: #0f172a; }
+
+  /* Premium Toggle */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #cbd5e1;
+    transition: .4s;
+    border-radius: 34px;
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 18px; width: 18px;
+    left: 4px; bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+  }
+  input:checked + .slider { background-color: #10b981; }
+  input:checked + .slider:before { transform: translateX(24px); }
+  /* ─── Custom Reset Modal ─────────────────────────────────── */
+  .custom-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+  }
+
+  .custom-modal {
+    background: white;
+    width: 100%;
+    max-width: 450px;
+    border-radius: 32px;
+    padding: 2.5rem;
+    text-align: center;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  }
+
+  .modal-icon-wrapper {
+    width: 80px; height: 80px;
+    background: #fef3c7; color: #f59e0b;
+    border-radius: 24px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.5rem; margin: 0 auto 1.5rem;
+  }
+
+  .modal-actions {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1rem; margin-top: 2rem;
+  }
+
+  .btn-modal {
+    padding: 1rem; border-radius: 16px;
+    font-weight: 700; border: none;
+    cursor: pointer; transition: all 0.2s;
+    text-decoration: none; font-size: 0.9rem;
+  }
+
+  .btn-confirm { background: #f59e0b; color: white; }
+  .btn-confirm:hover { background: #d97706; transform: translateY(-2px); }
+  .btn-cancel { background: #f1f5f9; color: #64748b; }
+  .btn-cancel:hover { background: #e2e8f0; }
+
+  /* ─── Premium Responsive Overrides ─────────────────────────── */
+  @media (max-width: 1024px) {
+    .detail-grid {
+      grid-template-columns: 1fr !important;
+      gap: 1.5rem !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .container-fluid {
+      padding: 1rem !important;
+    }
+    
+    .detail-card {
+      padding: 1.5rem !important;
+      border-radius: 20px !important;
+    }
+
+    /* Collapse header flex */
+    .container-fluid > div[style*="display: flex; justify-content: space-between"],
+    .container-fluid > div[style*="display:flex; justify-content:space-between"] {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 1.25rem !important;
+    }
+
+    .container-fluid h1 {
+      font-size: 1.75rem !important;
+    }
+
+    .container-fluid > div[style*="display: flex; justify-content: space-between"] div[style*="display: flex; gap: 1rem"],
+    .container-fluid > div[style*="display:flex; justify-content:space-between"] div[style*="display:flex; gap:1rem"] {
+      width: 100% !important;
+    }
+    
+    .container-fluid > div[style*="display: flex; justify-content: space-between"] button,
+    .container-fluid > div[style*="display:flex; justify-content:space-between"] button {
+      width: 100% !important;
+      justify-content: center !important;
+    }
+
+    /* Collapse all form grids to 1 column */
+    form[id="updateForm"] > div[style*="display: grid"],
+    form[id="updateForm"] > div[style*="display:grid"] {
+      grid-template-columns: 1fr !important;
+      gap: 0.75rem !important;
+    }
+
+    .stat-mini-grid {
+      gap: 1rem !important;
+    }
+
+    .modal-actions {
+      grid-template-columns: 1fr !important;
+      gap: 0.75rem !important;
+    }
+    .btn-modal {
+      width: 100% !important;
+    }
+    .custom-modal {
+      padding: 1.5rem !important;
+      width: 95% !important;
+      margin: 1rem auto !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .stat-mini-grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid" style="padding: 2rem;">
+  <a href="{{ url_for('main.dashboard') }}" class="back-btn">
+    <i class="fas fa-arrow-left"></i> Master Dashboard'a Dön
+  </a>
+
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+    <div>
+      <h1 style="font-size: 2.2rem; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.02em;">
+        {{ company.name }}
+      </h1>
+      <p style="color: #64748b; font-weight: 500; margin-top: 0.5rem;">
+        <i class="fas fa-link mr-2"></i> {{ company.subdomain }}.localhost
+      </p>
+    </div>
+    <div style="display: flex; gap: 1rem;">
+       <button type="button" onclick="document.getElementById('updateForm').submit()" class="btn" style="background: #2563eb; color: white; font-weight: 700; padding: 0.8rem 2rem; border-radius: 12px; border: none; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);">
+         Değişiklikleri Kaydet
+       </button>
+    </div>
+  </div>
+
+  <div class="detail-grid">
+    <!-- Main Settings -->
+    <div class="detail-card">
+      <h3 style="margin: 0 0 2rem; font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 0.75rem;">
+        <i class="fas fa-sliders-h" style="color: #2563eb;"></i> Şirket Bilgileri & Lisans
+      </h3>
+
+      <form id="updateForm" action="{{ url_for('master.master_company_update', id=company.id) }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div class="form-group">
+            <label>Şirket Adı</label>
+            <input type="text" name="name" class="form-control" value="{{ company.name }}" required>
+          </div>
+          <div class="form-group">
+            <label>İletişim Telefonu</label>
+            <input type="text" name="phone" class="form-control" value="{{ company.contact_phone or '' }}" 
+                   placeholder="05xxxxxxxxx" pattern="0[0-9]{10}" maxlength="11" title="Telefon numarası 0 ile başlamalı ve 11 hane olmalıdır.">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div class="form-group">
+            <label>Şirket E-postası (Yönetici)</label>
+            <input type="email" name="email" class="form-control" value="{{ company.contact_email or '' }}" placeholder="örn: admin@sirket.com" required>
+          </div>
+          <div class="form-group">
+            <label>Lisans Bedeli (₺)</label>
+            <input type="number" name="license_price" class="form-control" value="{{ company.license_price or 0.0 }}" min="0" step="any">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div class="form-group" style="display: none;">
+            <label>Acente Vergi Numarası (KABİS)</label>
+            <input type="text" name="tax_no" class="form-control" value="{{ company.tax_no or '' }}" 
+                   placeholder="10 Haneli Vergi No" maxlength="10" minlength="10" pattern="\d{10}" title="Lütfen 10 haneli vergi numarasını girin.">
+          </div>
+          <div class="form-group">
+            <!-- Boş/Genişletilebilir -->
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+          <div class="form-group">
+            <label>Lisans Bitiş Tarihi</label>
+            <input type="date" name="license_expires_at" class="form-control" 
+                   value="{{ company.license_expires_at.strftime('%Y-%m-%d') if company.license_expires_at else '' }}">
+            <small style="color: #94a3b8; font-weight: 500; display: block; margin-top: 0.5rem;">Boş bırakılırsa lisans süresiz olur.</small>
+          </div>
+          <div class="form-group">
+            <label>Hesap Durumu</label>
+            <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem;">
+              <label class="switch">
+                <input type="checkbox" name="is_active" {{ 'checked' if company.is_active }}>
+                <span class="slider"></span>
+              </label>
+              <span style="font-weight: 600; color: #475569;">{{ 'Aktif' if company.is_active else 'Pasif' }}</span>
+            </div>
+          </div>
+        </div>
+
+        {% if company.license_key %}
+        <div style="margin-top: 1rem; padding: 1rem; background: #eff6ff; border-radius: 12px; border: 1px solid #bfdbfe;">
+          <label style="display:block; font-size:0.8rem; font-weight:800; color:#1e40af; margin-bottom:0.25rem;">Lisans Anahtarı</label>
+          <code style="font-size:1.1rem; font-family:monospace; font-weight:800; color:#1d4ed8;">{{ company.license_key }}</code>
+        </div>
+        {% endif %}
+      </form>
+    </div>
+
+    <!-- Quick Stats -->
+    <div>
+      <div class="detail-card" style="margin-bottom: 2rem;">
+        <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800;">Performans Özeti</h3>
+        <div class="stat-mini-grid">
+          <div class="stat-mini-box">
+            <div style="font-size: 1.5rem; font-weight: 800; color: #2563eb;">{{ vehicle_count }}</div>
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; margin-top: 0.25rem;">Toplam Araç</div>
+          </div>
+          <div class="stat-mini-box">
+            <div style="font-size: 1.5rem; font-weight: 800; color: #10b981;">{{ rental_count }}</div>
+            <div style="font-size: 0.75rem; color: #64748b; font-weight: 600; margin-top: 0.25rem;">Toplam Kiralama</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-card">
+        <h3 style="margin: 0 0 1.5rem; font-size: 1.1rem; font-weight: 800;">Yönetici Bilgisi</h3>
+        {% if manager %}
+          <div style="background: #f1f5f9; border-radius: 16px; padding: 1.25rem;">
+            <div style="font-weight: 700; color: #1e293b;">@{{ manager.username }}</div>
+            <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">{{ manager.name or 'İsim Belirtilmemiş' }}</div>
+            
+            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 1rem 0;">
+            
+            <form id="resetPasswordForm" action="{{ url_for('master.master_user_reset_password', id=manager.id) }}" method="POST" style="display: none;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            </form>
+            <button type="button" onclick="askResetPassword('{{ manager.username }}')" 
+                    class="btn" style="width: 100%; background: white; color: #f59e0b; border: 1px solid #fef3c7; font-weight: 700; padding: 0.6rem; border-radius: 10px; font-size: 0.85rem;">
+              <i class="fas fa-key mr-2"></i> Şifreyi Sıfırla
+            </button>
+          </div>
+        {% else %}
+          <div style="text-align: center; padding: 1rem; color: #94a3b8; font-style: italic;">
+            Yönetici atanmamış.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block modals %}
+<!-- Reset Modal reused from dashboard logic -->
+<div id="resetModal" class="custom-modal-overlay">
+  <div class="custom-modal">
+    <div class="modal-icon-wrapper">
+      <i class="fas fa-key"></i>
+    </div>
+    <h3 style="font-size: 1.5rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem;">Şifre Sıfırlama</h3>
+    <p id="resetModalText" style="color: #64748b; font-weight: 500; line-height: 1.5;">Bu kullanıcının şifresini 123456 olarak sıfırlamak istediğinize emin misiniz?</p>
+    
+    <div class="modal-actions">
+      <button class="btn-modal btn-cancel" onclick="closeResetModal()">Vazgeç</button>
+      <button id="confirmResetBtn" onclick="confirmReset()" class="btn-modal btn-confirm" style="display: flex; align-items: center; justify-content: center; width: 100%; border: none;">Sıfırlamayı Onayla</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function askResetPassword(userName) {
+    const modal = document.getElementById('resetModal');
+    const text = document.getElementById('resetModalText');
+    
+    text.innerHTML = `<strong>${userName}</strong> kullanıcısının şifresini <strong>123456</strong> olarak sıfırlamak istediğinize emin misiniz? <br><br> Bu işlemden sonra kullanıcıdan ilk girişte şifresini değiştirmesi istenecektir.`;
+    
+    modal.style.display = 'flex';
+}
+
+function confirmReset() {
+    document.getElementById('resetPasswordForm').submit();
+}
+
+function closeResetModal() {
+    document.getElementById('resetModal').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('resetModal');
+    if (event.target == modal) {
+        closeResetModal();
+    }
+}
+
+// Phone Input Validation (starts with 0, digits only, max 11)
+document.querySelectorAll('input[name="phone"]').forEach(input => {
+    input.addEventListener('input', function(e) {
+        let val = this.value.replace(/\D/g, ''); 
+        if (val.length > 0 && val[0] !== '0') {
+            val = '0' + val;
+        }
+        this.value = val.substring(0, 11);
+    });
+});
+</script>
+{% endblock %}
+
+{% endblock %}

@@ -1,0 +1,59 @@
+{% set perms = current_user.get_permissions() %}
+{% if 'rentals' in perms.dashboard.cards or current_user.is_manager %}
+<div class="card">
+  <div class="card-header">
+    <h3>Son Kiralamalar</h3>
+  </div>
+  <div class="card-body p-0">
+    <div class="overflow-x">
+      <div class="table-responsive">
+<table class="data-table">
+        <thead>
+          <tr>
+            <th>Plaka</th>
+            <th>Araç</th>
+            <th>Müşteri</th>
+            <th>Kurum</th>
+            {% if current_user.is_manager %}
+            <th class="text-right">Gelir</th>
+            <th class="text-right">Kar</th>
+            {% endif %}
+            <th class="text-center">Hasar</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in son_kiralamalar %}
+          {% set v = get_vehicle_by_plaka(r.plaka) %}
+          <tr>
+            <td class="font-semibold">{{ r.plaka }}</td>
+            <td>{{ v.marka ~ ' ' ~ v.model if v else '-' }}</td>
+            <td>{{ r.musteriAdi }}</td>
+            <td>{{ r.kurumAdi or '-' }}</td>
+            {% if current_user.is_manager %}
+            <td class="text-right">{{ r.toplamFiyat|currency(r.paraBirimi) }}</td>
+            <td class="text-right {% if r.kar >= 0 %}text-green{% else %}text-red{% endif %} font-semibold">
+              {{ r.kar|currency(r.paraBirimi) }}
+            </td>
+            {% endif %}
+            <td class="text-center">
+              <span class="badge {{ 'green' if r.hasarDurumu == 'yok' else 'amber' if r.hasarDurumu == 'hafif' else 'orange' if r.hasarDurumu == 'orta' else 'red' }}">
+                {{ HASAR_LABELS.get(r.hasarDurumu, 'Bilinmiyor') }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not son_kiralamalar %}
+          <tr>
+            <td colspan="7" class="empty-state">
+              <i class="fas fa-clipboard-list"></i>
+              <p>Henüz kiralama kaydı yok</p>
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+</div>
+    </div>
+  </div>
+</div>
+{% endif %}

@@ -1,0 +1,2643 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/leaflet.css') }}" />
+<script src="{{ url_for('static', filename='js/leaflet.js') }}"></script>
+<style>
+  @media (max-width: 768px) {
+    /* Header Row and Buttons */
+    .page-header-row {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 1rem !important;
+    }
+    
+    .page-header-row div[style*="display:flex"],
+    .page-header-row div[style*="display: flex"] {
+      flex-direction: column !important;
+      gap: 0.5rem !important;
+      width: 100% !important;
+    }
+    
+    .page-header-row button,
+    .page-header-row .btn {
+      width: 100% !important;
+      justify-content: center !important;
+      margin: 0 !important;
+    }
+
+    /* Filter Bar selects */
+    .filter-bar {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 0.75rem !important;
+      padding: 1rem !important;
+    }
+    
+    .search-wrapper {
+      width: 100% !important;
+      min-width: unset !important;
+    }
+    
+    .filter-select {
+      width: 100% !important;
+    }
+
+    /* Modal Form Grids (2, 3, 4 columns) */
+    .form-grid-2, .form-grid-3, .form-grid-4 {
+      grid-template-columns: 1fr !important;
+      gap: 0.75rem !important;
+    }
+    
+    div[style*="display:grid; grid-template-columns:1fr 1fr"],
+    div[style*="display: grid; grid-template-columns: 1fr 1fr"],
+    div[style*="display:grid; grid-template-columns: 1fr 1fr"],
+    div[style*="display: grid; grid-template-columns:1fr 1fr"] {
+      grid-template-columns: 1fr !important;
+      gap: 0.75rem !important;
+    }
+
+    .modal-backdrop {
+      padding: 0.75rem !important;
+    }
+
+    .modal-footer {
+      flex-direction: column !important;
+      gap: 0.75rem !important;
+    }
+    
+    .modal-footer button,
+    .modal-footer .btn {
+      width: 100% !important;
+      margin: 0 !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set perms = current_user.get_permissions() %}
+<!-- Header -->
+<div class="page-header">
+  <div class="page-header-row">
+    <div>
+      <h2 class="page-title">Kiralamalar</h2>
+      <p class="page-subtitle">Tüm kiralama kayıtlarını görüntüleyin ve yönetin</p>
+    </div>
+    <div style="display:flex; gap:0.5rem; align-items:center;">
+      {% if False and kabis_total_pending > 0 %}
+      <button class="btn btn-warning" style="position: relative; animation: pulse 2s infinite;" onclick="openModal('kabisPendingModal')">
+        <i class="fas fa-bell"></i> KABİS Bekleyenler
+        <span class="badge red" style="position: absolute; top: -8px; right: -8px; border-radius: 50%; padding: 2px 6px;">{{ kabis_total_pending }}</span>
+      </button>
+      {% endif %}
+      {% if 'add' in perms.kiralamalar.actions or current_user.is_manager %}
+      <button class="btn btn-outline" style="border-color:var(--navy); color:var(--navy);" onclick="openReturnModal()">
+        <i class="fas fa-undo"></i> Araç Teslim
+      </button>
+      <button class="btn btn-primary" onclick="openAddModal()">
+        <i class="fas fa-plus"></i> Yeni Kiralama
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="search-wrapper">
+      <i class="fas fa-search"></i>
+      <input type="text" class="form-input" id="searchInput"
+        placeholder="Plaka, müşteri, marka veya tarih (G-A-Y) ara..." value="{{ search }}" autofocus>
+    </div>
+    <select class="form-select filter-select" id="hasarFilter" onchange="filterRentals()">
+      <option value="hepsi" {{ 'selected' if hasar_filter=='hepsi' }}>Tüm Hasar Durumları</option>
+      <option value="yok" {{ 'selected' if hasar_filter=='yok' }}>Hasar Yok</option>
+      <option value="hafif" {{ 'selected' if hasar_filter=='hafif' }}>Hafif Hasar</option>
+      <option value="orta" {{ 'selected' if hasar_filter=='orta' }}>Orta Hasar</option>
+      <option value="agir" {{ 'selected' if hasar_filter=='agir' }}>Ağır Hasar</option>
+    </select>
+    <select class="form-select filter-select" id="statusFilter" onchange="filterRentals()">
+      <option value="hepsi" {{ 'selected' if status_filter=='hepsi' }}>Tüm Kiralamalar</option>
+      <option value="aktif" {{ 'selected' if status_filter=='aktif' }}>Devam Edenler</option>
+      <option value="gecikmis" {{ 'selected' if status_filter=='gecikmis' }}>Süresi Dolanlar (Gecikmiş)</option>
+      <option value="tamamlanmis" {{ 'selected' if status_filter=='tamamlanmis' }}>Tamamlananlar</option>
+    </select>
+  </div>
+</div>
+
+<!-- Rentals Table -->
+<div class="card">
+  <div class="card-body p-0">
+    <div class="overflow-x" style="min-height: 480px !important; overflow-y: visible;">
+      <div class="table-responsive">
+<table class="data-table">
+        <thead>
+          <tr>
+            <th>Plaka</th>
+            <th>Araç</th>
+            <th>Müşteri</th>
+            <th class="hide-mobile">Tarih</th>
+            <th class="text-center">Durum</th>
+            <th class="hide-mobile">KM</th>
+            <th class="text-right">Gelir</th>
+            <th class="text-right">Kar</th>
+            <th class="text-center">Hasar</th>
+            <th class="text-center">İşlem</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% set today = now.strftime('%Y-%m-%d') %}
+          {% set now_time = now.strftime('%H:%M') %}
+          {% for r in rentals %}
+          {% set is_expired = (r.bitisTarihi < today or (r.bitisTarihi==today and (r.bitisSaati or '09:00' )
+            <=now_time)) and r.alinistaKm==0 %} <tr>
+            <td class="font-semibold">{{ r.plaka }}</td>
+            <td>{{ r.marka }} {{ r.model }}</td>
+            <td>
+              {{ r.musteriAdi }}
+              {% if r.is_signed %}
+              <span class="badge green" style="padding: 2px 6px; font-size: 0.65rem; margin-left: 4px; display: inline-flex; align-items: center; gap: 2px;"><i class="fas fa-signature"></i> İmzalı</span>
+              {% else %}
+              <span class="badge red" style="padding: 2px 6px; font-size: 0.65rem; margin-left: 4px; display: inline-flex; align-items: center; gap: 2px;"><i class="fas fa-file-invoice"></i> İmzasız</span>
+              {% endif %}
+            </td>
+            <td class="text-sm">
+              <div class="font-medium">{{ r.baslangicTarihi|fdate }} <small class="text-muted">{{ r.baslangicSaati or
+                  '09:00' }}</small></div>
+              <div class="text-muted">{{ r.bitisTarihi|fdate }} <small class="text-muted">{{ r.bitisSaati or '09:00'
+                  }}</small></div>
+            </td>
+            <td class="text-center">
+              {% if r.alinistaKm > 0 %}
+              <span class="badge green">Tamamlandı</span>
+              {% elif is_expired %}
+              <span class="badge red animate-pulse">Gecikmiş</span>
+              {% else %}
+              <span class="badge blue">Aktif</span>
+              {% endif %}
+            </td>
+            <td class="text-muted hide-mobile">{{ r.kullanilanKm|km }}</td>
+            <td class="text-right">{{ r.toplamFiyat|currency(r.paraBirimi) }}</td>
+            <td class="text-right font-semibold {% if r.kar >= 0 %}text-green{% else %}text-red{% endif %}">
+              {{ r.kar|currency(r.paraBirimi) }}
+            </td>
+            <td class="text-center">
+              <span
+                class="badge {{ 'green' if r.hasarDurumu == 'yok' else 'amber' if r.hasarDurumu == 'hafif' else 'orange' if r.hasarDurumu == 'orta' else 'red' }}">
+                {{ HASAR_LABELS.get(r.hasarDurumu, 'Bilinmiyor') }}
+              </span>
+            </td>
+            <td class="text-center">
+              <div class="action-dropdown">
+                <button class="action-btn" onclick="toggleActionMenu(this, event)" title="İşlemler">
+                  <i class="fas fa-ellipsis-vertical"></i>
+                </button>
+                <div class="action-menu">
+                  <button class="action-item" onclick="openDetailModal('{{ r.id }}')">
+                    <i class="fas fa-eye text-blue"></i> Detay Gör
+                  </button>
+                  {% if 'edit' in perms.kiralamalar.actions or current_user.is_manager %}
+                  <button class="action-item" onclick='openEditModal({{ r.to_dict()|tojson }})'>
+                    <i class="fas fa-pen-to-square text-amber"></i> Düzenle
+                  </button>
+                  {% endif %}
+                  {% if 'extend' in perms.kiralamalar.actions or current_user.is_manager %}
+                  <button class="action-item" onclick='openExtendModal({{ r.to_dict()|tojson }})'>
+                    <i class="fas fa-clock text-blue"></i> Süre Uzat
+                  </button>
+                  {% endif %}
+                  <div style="border-top:1px solid var(--border); margin:4px 0;"></div>
+                  {% if False %}
+                  {% if r.is_signed %}
+                  <button class="action-item" onclick="simulateKabis('{{ r.id }}')">
+                    <i class="fas fa-paper-plane text-green"></i> KABİS Bildir (Çıkış)
+                  </button>
+                  <a href="/kiralamalar/kabis_xml/{{ r.id }}" class="action-item" target="_blank" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:0.5rem;">
+                    <i class="fas fa-file-code text-blue"></i> KABİS XML İndir
+                  </a>
+                  {% else %}
+                  <button class="action-item" style="opacity: 0.5; cursor: not-allowed;" onclick="alert('Bu kiralama sözleşmesi imzalanmadığı için KABİS bildirim işlemleri yapılamaz. Lütfen önce sözleşmeyi imzalayın.')">
+                    <i class="fas fa-paper-plane text-muted"></i> KABİS Bildir (Pasif)
+                  </button>
+                  <button class="action-item" style="opacity: 0.5; cursor: not-allowed;" onclick="alert('Bu kiralama sözleşmesi imzalanmadığı için KABİS XML indirme işlemi yapılamaz. Lütfen önce sözleşmeyi imzalayın.')">
+                    <i class="fas fa-file-code text-muted"></i> KABİS XML İndir (Pasif)
+                  </button>
+                  {% endif %}
+                  {% endif %}
+                  <div style="border-top:1px solid var(--border); margin:4px 0;"></div>
+                  {% if r.is_signed %}
+                  <a href="/kiralamalar/sozlesme/{{ r.id }}" class="action-item" target="_blank" style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:0.5rem;">
+                    <i class="fas fa-file-contract text-green"></i> Sözleşme Gör / Yazdır
+                  </a>
+                  {% else %}
+                  <button class="action-item" onclick="openSignatureModal('{{ r.id }}', '{{ r.musteriAdi }}', '{{ r.personelAdi or 'Sistem Yetkilisi' }}')">
+                    <i class="fas fa-signature text-blue"></i> Sözleşmeyi İmzala
+                  </button>
+                  {% endif %}
+                  <div style="border-top:1px solid var(--border); margin:4px 0;"></div>
+                  {% if 'delete' in perms.kiralamalar.actions or current_user.is_manager %}
+                  <button class="action-item danger" onclick="openDeleteModal('{{ r.id }}', '{{ r.plaka }}')">
+                    <i class="fas fa-trash"></i> Kaydı Sil
+                  </button>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+            </tr>
+            {% endfor %}
+            {% if not rentals %}
+            <tr>
+              <td colspan="8" class="empty-state">
+                <i class="fas fa-clipboard-list"></i>
+                <p>Kiralama kaydı bulunamadı</p>
+              </td>
+            </tr>
+            {% endif %}
+        </tbody>
+      </table>
+</div>
+    </div>
+    {% if pages > 1 %}
+    <div class="pagination">
+      <a href="{{ url_for('fleet.kiralamalar', page=page-1, search=search, hasar=hasar_filter) }}"
+        class="pagination-btn" {{ 'disabled' if not has_prev else '' }}
+        onclick="{{ 'return false;' if not has_prev else '' }}">
+        <i class="fas fa-chevron-left"></i>
+      </a>
+
+      {% for p in range(1, pages + 1) %}
+      {% if p == 1 or p == pages or (p >= page - 2 and p <= page + 2) %} <a
+        href="{{ url_for('fleet.kiralamalar', page=p, search=search, hasar=hasar_filter) }}"
+        class="pagination-btn {{ 'active' if p == page else '' }}">
+        {{ p }}
+        </a>
+        {% elif p == page - 3 or p == page + 3 %}
+        <span class="pagination-info">...</span>
+        {% endif %}
+        {% endfor %}
+
+        <a href="{{ url_for('fleet.kiralamalar', page=page+1, search=search, hasar=hasar_filter) }}"
+          class="pagination-btn" {{ 'disabled' if not has_next else '' }}
+          onclick="{{ 'return false;' if not has_next else '' }}">
+          <i class="fas fa-chevron-right"></i>
+        </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+
+{% endblock %}
+
+{% block modals %}
+<!-- Add/Edit Modal -->
+<div class="modal-backdrop" id="rentalModal">
+  <div class="modal" style="max-width:720px;">
+    <div class="modal-header">
+      <h3 id="modalTitle">Yeni Kiralama</h3>
+      <button class="modal-close" onclick="closeModal('rentalModal')">&times;</button>
+    </div>
+    <form id="rentalForm" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="arac_id" id="r_aracId">
+      <input type="hidden" name="musteriImza" id="r_musteriImza">
+      <input type="hidden" name="firmaImza" id="r_firmaImza">
+      <div class="modal-body">
+        <!-- Araç Bilgileri -->
+        <div class="form-section-title">Araç Bilgileri</div>
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label class="form-label">Plaka <span class="text-red">*</span></label>
+            <select class="form-select" name="plaka" id="r_plaka" onchange="selectVehicle(this.value)" required>
+              <option value="">Araç seçin</option>
+              {% for v in vehicles %}
+              {% if v.durum == 'bosta' %}
+              <option value="{{ v.plaka }}" data-id="{{ v.id }}" data-marka="{{ v.marka }}" data-model="{{ v.model }}">
+                {{ v.plaka }} - {{
+                v.marka }} {{ v.model }}</option>
+              {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Marka</label>
+            <input type="text" class="form-input" name="marka" id="r_marka" placeholder="Toyota">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Model</label>
+            <input type="text" class="form-input" name="model" id="r_model" placeholder="Corolla">
+          </div>
+        </div>
+
+        <!-- Kiralama Bilgileri -->
+        <div class="form-section-title">Kiralama Bilgileri</div>
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label class="form-label">Uyruk <span class="text-red">*</span></label>
+            <input type="text" class="form-input" name="uyruk" id="r_uyruk" list="countries" required>
+            <datalist id="countries">
+              <option value="Türkiye">
+              <option value="TC">
+              <option value="Almanya">
+              <option value="Amerika Birleşik Devletleri">
+              <option value="Arnavutluk">
+              <option value="Andorra">
+              <option value="Angola">
+              <option value="Antigua ve Barbuda">
+              <option value="Arjantin">
+              <option value="Ermenistan">
+              <option value="Avustralya">
+              <option value="Avusturya">
+              <option value="Azerbaycan">
+              <option value="Bahamalar">
+              <option value="Bahreyn">
+              <option value="Bangladeş">
+              <option value="Barbados">
+              <option value="Belarus">
+              <option value="Belçika">
+              <option value="Belize">
+              <option value="Benin">
+              <option value="Bhutan">
+              <option value="Bolivya">
+              <option value="Bosna-Hersek">
+              <option value="Botsvana">
+              <option value="Brezilya">
+              <option value="Brunei">
+              <option value="Bulgaristan">
+              <option value="Burkina Faso">
+              <option value="Burundi">
+              <option value="Cabo Verde">
+              <option value="Kamboçya">
+              <option value="Kamerun">
+              <option value="Kanada">
+              <option value="Orta Afrika Cumhuriyeti">
+              <option value="Çad">
+              <option value="Şili">
+              <option value="Çin">
+              <option value="Kolombiya">
+              <option value="Komorlar">
+              <option value="Kongo">
+              <option value="Kosta Rika">
+              <option value="Hırvatistan">
+              <option value="Küba">
+              <option value="Kıbrıs">
+              <option value="Çek Cumhuriyeti">
+              <option value="Danimarka">
+              <option value="Cibuti">
+              <option value="Dominika">
+              <option value="Dominik Cumhuriyeti">
+              <option value="Ekvador">
+              <option value="Mısır">
+              <option value="El Salvador">
+              <option value="Ekvator Ginesi">
+              <option value="Eritre">
+              <option value="Estonya">
+              <option value="Eswatini">
+              <option value="Etiyopya">
+              <option value="Fiji">
+              <option value="Finlandiya">
+              <option value="Fransa">
+              <option value="Gabon">
+              <option value="Gambia">
+              <option value="Gürcistan">
+              <option value="Gana">
+              <option value="Yunanistan">
+              <option value="Grenada">
+              <option value="Guatemala">
+              <option value="Gine">
+              <option value="Gine-Bissau">
+              <option value="Guyana">
+              <option value="Haiti">
+              <option value="Honduras">
+              <option value="Macaristan">
+              <option value="İzlanda">
+              <option value="Hindistan">
+              <option value="Endonezya">
+              <option value="İran">
+              <option value="Irak">
+              <option value="İrlanda">
+              <option value="İsrail">
+              <option value="İtalya">
+              <option value="Jamaika">
+              <option value="Japonya">
+              <option value="Ürdün">
+              <option value="Kazakistan">
+              <option value="Kenya">
+              <option value="Kiribati">
+              <option value="Kuzey Kore">
+              <option value="Güney Kore">
+              <option value="Kuveyt">
+              <option value="Kırgızistan">
+              <option value="Laos">
+              <option value="Letonya">
+              <option value="Lübnan">
+              <option value="Lesotho">
+              <option value="Liberya">
+              <option value="Libya">
+              <option value="Lihtenştayn">
+              <option value="Litvanya">
+              <option value="Lüksemburg">
+              <option value="Madagaskar">
+              <option value="Malavi">
+              <option value="Malezya">
+              <option value="Maldivler">
+              <option value="Mali">
+              <option value="Malta">
+              <option value="Marshall Adaları">
+              <option value="Moritanya">
+              <option value="Mauritius">
+              <option value="Meksika">
+              <option value="Mikronezya">
+              <option value="Moldova">
+              <option value="Monako">
+              <option value="Moğolistan">
+              <option value="Karadağ">
+              <option value="Fas">
+              <option value="Mozambik">
+              <option value="Myanmar">
+              <option value="Namibya">
+              <option value="Nauru">
+              <option value="Nepal">
+              <option value="Hollanda">
+              <option value="Yeni Zelanda">
+              <option value="Nikaragua">
+              <option value="Nijer">
+              <option value="Nijerya">
+              <option value="Kuzey Makedonya">
+              <option value="Norveç">
+              <option value="Umman">
+              <option value="Pakistan">
+              <option value="Palau">
+              <option value="Filistin">
+              <option value="Panama">
+              <option value="Papua Yeni Gine">
+              <option value="Paraguay">
+              <option value="Peru">
+              <option value="Filipinler">
+              <option value="Polonya">
+              <option value="Portekiz">
+              <option value="Katar">
+              <option value="Romanya">
+              <option value="Rusya">
+              <option value="Ruanda">
+              <option value="Saint Kitts ve Nevis">
+              <option value="Saint Lucia">
+              <option value="Saint Vincent">
+              <option value="Samoa">
+              <option value="San Marino">
+              <option value="Sao Tome ve Principe">
+              <option value="Suudi Arabistan">
+              <option value="Senegal">
+              <option value="Sırbistan">
+              <option value="Seyşeller">
+              <option value="Sierra Leone">
+              <option value="Singapur">
+              <option value="Slovakya">
+              <option value="Slovenya">
+              <option value="Solomon Adaları">
+              <option value="Somali">
+              <option value="Güney Afrika">
+              <option value="Güney Sudan">
+              <option value="İspanya">
+              <option value="Sri Lanka">
+              <option value="Sudan">
+              <option value="Surinam">
+              <option value="İsveç">
+              <option value="İsviçre">
+              <option value="Suriye">
+              <option value="Tayvan">
+              <option value="Tacikistan">
+              <option value="Tanzanya">
+              <option value="Tayland">
+              <option value="Timor-Leste">
+              <option value="Togo">
+              <option value="Tonga">
+              <option value="Trinidad ve Tobago">
+              <option value="Tunus">
+              <option value="Türkmenistan">
+              <option value="Tuvalu">
+              <option value="Uganda">
+              <option value="Ukrayna">
+              <option value="Birleşik Arap Emirlikleri">
+              <option value="Birleşik Krallık">
+              <option value="Uruguay">
+              <option value="Özbekistan">
+              <option value="Vanuatu">
+              <option value="Vatikan">
+              <option value="Venezuela">
+              <option value="Vietnam">
+              <option value="Yemen">
+              <option value="Zambiya">
+              <option value="Zimbabve">
+            </datalist>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Kimlik Tipi <span class="text-red">*</span></label>
+            <div style="display:flex; gap:1rem; align-items:center; height:38px;">
+              <label style="display:flex; align-items:center; gap:0.25rem;"><input type="radio" name="kimlikTipi"
+                  value="TC" checked onchange="toggleKimlikTipi()"> TC</label>
+              <label style="display:flex; align-items:center; gap:0.25rem;"><input type="radio" name="kimlikTipi"
+                  value="Pasaport" onchange="toggleKimlikTipi()"> Pasaport</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" id="kimlikLabel">TC Kimlik No <span class="text-red">*</span></label>
+            <input type="text" class="form-input" name="tcKimlik" id="r_tcKimlik" required oninput="valKimlik()">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Doğum Yeri</label>
+            <input type="text" class="form-input" name="dogumYeri" id="r_dogumYeri" placeholder="Örn: Ankara">
+          </div>
+          <div class="form-group">
+            <label class="form-label">İsim <span class="text-red">*</span></label>
+            <input type="text" class="form-input" name="isim" id="r_isim" placeholder="İsim" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Soyisim <span class="text-red">*</span></label>
+            <input type="text" class="form-input" name="soyisim" id="r_soyisim" placeholder="Soyisim" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Müşteri E-posta <span class="text-red">*</span></label>
+            <input type="email" class="form-input" name="musteriEmail" id="r_musteriEmail" placeholder="ornek@domain.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Müşteri Telefon <span class="text-red">*</span></label>
+            <input type="tel" class="form-input" name="musteriTelefon" id="r_musteriTelefon" placeholder="05XXXXXXXXX" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Kurum Adı <span class="text-red">*</span></label>
+            <input type="text" class="form-input" name="kurumAdi" id="r_kurumAdi" placeholder="Kurum Adı" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Aracı Kiraya Veren Personel <span class="text-red">*</span></label>
+            <input type="text" class="form-input" name="personelAdi" id="r_personelAdi" placeholder="Personel Adı"
+              required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sözleşme Dili <span class="text-red">*</span></label>
+            <select class="form-select" name="sozlesmeDili" id="r_sozlesmeDili" required>
+              <option value="TR">Türkçe (TR)</option>
+              <option value="EN">English (EN)</option>
+              <option value="DE">Deutsch (DE)</option>
+              <option value="RU">Русский (RU)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Ehliyet Bilgileri -->
+        <div id="ehliyetGroup"
+          style="margin-bottom:0.75rem; padding:1rem; border:1px dashed var(--border); border-radius:var(--radius); background:var(--bg);">
+          <div class="form-section-title" style="margin-top:0;">Ehliyet Bilgileri</div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Sürücü Adı Soyadı <span class="text-red">*</span></label>
+              <input type="text" class="form-input" name="surucuAdSoyad" id="r_surucuAdSoyad" placeholder="Ad Soyad"
+                required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Ehliyet No <span class="text-red">*</span></label>
+              <input type="text" class="form-input" name="ehliyetNo" id="r_ehliyetNo" placeholder="Belge No" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Veriliş Tarihi <span class="text-red">*</span></label>
+              <input type="date" class="form-input" name="ehliyetVerilisTarihi" id="r_ehliyetVerilisTarihi"
+                max="2099-12-31" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Geçerlilik Tarihi <span class="text-red">*</span></label>
+              <input type="date" class="form-input" name="ehliyetGecerlilikTarihi" id="r_ehliyetGecerlilikTarihi"
+                max="2099-12-31" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- Konaklama Bilgileri -->
+        <div class="form-section-title">Konaklama Bilgileri</div>
+        <div class="form-grid-2" style="margin-bottom: 0.75rem;">
+          <div class="form-group">
+            <label class="form-label">Konaklama Tipi <span class="text-red">*</span></label>
+            <select class="form-select" name="konaklamaTipi" id="r_konaklamaTipi" onchange="toggleAccommodationFields()"
+              required>
+              <option value="ev">Ev</option>
+              <option value="otel_pansiyon">Otel / Pansiyon</option>
+            </select>
+          </div>
+          <div class="form-group" id="odaNoGroup" style="display:none;">
+            <label class="form-label">Oda No <span class="text-red">*</span></label>
+            <input type="text" class="form-input" name="odaNo" id="r_odaNo" placeholder="Oda Numarası" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+          </div>
+        </div>
+        <div class="form-group mb-3" id="adresGroup">
+          <label class="form-label">Adres <span class="text-red">*</span></label>
+          <textarea class="form-textarea" name="adres" id="r_adres" rows="2" placeholder="Adres detaylarını yazın..."
+            required></textarea>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Başlangıç Tarihi & Saati</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input type="date" class="form-input" name="baslangicTarihi" id="r_baslangicTarihi" min="2000-01-01" max="2099-12-31" required>
+              <input type="time" class="form-input" name="baslangicSaati" id="r_baslangicSaati" value="09:00" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Bitiş Tarihi & Saati</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <input type="date" class="form-input" name="bitisTarihi" id="r_bitisTarihi" min="2000-01-01" max="2099-12-31" required>
+              <input type="time" class="form-input" name="bitisSaati" id="r_bitisSaati" value="09:00" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kilometre Bilgileri -->
+        <div class="form-section-title">Kilometre Bilgileri</div>
+        <div class="form-group mb-3">
+          <label class="form-label">Araç Alış Kilometresi <span class="text-red">*</span></label>
+          <input type="number" class="form-input" name="verilisteKm" id="r_verilisteKm" value="0" required>
+        </div>
+
+        <!-- Fiyatlandırma -->
+        <div class="form-section-title">Fiyatlandırma</div>
+        <div class="form-grid-4"
+          style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 0.75rem;">
+          <div class="form-group">
+            <label class="form-label">Para Birimi</label>
+            <select class="form-select" name="paraBirimi" id="r_paraBirimi">
+              <option value="₺">₺ (TL)</option>
+              <option value="$">$ (USD)</option>
+              <option value="€">€ (EUR)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Günlük Fiyat</label>
+            <input type="number" class="form-input" name="gunlukFiyat" id="r_gunlukFiyat" value="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Kaç Gün</label>
+            <input type="number" class="form-input" name="kiralamaSuresi" id="r_kiralamaSuresi" value="1" min="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Toplam Fiyat</label>
+            <input type="number" class="form-input" name="toplamFiyat" id="r_toplamFiyat" value="0" readonly
+              style="background-color:var(--bg);">
+          </div>
+        </div>
+
+        <!-- Ödeme Yöntemi -->
+        <div class="form-section-title">Ödeme Yöntemi</div>
+        <div class="form-group mb-3">
+          <label class="form-label">Ödeme Türü <span class="text-red">*</span></label>
+          <div style="display:flex; gap:1.5rem; align-items:center; height:38px;">
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+              <input type="checkbox" name="pay_nakit" id="r_pay_nakit" value="true" onchange="togglePaymentSplit(true)">
+              Nakit
+            </label>
+            <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+              <input type="checkbox" name="pay_kart" id="r_pay_kart" value="true" onchange="togglePaymentSplit(true)"> Kart
+            </label>
+          </div>
+        </div>
+
+        <div id="paymentSplitGroup"
+          style="display:none; padding:1rem; background:var(--bg); border-radius:var(--radius); margin-bottom:1rem; border:1px solid var(--border);">
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Nakit Alınan Tutar <span class="text-red">*</span></label>
+              <input type="number" class="form-input" name="nakitTutar" id="r_nakitTutar" value="0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Kart ile Alınan Tutar <span class="text-red">*</span></label>
+              <input type="number" class="form-input" name="kartTutar" id="r_kartTutar" value="0">
+            </div>
+          </div>
+          <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.5rem;">
+            <i class="fas fa-info-circle mr-1"></i> Toplam: <span id="paymentSplitTotal">0</span> / Beklenen: <span
+              id="paymentExpectedTotal">0</span>
+          </p>
+        </div>
+
+        <!-- Hasar Durumu -->
+        <div class="form-section-title">Hasar Durumu</div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Hasar Durumu</label>
+            <select class="form-select" name="hasarDurumu" id="r_hasarDurumu" onchange="toggleHasarFields()">
+              <option value="yok">Hasar Yok</option>
+              <option value="hafif">Hafif Hasarlı</option>
+              <option value="orta">Orta Hasarlı</option>
+              <option value="agir">Ağır Hasarlı</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" id="hasarAciklamaGroup" style="display:none;">
+          <label class="form-label">Hasar Açıklaması</label>
+          <textarea class="form-textarea" name="hasarAciklama" id="r_hasarAciklama" rows="2"
+            placeholder="Hasar detaylarını yazın..."></textarea>
+        </div>
+
+        <!-- KABIS Başlangıç Harita Konumu -->
+        <div style="display: none;">
+        <div class="form-section-title" style="color:#10b981;"><i class="fas fa-map-marker-alt"></i> KABİS Araç Teslim Konumu (Zorunlu)</div>
+        <div class="form-group mb-3">
+          <p style="font-size:12px; color:#6b7280; margin-bottom: 5px;">Harita üzerinde tıklayarak aracın teslim edildiği tam konumu seçiniz.</p>
+          <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+            <input type="text" id="kiralamaAdresAra" class="form-control" placeholder="Örn: Kızılay, Ankara" style="flex: 1; padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;" onkeypress="if(event.key === 'Enter') { event.preventDefault(); araKiralamaAdres(); }">
+            <button type="button" onclick="araKiralamaAdres()" style="padding: 8px 16px; border-radius: 6px; background-color: #64748b; color: white; border: none; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 5px;"><i class="fas fa-search"></i> Ara</button>
+          </div>
+          <div id="kiralamaMap" style="height: 250px; border-radius: 8px; border: 1px solid #e5e7eb; margin-bottom: 1rem;"></div>
+          <input type="hidden" name="kiralama_lat" id="kiralama_lat" value="39.92">
+          <input type="hidden" name="kiralama_lng" id="kiralama_lng" value="32.85">
+        </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-box" id="summaryBox" style="display:none;">
+          <h4>Özet</h4>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <div class="label">Gelir</div>
+              <div class="value" id="sum_gelir">₺0</div>
+            </div>
+            <div class="summary-item">
+              <div class="label">Net Kiralama Geliri</div>
+              <div class="value text-green" id="sum_kar">₺0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('rentalModal')">İptal</button>
+        <button type="submit" class="btn btn-primary" id="rentalSubmitBtn">Kaydet</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-backdrop" id="detailModal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h3>Kiralama Detayı</h3>
+      <button class="modal-close" onclick="closeModal('detailModal')">&times;</button>
+    </div>
+    <div class="modal-body" id="detailContent">
+      <p class="text-muted">Yükleniyor...</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- Return Vehicle Modal -->
+<div class="modal-backdrop" id="returnModal">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <h3>Araç Teslim</h3>
+      <button class="modal-close" onclick="closeModal('returnModal')">&times;</button>
+    </div>
+    <form id="returnForm" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-body">
+        <div class="form-group mb-3">
+          <label class="form-label">Teslim Alınacak Araç *</label>
+          <select class="form-select" id="ret_rentalSelect" onchange="selectReturnRental()">
+            <option value="">Araç Seçiniz...</option>
+            {% set active_plates = [] %}
+            {% for r in active_rentals %}
+            {% if (not r.alinistaKm or r.alinistaKm == 0 or r.alinistaKm == '0') and r.plaka not in active_plates %}
+            <option value="{{ r.plaka }}">{{ r.plaka }}</option>
+            {% set _ = active_plates.append(r.plaka) %}
+            {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group mb-3">
+          <label class="form-label">Aracın Verildiği Tarih</label>
+          <input type="date" class="form-input" id="ret_baslangic" readonly style="background-color: var(--bg);"
+            max="2099-12-31">
+        </div>
+        <div class="form-group mb-3">
+          <label class="form-label">Müşteriden Alınacak Tarih</label>
+          <input type="date" class="form-input" name="bitisTarihi" id="ret_bitis" max="2099-12-31">
+        </div>
+        <div class="form-group mb-3">
+          <label class="form-label">Araç Veriliş Kilometresi</label>
+          <input type="number" class="form-input" id="ret_verilisKm" readonly style="background-color: var(--bg);">
+        </div>
+        <div class="form-group mb-3">
+          <label class="form-label">Araç Dönüş Kilometresi <span class="text-red">*</span></label>
+          <input type="number" class="form-input" name="alinistaKm" id="ret_alinisKm" required>
+        </div>
+        <div class="form-group mb-3">
+          <label class="form-label">Teslim Alan Personel <span class="text-red">*</span></label>
+          <input type="text" class="form-input" name="teslimAlanPersonel" id="ret_teslimAlan" required
+            placeholder="Personel ismi giriniz...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hasar Durumu</label>
+          <select class="form-select" name="hasarDurumu" id="ret_hasar" onchange="toggleReturnHasarFields()">
+            <option value="yok">Hasar Yok</option>
+            <option value="hafif">Hafif Hasar</option>
+            <option value="orta">Orta Hasar</option>
+            <option value="agir">Ağır Hasar</option>
+          </select>
+        </div>
+        
+          <!-- KABIS Harita Konumu -->
+          <div style="display: none;">
+          <div class="form-group mt-3">
+            <label class="form-label" style="color:#10b981;"><i class="fas fa-map-marker-alt"></i> KABİS Araç Dönüş Konumu (Zorunlu)</label>
+            <p style="font-size:12px; color:#6b7280; margin-bottom: 5px;">Harita üzerinde tıklayarak aracın geri alındığı tam konumu seçiniz.</p>
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+              <input type="text" id="teslimAdresAra" class="form-control" placeholder="Örn: Kızılay, Ankara" style="flex: 1; padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px;" onkeypress="if(event.key === 'Enter') { event.preventDefault(); araTeslimAdres(); }">
+              <button type="button" onclick="araTeslimAdres()" style="padding: 8px 16px; border-radius: 6px; background-color: #64748b; color: white; border: none; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 5px;"><i class="fas fa-search"></i> Ara</button>
+            </div>
+            <div id="teslimMap" style="height: 250px; border-radius: 8px; border: 1px solid #e5e7eb;"></div>
+            <input type="hidden" name="teslim_lat" id="teslim_lat" value="39.92">
+            <input type="hidden" name="teslim_lng" id="teslim_lng" value="32.85">
+          </div>
+          </div>
+
+          <div class="form-group mt-3" id="ret_hasarAciklamaGroup" style="display:none;">
+          <label class="form-label">Hasar Açıklaması</label>
+          <textarea class="form-textarea" name="hasarAciklama" id="ret_hasarAciklama" rows="2"
+            placeholder="Hasar detaylarını yazın..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('returnModal')">İptal</button>
+        <button type="submit" class="btn btn-primary" id="returnSubmitBtn" disabled>Teslim Al</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Signature Modal -->
+<div class="modal-backdrop" id="signatureModal">
+  <div class="modal" style="max-width:680px; width:95%;">
+    <div class="modal-header">
+      <h3>Dijital Sözleşme İmzalama</h3>
+      <button class="modal-close" onclick="closeModal('signatureModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p class="text-muted mb-3" style="font-size:0.85rem;">
+        Sözleşmeyi tamamlamak için lütfen aşağıdaki imza alanlarını doldurunuz. Bu işlemden sonra kağıt sözleşme rafa kalkacaktır.
+      </p>
+      
+      <div class="form-grid-2" style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+        <!-- Müşteri İmza Kutu -->
+        <div style="display:flex; flex-direction:column; gap:0.5rem;">
+          <label class="form-label" style="font-weight:700; display:flex; justify-content:space-between; align-items:center;">
+            <span>Kiracı (Müşteri) İmzası</span>
+            <button type="button" class="btn btn-sm btn-outline" style="padding:2px 8px; font-size:0.75rem;" onclick="clearCanvas('customerCanvas')">Temizle</button>
+          </label>
+          <div style="border:2px dashed var(--border); border-radius:var(--radius); background:white; overflow:hidden; display:flex; justify-content:center; align-items:center;">
+            <canvas id="customerCanvas" width="300" height="150" style="cursor:crosshair; width:100%; display:block; background:white;"></canvas>
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-muted); text-align:center;" id="customerNameLabel">Müşteri</div>
+        </div>
+
+        <!-- Firma Yetkilisi İmza Kutu -->
+        <div style="display:flex; flex-direction:column; gap:0.5rem;">
+          <label class="form-label" style="font-weight:700; display:flex; justify-content:space-between; align-items:center;">
+            <span>Firma Yetkilisi İmzası</span>
+            <button type="button" class="btn btn-sm btn-outline" style="padding:2px 8px; font-size:0.75rem;" onclick="clearCanvas('agencyCanvas')">Temizle</button>
+          </label>
+          <div style="border:2px dashed var(--border); border-radius:var(--radius); background:white; overflow:hidden; display:flex; justify-content:center; align-items:center;">
+            <canvas id="agencyCanvas" width="300" height="150" style="cursor:crosshair; width:100%; display:block; background:white;"></canvas>
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-muted); text-align:center;" id="agencyNameLabel">Yetkili</div>
+        </div>
+      </div>
+      
+      <div id="signatureError" class="text-red font-medium mb-3" style="display:none; font-size:0.85rem;"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" onclick="closeModal('signatureModal')">İptal</button>
+      <button type="button" class="btn btn-primary" id="signatureSaveBtn" onclick="saveSignatures()">Sözleşmeyi İmzala ve Tamamla</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden Company Contract Template for JavaScript access -->
+<div id="company_contract_template_data" style="display:none;">{{ g.current_company.contract_template }}</div>
+
+<!-- New Rental Signature Modal -->
+<div class="modal-backdrop" id="rentalContractModal" style="display:none; z-index: 10000;">
+  <div class="modal" style="max-width:750px; width:95%;">
+    <div class="modal-header">
+      <h3>Araç Kiralama Sözleşmesi ve İmza</h3>
+      <button type="button" class="modal-close" onclick="closeModal('rentalContractModal')">&times;</button>
+    </div>
+    <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+      
+      <!-- Sözleşme Şablonu Metni -->
+      <div class="terms-section mb-4" style="border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; background: var(--bg);">
+        <h4 class="mb-2" style="font-weight: 800; color: var(--text);">Kiralama Sözleşmesi Şartları</h4>
+        <div id="modal_contract_text" style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.6; max-height: 200px; overflow-y: auto; padding-right: 0.5rem; white-space: pre-line; text-align: justify; border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1rem;">
+          <!-- Will be filled by JavaScript -->
+        </div>
+      </div>
+      
+      <p class="text-muted mb-3" style="font-size:0.85rem;">
+        <strong>ZORUNLU ADIM:</strong> Kaydı tamamlayabilmek için lütfen aşağıdaki imza alanlarını doldurunuz. İmza alınmadan kiralama yapılmasına sistem tarafından izin verilmemektedir.
+      </p>
+      
+      <div class="form-grid-2" style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+        <!-- Müşteri İmza Kutu -->
+        <div style="display:flex; flex-direction:column; gap:0.5rem;">
+          <label class="form-label" style="font-weight:700; display:flex; justify-content:space-between; align-items:center;">
+            <span>Kiracı (Müşteri) İmzası *</span>
+            <button type="button" class="btn btn-sm btn-outline" style="padding:2px 8px; font-size:0.75rem;" onclick="clearCanvas('newCustomerCanvas')">Temizle</button>
+          </label>
+          <div style="border:2px dashed var(--border); border-radius:var(--radius); background:white; overflow:hidden; display:flex; justify-content:center; align-items:center;">
+            <canvas id="newCustomerCanvas" width="300" height="150" style="cursor:crosshair; width:100%; display:block; background:white;"></canvas>
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-muted); text-align:center;" id="newCustomerNameLabel">Müşteri</div>
+        </div>
+
+        <!-- Firma Yetkilisi İmza Kutu -->
+        <div style="display:flex; flex-direction:column; gap:0.5rem;">
+          <label class="form-label" style="font-weight:700; display:flex; justify-content:space-between; align-items:center;">
+            <span>Firma Yetkilisi İmzası *</span>
+            <button type="button" class="btn btn-sm btn-outline" style="padding:2px 8px; font-size:0.75rem;" onclick="clearCanvas('newAgencyCanvas')">Temizle</button>
+          </label>
+          <div style="border:2px dashed var(--border); border-radius:var(--radius); background:white; overflow:hidden; display:flex; justify-content:center; align-items:center;">
+            <canvas id="newAgencyCanvas" width="300" height="150" style="cursor:crosshair; width:100%; display:block; background:white;"></canvas>
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-muted); text-align:center;" id="newAgencyNameLabel">Yetkili</div>
+        </div>
+      </div>
+      
+      <div id="newSignatureError" class="text-red font-medium mb-3" style="display:none; font-size:0.85rem;"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline" onclick="closeModal('rentalContractModal')">Geri Dön</button>
+      <button type="button" class="btn btn-primary" id="newSignatureSaveBtn" onclick="submitRentalFormWithSignatures()">Sözleşmeyi İmzala ve Kaydet</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- KABİS Notification Center Modal -->
+<div class="modal-backdrop" id="kabisPendingModal">
+  <div class="modal" style="max-width: 800px; width: 95%;">
+    <div class="modal-header" style="background-color: #fee2e2; border-bottom: 1px solid #fca5a5;">
+      <h3 style="color: #991b1b; margin: 0; display: flex; align-items: center; gap: 8px;"><i class="fas fa-bell"></i> KABİS İşlem Merkezi</h3>
+      <button class="modal-close" onclick="closeModal('kabisPendingModal')" style="color: #991b1b;">&times;</button>
+    </div>
+    <div class="modal-body" style="padding: 20px; max-height: 75vh; overflow-y: auto;">
+      
+      <!-- Çıkış Bildirimi Bekleyenler -->
+      {% if kabis_pending_checkout %}
+      <h4 style="margin-bottom: 10px; color: #b91c1c;"><i class="fas fa-sign-out-alt"></i> Çıkış Bildirimi Bekleyen / Hata Alan Araçlar</h4>
+      <div class="table-responsive" style="margin-bottom: 20px;">
+        <table class="data-table" style="font-size: 0.9rem;">
+          <thead>
+            <tr>
+              <th>Plaka</th>
+              <th>Müşteri</th>
+              <th>Çıkış Tarihi</th>
+              <th>Hata Sebebi</th>
+              <th class="text-right">İşlem</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in kabis_pending_checkout %}
+            <tr>
+              <td class="font-semibold">{{ r.plaka }}</td>
+              <td>{{ r.musteriAdi }}</td>
+              <td>{{ r.baslangicTarihi|fdate }}</td>
+              <td style="color: {% if r.kabis_kiralama_status == 'hata' %}#dc2626{% else %}#ca8a04{% endif %}; max-width: 200px; white-space: normal;">
+                {% if r.kabis_kiralama_status == 'hata' %}
+                  {{ r.kabis_kiralama_hata or 'Hata (Sebep yok)' }}
+                {% else %}
+                  Henüz Gönderilmedi
+                {% endif %}
+              </td>
+              <td class="text-right">
+                <button class="btn" style="background-color: #ef4444; color: white; padding: 4px 10px; font-size: 0.8rem;" onclick="simulateKabis('{{ r.id }}')">
+                  <i class="fas fa-paper-plane"></i> Çıkış Bildir
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
+      <!-- Dönüş Bildirimi Bekleyenler -->
+      {% if kabis_pending_return %}
+      <h4 style="margin-bottom: 10px; color: #b91c1c; margin-top: {% if kabis_pending_checkout %}20px{% else %}0{% endif %};"><i class="fas fa-undo"></i> Dönüş (Teslim) Bildirimi Bekleyen / Hata Alan Araçlar</h4>
+      <div class="table-responsive">
+        <table class="data-table" style="font-size: 0.9rem;">
+          <thead>
+            <tr>
+              <th>Plaka</th>
+              <th>Müşteri</th>
+              <th>Dönüş Tarihi</th>
+              <th>Hata Sebebi</th>
+              <th class="text-right">İşlem</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in kabis_pending_return %}
+            <tr>
+              <td class="font-semibold">{{ r.plaka }}</td>
+              <td>{{ r.musteriAdi }}</td>
+              <td>{{ r.bitisTarihi|fdate }}</td>
+              <td style="color: {% if r.kabis_teslim_status == 'hata' %}#dc2626{% else %}#ca8a04{% endif %}; max-width: 200px; white-space: normal;">
+                {% if r.kabis_teslim_status == 'hata' %}
+                  {{ r.kabis_teslim_hata or 'Hata (Sebep yok)' }}
+                {% else %}
+                  Henüz Gönderilmedi
+                {% endif %}
+              </td>
+              <td class="text-right">
+                <button class="btn" style="background-color: #ef4444; color: white; padding: 4px 10px; font-size: 0.8rem;" onclick="retryKabisTeslim('{{ r.id }}')">
+                  <i class="fas fa-undo"></i> Dönüş Bildir
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
+      {% if not kabis_pending_checkout and not kabis_pending_return %}
+      <div style="text-align: center; padding: 30px; color: #15803d;">
+        <i class="fas fa-check-circle" style="font-size: 3rem; margin-bottom: 10px;"></i>
+        <p style="font-size: 1.1rem; font-weight: bold;">Harika! KABİS'te işlem bekleyen araç yok.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Extend Rental Modal -->
+<div class="modal-backdrop" id="extendRentalModal">
+  <div class="modal" style="max-width: 500px;">
+    <div class="modal-header">
+      <h3 id="extendModalTitle">Süre Uzat</h3>
+      <button class="modal-close" onclick="closeModal('extendRentalModal')">&times;</button>
+    </div>
+    <div class="modal-body" style="padding: 20px;">
+      <form id="extendRentalForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" id="ext_rentalId" name="rentalId">
+        
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #334155;">Mevcut Bitiş Tarihi</label>
+          <input type="text" id="ext_mevcutBitis" class="input" readonly style="background:#f1f5f9; width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px;">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #334155;">Ek Gün Sayısı</label>
+          <input type="number" id="ext_ekGun" name="ekGun" class="input" min="1" value="1" oninput="calculateExtendFee()" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px;">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #334155;">Ek Tutar (₺)</label>
+          <input type="number" id="ext_ekTutar" name="ekTutar" class="input" step="0.01" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px;">
+          <small class="text-muted" style="display: block; margin-top: 5px; font-size: 0.8rem;">Bu tutar, günlük kira bedeline göre otomatik hesaplanmıştır. Gerekirse değiştirebilirsiniz.</small>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #334155;">Tahsilat Yöntemi</label>
+          <select id="ext_odemeYontemi" name="odemeYontemi" class="input" required style="width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px;">
+            <option value="nakit">Nakit</option>
+            <option value="kart">Kredi Kartı / Havale</option>
+          </select>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer" style="padding: 15px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px; background: #f8fafc; border-radius: 0 0 16px 16px;">
+      <button class="btn" style="background: #fff; border: 1px solid #cbd5e1; color: #475569;" onclick="closeModal('extendRentalModal')" type="button">İptal</button>
+      <button class="btn" style="background: var(--blue); color: #fff; border: none;" onclick="submitExtendRental(this)" type="button">Uzat ve Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+  // Global Map Variables
+  let kiralamaMapInstance = null;
+  let kiralamaMarker = null;
+  let teslimMapInstance = null;
+  let teslimMarker = null;
+
+  function initKiralamaMap() {
+    console.log('--- initKiralamaMap FORTIFIED START ---');
+    const mapContainer = document.getElementById('kiralamaMap');
+    
+    if (!mapContainer) {
+      alert('HATA: kiralamaMap elementi bulunamadi!');
+      return;
+    }
+    
+    console.log('mapContainer found:', mapContainer);
+    console.log('Dimensions before L.map:', mapContainer.clientWidth, 'x', mapContainer.clientHeight);
+
+    if (!kiralamaMapInstance) {
+      try {
+        console.log('Initializing L.map...');
+        kiralamaMapInstance = L.map('kiralamaMap', {
+          zoomControl: true, // Zorunlu zoom kontrolü
+          attributionControl: false // Temiz görünüm için kaldır
+        }).setView([39.9334, 32.8597], 6);
+        
+        console.log('Adding tile layer...');
+        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
+        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
+        const googleHybrid = L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', { subdomains:['mt0','mt1','mt2','mt3'], maxZoom: 20 });
+        
+        // Varsayilan olarak Google Hybrid (Detayli) secili baslat
+        googleHybrid.addTo(kiralamaMapInstance);
+        
+        const baseMaps = {
+            "Google Harita (Detaylı)": googleHybrid,
+            "Esri Uydu (Sade)": satellite,
+            "Standart (Sokak)": osm
+        };
+        L.control.layers(baseMaps).addTo(kiralamaMapInstance);
+        
+        console.log('Setting click handlers...');
+        kiralamaMapInstance.on('click', function(e) {
+          const lat = e.latlng.lat;
+          const lng = e.latlng.lng;
+          document.getElementById('kiralama_lat').value = lat;
+          document.getElementById('kiralama_lng').value = lng;
+          
+          if (kiralamaMarker) {
+            kiralamaMarker.setLatLng(e.latlng);
+          } else {
+            kiralamaMarker = L.marker(e.latlng).addTo(kiralamaMapInstance);
+          }
+        });
+        
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+            kiralamaMapInstance.setView([position.coords.latitude, position.coords.longitude], 14);
+          }, function() {}, { timeout: 5000 });
+        }
+      } catch (e) {
+        console.error('LEAFLET CRASH:', e);
+      }
+    } else {
+      console.log('kiralamaMapInstance already exists.');
+    }
+    
+    // Aggressive invalidateSize loop
+    let ticks = 0;
+    const resizer = setInterval(() => {
+      ticks++;
+      if (kiralamaMapInstance) {
+        kiralamaMapInstance.invalidateSize();
+        console.log(`invalidateSize tick ${ticks}: ${mapContainer.clientWidth}x${mapContainer.clientHeight}`);
+      }
+      if (ticks >= 10) clearInterval(resizer);
+    }, 100);
+  }
+
+  function araKiralamaAdres() {
+    const adres = document.getElementById('kiralamaAdresAra').value;
+    if (!adres || adres.trim() === '') return;
+    
+    // ArcGIS World Geocoding Service (Highly tolerant of verbose/colloquial addresses)
+    const url = `https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=json&singleLine=${encodeURIComponent(adres)}&maxLocations=1`;
+    
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        if (data && data.candidates && data.candidates.length > 0) {
+          const result = data.candidates[0];
+          const lat = parseFloat(result.location.y);
+          const lon = parseFloat(result.location.x);
+          
+          if (kiralamaMapInstance) {
+            kiralamaMapInstance.setView([lat, lon], 15); // Haritayi adrese odakla
+            
+            // Konumu secilmis gibi isaretle
+            document.getElementById('kiralama_lat').value = lat;
+            document.getElementById('kiralama_lng').value = lon;
+            
+            if (kiralamaMarker) {
+              kiralamaMarker.setLatLng([lat, lon]);
+            } else {
+              kiralamaMarker = L.marker([lat, lon]).addTo(kiralamaMapInstance);
+            }
+          }
+        } else {
+          alert('Adres bulunamadi. Lutfen daha kisa veya anlasilir bir adres yazmayi deneyin (Orn: Okurcalar, Alanya).');
+        }
+      })
+      .catch(err => {
+        console.error('Adres arama hatasi:', err);
+        alert('Adres aranirken bir hata olustu. Sunucu baglantisini kontrol edin.');
+      });
+  }
+
+  function araTeslimAdres() {
+    const adres = document.getElementById('teslimAdresAra').value;
+    if (!adres || adres.trim() === '') return;
+    
+    // ArcGIS World Geocoding Service
+    const url = `https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=json&singleLine=${encodeURIComponent(adres)}&maxLocations=1`;
+    
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        if (data && data.candidates && data.candidates.length > 0) {
+          const result = data.candidates[0];
+          const lat = parseFloat(result.location.y);
+          const lon = parseFloat(result.location.x);
+          
+          if (teslimMapInstance) {
+            teslimMapInstance.setView([lat, lon], 15);
+            
+            document.getElementById('teslim_lat').value = lat;
+            document.getElementById('teslim_lng').value = lon;
+            
+            if (teslimMarker) {
+              teslimMarker.setLatLng([lat, lon]);
+            } else {
+              teslimMarker = L.marker([lat, lon], {
+                icon: L.icon({
+                  iconUrl: '/static/css/images/marker-icon-green.png',
+                  shadowUrl: '/static/css/images/marker-shadow.png',
+                  iconSize: [25, 41],
+                  iconAnchor: [12, 41],
+                  popupAnchor: [1, -34],
+                  shadowSize: [41, 41]
+                })
+              }).addTo(teslimMapInstance);
+            }
+          }
+        } else {
+          alert('Adres bulunamadi. Lutfen daha kisa veya anlasilir bir adres yazmayi deneyin (Orn: Okurcalar, Alanya).');
+        }
+      })
+      .catch(err => {
+        console.error('Adres arama hatasi:', err);
+        alert('Adres aranirken bir hata olustu. Sunucu baglantisini kontrol edin.');
+      });
+  }
+
+  function initTeslimMap() {
+    const mapContainer = document.getElementById('teslimMap');
+    if (!mapContainer) return;
+    
+    if (!teslimMapInstance) {
+      teslimMapInstance = L.map('teslimMap', {
+        attributionControl: false // Temiz görünüm
+      }).setView([39.9334, 32.8597], 6);
+      
+      const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
+      const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
+      const googleHybrid = L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', { subdomains:['mt0','mt1','mt2','mt3'], maxZoom: 20 });
+      
+      googleHybrid.addTo(teslimMapInstance);
+      
+      const baseMaps = {
+          "Google Harita (Detaylı)": googleHybrid,
+          "Esri Uydu (Sade)": satellite,
+          "Standart (Sokak)": osm
+      };
+      L.control.layers(baseMaps).addTo(teslimMapInstance);
+      
+      teslimMapInstance.on('click', function(e) {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+        
+        document.getElementById('teslim_lat').value = lat;
+        document.getElementById('teslim_lng').value = lng;
+        
+        if (teslimMarker) {
+          teslimMarker.setLatLng(e.latlng);
+        } else {
+          teslimMarker = L.marker(e.latlng, {
+            icon: L.icon({
+              iconUrl: '/static/css/images/marker-icon-green.png',
+              shadowUrl: '/static/css/images/marker-shadow.png',
+              iconSize: [25, 41],
+              iconAnchor: [12, 41],
+              popupAnchor: [1, -34],
+              shadowSize: [41, 41]
+            })
+          }).addTo(teslimMapInstance);
+        }
+      });
+      
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          const uLat = position.coords.latitude;
+          const uLng = position.coords.longitude;
+          teslimMapInstance.setView([uLat, uLng], 14);
+        }, function() {}, { timeout: 5000 });
+      }
+    }
+    
+    setTimeout(() => {
+      teslimMapInstance.invalidateSize();
+    }, 400);
+  }
+
+  // Global Modal Helper Functions to prevent reference errors
+  function openModal(id) {
+    console.log('openModal triggered for:', id);
+    const el = document.getElementById(id);
+    if (el) el.classList.add('active');
+    
+    if (id === 'rentalModal') {
+      console.log('rentalModal detected, calling setTimeout for initKiralamaMap');
+      setTimeout(initKiralamaMap, 200);
+    } else if (id === 'returnModal') {
+      console.log('returnModal detected, calling setTimeout for initTeslimMap');
+      setTimeout(initTeslimMap, 200);
+    }
+  }
+
+  function closeModal(id) {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  }
+
+  const HASAR_LABELS = {{ HASAR_LABELS| tojson }};
+
+  function selectVehicle(plaka) {
+    const opt = document.querySelector('#r_plaka option[value="' + plaka + '"]');
+    if (opt) {
+      document.getElementById('r_aracId').value = opt.dataset.id || '';
+      document.getElementById('r_marka').value = opt.dataset.marka || '';
+      document.getElementById('r_model').value = opt.dataset.model || '';
+    }
+
+    if (plaka) {
+      fetch(`/kiralama_arac_km?plaka=${encodeURIComponent(plaka)}&t=${new Date().getTime()}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            const kmInput = document.getElementById('r_verilisteKm');
+            kmInput.value = data.guncelKm;
+            kmInput.readOnly = true;
+            kmInput.style.backgroundColor = 'var(--bg)';
+
+            // Günlük kiralama bedelini otomatik doldur
+            const gunlukInput = document.getElementById('r_gunlukFiyat');
+            if (data.gunlukUcret > 0) {
+              gunlukInput.value = data.gunlukUcret;
+              // Toplam fiyatı yeniden hesapla
+              autoCalcTotal.call(gunlukInput);
+            }
+          }
+        })
+        .catch(err => console.error("Veri çekme hatası:", err));
+    } else {
+      const kmInput = document.getElementById('r_verilisteKm');
+      kmInput.value = 0;
+      kmInput.readOnly = false;
+      kmInput.style.backgroundColor = '';
+    }
+  }
+
+  function toggleHasarFields() {
+    const val = document.getElementById('r_hasarDurumu').value;
+    document.getElementById('hasarAciklamaGroup').style.display = val !== 'yok' ? 'block' : 'none';
+  }
+
+  function toggleReturnHasarFields() {
+    const val = document.getElementById('ret_hasar').value;
+    document.getElementById('ret_hasarAciklamaGroup').style.display = val !== 'yok' ? 'block' : 'none';
+  }
+
+  function toggleAccommodationFields() {
+    const type = document.getElementById('r_konaklamaTipi').value;
+    const odaGroup = document.getElementById('odaNoGroup');
+    const adresGroup = document.getElementById('adresGroup');
+    const odaInput = document.getElementById('r_odaNo');
+    const adresInput = document.getElementById('r_adres');
+
+    if (type === 'otel_pansiyon') {
+      odaGroup.style.display = 'block';
+      odaInput.required = true;
+      // Otel seçilince adres opsiyonel olabilir veya yine zorunlu kalabilir
+      // Ama kullanıcı "Ev seçilirse adres zorunlu olsun" dediği için 
+      // Otel seçilince oda no zorunlu yapıyoruz.
+    } else {
+      odaGroup.style.display = 'none';
+      odaInput.required = false;
+      odaInput.value = '';
+    }
+  }
+
+  function togglePaymentSplit(isManualClick = false) {
+    const isNakit = document.getElementById('r_pay_nakit').checked;
+    const isKart = document.getElementById('r_pay_kart').checked;
+    const splitGroup = document.getElementById('paymentSplitGroup');
+    const nakitInput = document.getElementById('r_nakitTutar');
+    const kartInput = document.getElementById('r_kartTutar');
+    const expected = parseFloat(document.getElementById('r_toplamFiyat').value) || 0;
+
+    if (isNakit && isKart) {
+      splitGroup.style.display = 'block';
+      nakitInput.required = true;
+      kartInput.required = true;
+      if (isManualClick) {
+        nakitInput.value = '';
+        kartInput.value = '';
+      }
+    } else {
+      splitGroup.style.display = 'none';
+      nakitInput.required = false;
+      kartInput.required = false;
+
+      if (isNakit) {
+        nakitInput.value = expected;
+        kartInput.value = 0;
+      } else if (isKart) {
+        kartInput.value = expected;
+        nakitInput.value = 0;
+      }
+    }
+    updatePaymentSplitSummary();
+  }
+
+  function updatePaymentSplitSummary() {
+    const nakit = parseFloat(document.getElementById('r_nakitTutar').value) || 0;
+    const kart = parseFloat(document.getElementById('r_kartTutar').value) || 0;
+    const expected = parseFloat(document.getElementById('r_toplamFiyat').value) || 0;
+
+    document.getElementById('paymentSplitTotal').textContent = (nakit + kart).toLocaleString('tr-TR');
+    document.getElementById('paymentExpectedTotal').textContent = expected.toLocaleString('tr-TR');
+  }
+
+  // Attach split listeners
+  document.getElementById('r_nakitTutar').addEventListener('input', updatePaymentSplitSummary);
+  document.getElementById('r_kartTutar').addEventListener('input', updatePaymentSplitSummary);
+
+  function toggleEhliyetFields() {
+    // Ehliyet bilgileri artık her zaman zorunlu ve görünür.
+  }
+
+  function updateSummary() {
+    const gelir = parseFloat(document.getElementById('r_toplamFiyat').value) || 0;
+    const pb = document.getElementById('r_paraBirimi').value;
+
+    document.getElementById('summaryBox').style.display = gelir > 0 ? 'block' : 'none';
+    document.getElementById('sum_gelir').textContent = pb + gelir.toLocaleString('tr-TR');
+    document.getElementById('sum_kar').textContent = pb + gelir.toLocaleString('tr-TR');
+  }
+
+  function updateKmInfo() {
+    // Alınış kilometresi sadece araç teslim formunda olduğu için bu kısım iptal edildi.
+  }
+
+  // Auto-calculate total price from daily price and dates
+  function autoCalcTotal() {
+    const startInput = document.getElementById('r_baslangicTarihi');
+    const endInput = document.getElementById('r_bitisTarihi');
+    const suresiInput = document.getElementById('r_kiralamaSuresi');
+    const gunlukInput = document.getElementById('r_gunlukFiyat');
+    const toplamInput = document.getElementById('r_toplamFiyat');
+
+    let days = parseInt(suresiInput.value) || 0;
+
+    // Eğer tarihler değişmişse gün sayısını yeniden hesapla
+    if (this && (this.id === 'r_baslangicTarihi' || this.id === 'r_bitisTarihi')) {
+      if (startInput.value && endInput.value) {
+        const d1 = new Date(startInput.value);
+        const d2 = new Date(endInput.value);
+        const diffTime = d2 - d1;
+        days = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+        suresiInput.value = days;
+      }
+    }
+
+    const dailyPrice = parseFloat(gunlukInput.value) || 0;
+    const total = days * dailyPrice;
+    toplamInput.value = total;
+
+    updateSummary();
+    updatePaymentSplitSummary();
+  }
+
+  // Attach listeners
+  ['r_toplamFiyat'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateSummary);
+  });
+  document.getElementById('r_paraBirimi').addEventListener('change', updateSummary);
+  ['r_verilisteKm'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateKmInfo);
+  });
+  ['r_baslangicTarihi', 'r_bitisTarihi', 'r_gunlukFiyat', 'r_kiralamaSuresi'].forEach(id => {
+    document.getElementById(id).addEventListener('change', autoCalcTotal);
+    document.getElementById(id).addEventListener('input', autoCalcTotal);
+  });
+
+  // TC / Pasaport Validation
+  function toggleKimlikTipi() {
+    const isTC = document.querySelector('input[name="kimlikTipi"]:checked').value === 'TC';
+    document.getElementById('kimlikLabel').innerHTML = isTC ? 'TC Kimlik No <span class="text-red">*</span>' : 'Pasaport No <span class="text-red">*</span>';
+    const input = document.getElementById('r_tcKimlik');
+    input.value = '';
+    input.maxLength = isTC ? 11 : 9;
+    toggleEhliyetFields();
+  }
+
+  function valKimlik() {
+    const input = document.getElementById('r_tcKimlik');
+    let val = input.value.toUpperCase();
+    const isTC = document.querySelector('input[name="kimlikTipi"]:checked').value === 'TC';
+
+    if (isTC) {
+      val = val.replace(/[^0-9]/g, '');
+      input.maxLength = 11;
+    } else {
+      val = val.replace(/[^A-Z0-9]/g, '');
+      input.maxLength = 9;
+    }
+    input.value = val;
+  }
+
+  document.getElementById('rentalForm').addEventListener('submit', function (e) {
+    let hasEmpty = false;
+    const requiredInputs = [
+      'r_plaka', 'r_uyruk', 'r_tcKimlik', 'r_dogumYeri', 'r_isim', 'r_soyisim',
+      'r_musteriEmail', 'r_musteriTelefon', 'r_kurumAdi', 'r_personelAdi', 'r_baslangicTarihi', 'r_bitisTarihi', 'r_verilisteKm'
+    ];
+
+    requiredInputs.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && (!el.value || el.value.trim() === '')) {
+        el.style.border = '1px solid var(--red)';
+        hasEmpty = true;
+      } else if (el) {
+        el.style.border = '';
+      }
+    });
+
+    if (hasEmpty) {
+      e.preventDefault();
+      alert('Lütfen tüm zorunlu alanları doldurun.');
+      return;
+    }
+
+    const isTC = document.querySelector('input[name="kimlikTipi"]:checked').value === 'TC';
+    const val = document.getElementById('r_tcKimlik').value;
+
+    if (isTC) {
+      if (val.length !== 11) {
+        e.preventDefault();
+        alert('TC Kimlik numarası tam 11 haneli olmalıdır.');
+      }
+    } else {
+      if (val.length < 6 || val.length > 9) {
+        e.preventDefault();
+        alert('Pasaport numarası en az 6, en fazla 9 hane (harf ve rakam) olmalıdır.');
+      }
+    }
+
+    // Ödeme Yöntemi Kontrolü
+    const payNakit = document.getElementById('r_pay_nakit').checked;
+    const payKart = document.getElementById('r_pay_kart').checked;
+    const expected = parseFloat(document.getElementById('r_toplamFiyat').value) || 0;
+
+    if (!payNakit && !payKart) {
+      e.preventDefault();
+      showToast('🚨 Lütfen bir ödeme yöntemi seçin (Nakit veya Kart).', 'error');
+      return;
+    }
+
+    if (payNakit && payKart) {
+      const nakit = parseFloat(document.getElementById('r_nakitTutar').value) || 0;
+      const kart = parseFloat(document.getElementById('r_kartTutar').value) || 0;
+      if (Math.abs((nakit + kart) - expected) > 0.01) {
+        e.preventDefault();
+        showToast(`🚨 Nakit ve Kart tutarlarının toplamı (${(nakit + kart).toLocaleString('tr-TR')}), beklenen toplam fiyat (${expected.toLocaleString('tr-TR')}) ile eşleşmiyor!`, 'error');
+        return;
+      }
+    }
+
+    // Tarih Mantık Kontrolleri (Ters Tarih Saçmalıklarını Engelleme)
+    const startVal = document.getElementById('r_baslangicTarihi').value;
+    const endVal = document.getElementById('r_bitisTarihi').value;
+    if (startVal && endVal && endVal < startVal) {
+      e.preventDefault();
+      showToast('🚨 Hata: Araç dönüş tarihi (Bitiş Tarihi), kiralama başlangıç tarihinden önce olamaz.', 'error');
+      document.getElementById('r_bitisTarihi').focus();
+      return;
+    }
+
+    const verilisVal = document.getElementById('r_ehliyetVerilisTarihi').value;
+    const gecerlilikVal = document.getElementById('r_ehliyetGecerlilikTarihi').value;
+    if (verilisVal && gecerlilikVal && gecerlilikVal < verilisVal) {
+      e.preventDefault();
+      showToast('🚨 Hata: Ehliyet geçerlilik tarihi, ehliyet veriliş tarihinden önce olamaz.', 'error');
+      document.getElementById('r_ehliyetGecerlilikTarihi').focus();
+      return;
+    }
+
+    // KABİS Konum Seçilme Zorunluluğu Kontrolü
+    const kiralamaLat = document.getElementById('kiralama_lat').value;
+    const kiralamaLng = document.getElementById('kiralama_lng').value;
+    if (!kiralamaLat || !kiralamaLng) {
+      e.preventDefault();
+      showToast('🚨 Hata: Lütfen harita üzerinden KABİS araç teslim konumunu seçiniz!', 'error');
+      document.getElementById('kiralamaMap').scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    // Eğer yeni kiralama ise imza modalını tetikle
+    const formAction = document.getElementById('rentalForm').getAttribute('action') || '';
+    if (formAction.includes('/ekle') || formAction.includes('kiralama_ekle')) {
+      e.preventDefault();
+
+      const templateDataRaw = document.getElementById('company_contract_template_data').innerText;
+      let displayContract = templateDataRaw;
+      const selectedLang = document.getElementById('r_sozlesmeDili').value || 'TR';
+      
+      try {
+        if (templateDataRaw.trim().startsWith('{')) {
+          const parsed = JSON.parse(templateDataRaw);
+          displayContract = parsed[selectedLang] || templateDataRaw;
+        }
+      } catch (e) {
+        console.error("Contract JSON parsing error:", e);
+      }
+      
+      document.getElementById('modal_contract_text').innerText = displayContract;
+      const customerName = document.getElementById('r_isim').value + ' ' + document.getElementById('r_soyisim').value;
+      const agencyName = document.getElementById('r_personelAdi').value;
+
+      document.getElementById('newCustomerNameLabel').innerText = "Kiracı: " + customerName;
+      document.getElementById('newAgencyNameLabel').innerText = "Yetkili: " + agencyName;
+      document.getElementById('newSignatureError').style.display = 'none';
+
+      // Kiralamayı kapa, imza sözleşmesini aç
+      closeModal('rentalModal');
+      openModal('rentalContractModal');
+
+      // Kanvasları ilklendir
+      setTimeout(() => {
+        initSignatureCanvas('newCustomerCanvas');
+        initSignatureCanvas('newAgencyCanvas');
+        clearCanvas('newCustomerCanvas');
+        clearCanvas('newAgencyCanvas');
+      }, 150);
+    }
+  });
+
+  // Remove red border on input
+  document.querySelectorAll('#rentalForm .form-input, #rentalForm .form-select').forEach(el => {
+    const clearError = function () {
+      if (this.value && this.value.trim() !== '') {
+        this.style.border = '';
+      }
+    };
+    el.addEventListener('input', clearError);
+    el.addEventListener('change', clearError);
+  });
+
+  // Ehliyet Tarihi Validation
+  document.getElementById('r_ehliyetVerilisTarihi').addEventListener('change', function (e) {
+    const verilisVal = this.value;
+    const gecerlilikInput = document.getElementById('r_ehliyetGecerlilikTarihi');
+    if (verilisVal) {
+      gecerlilikInput.min = verilisVal;
+      if (gecerlilikInput.value && gecerlilikInput.value < verilisVal) {
+        gecerlilikInput.value = verilisVal;
+      }
+    }
+  });
+
+  // Kiralama Başlangıç Tarihi Değiştiğinde Bitiş Tarihine Min Sınırı Koyma
+  document.getElementById('r_baslangicTarihi').addEventListener('change', function () {
+    const startVal = this.value;
+    const endInput = document.getElementById('r_bitisTarihi');
+    if (startVal) {
+      endInput.min = startVal;
+      if (endInput.value && endInput.value < startVal) {
+        endInput.value = startVal;
+      }
+    }
+  });
+
+  function resetForm() {
+    ['r_aracId', 'r_plaka', 'r_marka', 'r_model', 'r_isim', 'r_soyisim', 'r_musteriEmail', 'r_musteriTelefon', 'r_tcKimlik', 'r_dogumYeri', 'r_uyruk', 'r_kurumAdi', 'r_personelAdi', 'r_surucuAdSoyad', 'r_ehliyetNo', 'r_ehliyetVerilisTarihi', 'r_ehliyetGecerlilikTarihi', 'r_baslangicTarihi', 'r_bitisTarihi', 'r_hasarAciklama'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    ['r_verilisteKm', 'r_gunlukFiyat', 'r_toplamFiyat'].forEach(id => {
+      document.getElementById(id).value = '0';
+    });
+
+    document.getElementById('r_sozlesmeDili').value = 'TR';
+
+    // Reset ReadOnly for verilisteKm
+    const kmInput = document.getElementById('r_verilisteKm');
+    if (kmInput) {
+      kmInput.readOnly = false;
+      kmInput.style.backgroundColor = '';
+    }
+    document.getElementById('r_hasarDurumu').value = 'yok';
+    document.getElementById('hasarAciklamaGroup').style.display = 'none';
+    document.getElementById('summaryBox').style.display = 'none';
+
+    // Tarih alanlarındaki zorunlulukları (min) temizlemek yerine zorla geçmişe çek
+    document.querySelectorAll('input[type="date"]').forEach(input => {
+      input.min = '2000-01-01';
+    });
+
+    // Reset payment checkbox and split fields
+    document.getElementById('r_pay_nakit').checked = false;
+    document.getElementById('r_pay_kart').checked = false;
+    document.getElementById('r_nakitTutar').value = '0';
+    document.getElementById('r_kartTutar').value = '0';
+    togglePaymentSplit(false);
+  }
+
+  function openAddModal() {
+    resetForm();
+    document.getElementById('modalTitle').textContent = 'Yeni Kiralama';
+    document.getElementById('rentalSubmitBtn').textContent = 'Kaydet';
+    document.getElementById('rentalForm').action = '{{ url_for("fleet.kiralama_ekle") }}';
+
+    document.querySelector('input[name="kimlikTipi"][value="TC"]').checked = true;
+    toggleKimlikTipi();
+
+    openModal('rentalModal');
+  }
+
+  function openEditModal(r) {
+    document.getElementById('modalTitle').textContent = 'Kiralama Düzenle';
+    document.getElementById('rentalSubmitBtn').textContent = 'Güncelle';
+    document.getElementById('rentalForm').action = '/kiralamalar/guncelle/' + r.id;
+
+    document.getElementById('r_aracId').value = r.arac_id;
+    document.getElementById('r_plaka').value = r.plaka;
+    document.getElementById('r_marka').value = r.marka;
+    document.getElementById('r_model').value = r.model;
+    document.getElementById('r_isim').value = r.isim || '';
+    document.getElementById('r_soyisim').value = r.soyisim || '';
+    document.getElementById('r_musteriEmail').value = r.musteriEmail || '';
+    document.getElementById('r_musteriTelefon').value = r.musteriTelefon || '';
+    document.getElementById('r_uyruk').value = r.uyruk || 'TC';
+    document.getElementById('r_kurumAdi').value = r.kurumAdi || '';
+    document.getElementById('r_dogumYeri').value = r.dogumYeri || '';
+    document.getElementById('r_personelAdi').value = r.personelAdi || '';
+    document.getElementById('r_sozlesmeDili').value = r.sozlesmeDili || 'TR';
+
+    // Kimlik Tipi ve No Ataması
+    document.getElementById('r_tcKimlik').value = r.tcKimlik || '';
+    let isTCOrPasaport = 'TC';
+    // Eğer kimlikte harf varsa veya 11 rakamdan farklıysa Pasaport kabul et
+    if (r.tcKimlik && (/[A-Za-z]/.test(r.tcKimlik) || r.tcKimlik.length !== 11)) {
+      isTCOrPasaport = 'Pasaport';
+    }
+    const radio = document.querySelector(`input[name="kimlikTipi"][value="${isTCOrPasaport}"]`);
+    if (radio) radio.checked = true;
+    toggleKimlikTipi();
+
+    document.getElementById('r_surucuAdSoyad').value = r.surucuAdSoyad || '';
+    document.getElementById('r_ehliyetNo').value = r.ehliyetNo || '';
+    document.getElementById('r_ehliyetVerilisTarihi').value = r.ehliyetVerilisTarihi || '';
+    document.getElementById('r_ehliyetGecerlilikTarihi').value = r.ehliyetGecerlilikTarihi || '';
+    document.getElementById('r_baslangicTarihi').value = r.baslangicTarihi;
+    document.getElementById('r_baslangicSaati').value = r.baslangicSaati || '09:00';
+    document.getElementById('r_bitisTarihi').value = r.bitisTarihi;
+    document.getElementById('r_bitisSaati').value = r.bitisSaati || '09:00';
+
+    // Düzenleme sırasında tarih kısıtlamalarını ayarla
+    document.getElementById('r_bitisTarihi').min = r.baslangicTarihi;
+    if (r.ehliyetVerilisTarihi) {
+      document.getElementById('r_ehliyetGecerlilikTarihi').min = r.ehliyetVerilisTarihi;
+    }
+
+    const kmInput = document.getElementById('r_verilisteKm');
+    kmInput.value = r.verilisteKm || 0;
+    kmInput.readOnly = true;
+    kmInput.style.backgroundColor = 'var(--bg)';
+
+    document.getElementById('r_gunlukFiyat').value = r.gunlukFiyat || 0;
+    document.getElementById('r_kiralamaSuresi').value = r.kiralamaSuresi || 1;
+    document.getElementById('r_toplamFiyat').value = r.toplamFiyat || 0;
+    document.getElementById('r_paraBirimi').value = r.paraBirimi || '₺';
+    document.getElementById('r_hasarDurumu').value = r.hasarDurumu;
+    document.getElementById('r_hasarAciklama').value = r.hasarAciklama || '';
+
+    // Ödeme Türü ve tutarları popüle et
+    const nakitVal = parseFloat(r.nakitTutar) || 0;
+    const kartVal = parseFloat(r.kartTutar) || 0;
+    document.getElementById('r_pay_nakit').checked = nakitVal > 0;
+    document.getElementById('r_pay_kart').checked = kartVal > 0;
+    document.getElementById('r_nakitTutar').value = nakitVal;
+    document.getElementById('r_kartTutar').value = kartVal;
+    togglePaymentSplit(false);
+
+    toggleHasarFields();
+    toggleEhliyetFields();
+    updateKmInfo();
+    updateSummary();
+    openModal('rentalModal');
+  }
+
+  let currentGunlukFiyat = 0;
+  function openExtendModal(rental) {
+    document.getElementById('extendRentalModal').classList.add('active');
+    document.getElementById('extendModalTitle').innerText = `${rental.plaka} - Süre Uzat`;
+    document.getElementById('ext_rentalId').value = rental.id;
+    
+    currentGunlukFiyat = parseFloat(rental.gunlukFiyat) || 0;
+    
+    // Parse date for visual
+    const parts = (rental.bitisTarihi || "").split('-');
+    const formattedDate = parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : rental.bitisTarihi;
+    document.getElementById('ext_mevcutBitis').value = formattedDate + " " + (rental.bitisSaati || "");
+    
+    document.getElementById('ext_ekGun').value = 1;
+    calculateExtendFee();
+  }
+
+  function calculateExtendFee() {
+    const ekGun = parseInt(document.getElementById('ext_ekGun').value) || 0;
+    const ekTutar = ekGun * currentGunlukFiyat;
+    document.getElementById('ext_ekTutar').value = ekTutar.toFixed(2);
+  }
+
+  async function submitExtendRental(btn) {
+    btn.disabled = true;
+    btn.innerText = "Kaydediliyor...";
+    
+    const formData = new FormData(document.getElementById('extendRentalForm'));
+    const rentalId = formData.get('rentalId');
+    
+    try {
+      const response = await fetch(`/kiralamalar/extend/${rentalId}`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+      if(response.ok && data.success) {
+        showToast("Süre başarıyla uzatıldı", "success");
+        setTimeout(() => location.reload(), 1000);
+      } else {
+        alert("Hata: " + (data.message || data.error || 'Bilinmeyen hata'));
+        btn.disabled = false;
+        btn.innerText = "Uzat ve Kaydet";
+      }
+    } catch(err) {
+      alert("Sunucu hatası: " + err.message);
+      btn.disabled = false;
+      btn.innerText = "Uzat ve Kaydet";
+    }
+  }
+
+  function openDetailModal(id) {
+    document.getElementById('detailContent').innerHTML = '<p class="text-muted">Yükleniyor...</p>';
+    document.getElementById('detailModal').classList.add('active');
+
+    fetch('/kiralamalar/detay/' + id)
+      .then(res => res.json())
+      .then(r => {
+        const fmtDate = d => {
+          if (!d) return '-';
+          const parts = d.split('-');
+          return parts[2] + '.' + parts[1] + '.' + parts[0];
+        };
+        const fmtMoney = v => '₺' + Number(v).toLocaleString('tr-TR');
+        const fmtKm = v => Number(v).toLocaleString('tr-TR') + ' km';
+
+        let html = `
+          <div class="detail-grid">
+            <div class="detail-row"><div class="label">Plaka</div><div class="value">${r.plaka}</div></div>
+            <div class="detail-row"><div class="label">Araç</div><div class="value">${r.marka} ${r.model}</div></div>
+            <div class="detail-row"><div class="label">Müşteri</div><div class="value">${r.musteriAdi}</div></div>
+            <div class="detail-row"><div class="label">E-posta</div><div class="value">${r.musteriEmail || '-'}</div></div>
+            <div class="detail-row"><div class="label">Telefon</div><div class="value">${r.musteriTelefon || '-'}</div></div>
+            <div class="detail-row"><div class="label">Kurum Adı</div><div class="value">${r.kurumAdi || '-'}</div></div>
+            <div class="detail-row"><div class="label">Tarih</div><div class="value">${fmtDate(r.baslangicTarihi)} - ${fmtDate(r.bitisTarihi)}</div></div>
+            <div class="detail-row"><div class="label">Veriliş KM</div><div class="value">${fmtKm(r.verilisteKm)}</div></div>
+            <div class="detail-row"><div class="label">Alınış KM</div><div class="value">${fmtKm(r.alinistaKm)}</div></div>
+            <div class="detail-row"><div class="label">Kullanılan KM</div><div class="value highlight">${fmtKm(r.kullanilanKm)}</div></div>
+            <div class="detail-row"><div class="label">Günlük Fiyat</div><div class="value">${fmtMoney(r.gunlukFiyat)}</div></div>
+          </div>`;
+
+        if (r.tcKimlik) {
+          html += `<div style="border-top:1px solid var(--border); margin-top:1rem; padding-top:1rem;">
+            <h4 style="font-size:0.7rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem;">Kimlik ve Ehliyet Bilgileri</h4>
+            <div class="detail-grid">
+              <div class="detail-row"><div class="label">TC/Pasaport No</div><div class="value">${r.tcKimlik}</div></div>
+              <div class="detail-row"><div class="label">Sürücü Ad Soyad</div><div class="value">${r.surucuAdSoyad || '-'}</div></div>
+              <div class="detail-row"><div class="label">Ehliyet No</div><div class="value">${r.ehliyetNo || '-'}</div></div>
+              <div class="detail-row"><div class="label">Veriliş / Geçerlilik</div><div class="value">${fmtDate(r.ehliyetVerilisTarihi)} - ${fmtDate(r.ehliyetGecerlilikTarihi)}</div></div>
+            </div>
+          </div>`;
+        }
+
+        html += `<div style="border-top:1px solid var(--border); margin-top:1rem; padding-top:1rem;">
+            <h4 style="font-size:0.7rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem;">Finansal Özet</h4>
+            <div class="detail-grid">
+              <div class="detail-row"><div class="label">Kiralama Geliri</div><div class="value highlight">${r.paraBirimi || '₺'}${Number(r.toplamFiyat).toLocaleString('tr-TR')}</div></div>
+              <div class="detail-row"><div class="label">Hasar Durumu</div><div class="value">${HASAR_LABELS[r.hasarDurumu] || (r.hasarDurumu === 'var' ? 'Hasar Var' : 'Hasar Yok')}</div></div>
+            </div>
+          </div>`;
+
+        if (r.hasarAciklama) {
+          html += `<div style="border-top:1px solid var(--border); margin-top:1rem; padding-top:1rem;">
+            <p style="font-size:0.7rem; color:var(--text-muted); margin-bottom:0.25rem;">Hasar Açıklaması</p>
+            <p>${r.hasarAciklama}</p>
+          </div>`;
+        }
+
+        document.getElementById('detailContent').innerHTML = html;
+      })
+      .catch(() => {
+        document.getElementById('detailContent').innerHTML = '<p style="color:var(--red);">Veri yüklenemedi</p>';
+      });
+  }
+
+  function openDeleteModal(id, plaka) {
+    showConfirm(
+      'Kiralama Sil',
+      `"${plaka}" plakalı araca ait kiralama kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`,
+      () => {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/kiralamalar/sil/' + id;
+
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        form.appendChild(csrfInput);
+
+        document.body.appendChild(form);
+        form.submit();
+      },
+      true
+    );
+  }
+
+  function filterRentals() {
+    const search = document.getElementById('searchInput').value;
+    const hasar = document.getElementById('hasarFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    window.location.href = '{{ url_for("fleet.kiralamalar") }}?search=' + encodeURIComponent(search) + '&hasar=' + hasar + '&status=' + status;
+  }
+
+  let searchTimeout;
+  document.getElementById('searchInput').addEventListener('keyup', function (e) {
+    clearTimeout(searchTimeout);
+    if (e.key === 'Enter') filterRentals();
+    else searchTimeout = setTimeout(filterRentals, 600);
+  });
+
+  document.querySelectorAll('.modal-backdrop').forEach(b => {
+    b.addEventListener('click', function (e) { if (e.target === this) this.classList.remove('active'); });
+  });
+
+  function getTodayLocal() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  // Araç Teslim Modal JS
+  function openReturnModal() {
+    document.getElementById('ret_rentalSelect').value = '';
+    document.getElementById('ret_baslangic').value = '';
+    document.getElementById('ret_bitis').value = getTodayLocal();
+    document.getElementById('ret_verilisKm').value = '';
+    document.getElementById('ret_alinisKm').value = '';
+    document.getElementById('returnSubmitBtn').disabled = true;
+    openModal('returnModal');
+  }
+
+  const allRentals = {{ active_rentals_json | tojson }};
+
+  function selectReturnRental() {
+    const plaka = document.getElementById('ret_rentalSelect').value;
+
+    if (!plaka) {
+      resetReturnModal();
+      return;
+    }
+
+    const currentPlakaRentals = allRentals.filter(r => r.plaka === plaka && (parseInt(r.alinistaKm) === 0 || !r.alinistaKm || r.alinistaKm === '0'));
+    const activeRental = currentPlakaRentals[currentPlakaRentals.length - 1]; // Olası kopya vakalarında en güncelini al
+
+    if (activeRental) {
+      document.getElementById('ret_baslangic').value = activeRental.baslangicTarihi || '';
+      if (!document.getElementById('ret_bitis').value) {
+        document.getElementById('ret_bitis').value = getTodayLocal();
+      }
+      document.getElementById('ret_verilisKm').value = (activeRental.verilisteKm !== undefined && activeRental.verilisteKm !== null) ? activeRental.verilisteKm : '';
+      document.getElementById('returnSubmitBtn').disabled = false;
+      document.getElementById('returnForm').action = '/kiralamalar/teslim/' + activeRental.id;
+    } else {
+      alert("Bu araca ait aktif bir kiralama kaydı bulunamadı.");
+      resetReturnModal();
+      document.getElementById('ret_rentalSelect').value = plaka;
+    }
+  }
+
+  function resetReturnModal() {
+    document.getElementById('ret_baslangic').value = '';
+    document.getElementById('ret_bitis').value = getTodayLocal();
+    document.getElementById('ret_verilisKm').value = '';
+    document.getElementById('ret_alinisKm').value = '';
+    document.getElementById('ret_teslimAlan').value = '';
+    document.getElementById('returnSubmitBtn').disabled = true;
+    document.getElementById('returnForm').action = '';
+  }
+  // Tarih alanlarında 4 haneli yıl sınırı kontrolü
+  document.querySelectorAll('input[type="date"]').forEach(input => {
+    input.addEventListener('input', function () {
+      if (this.value) {
+        const year = this.value.split('-')[0];
+        if (year.length > 4) {
+          this.value = '2099' + this.value.substring(year.length);
+        }
+      }
+    });
+  });
+  // Anlık Arama Özelliği
+  document.getElementById('searchInput').addEventListener('input', function (e) {
+    const term = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('.data-table tbody tr');
+
+    rows.forEach(row => {
+      // Boş tablo uyarısı satırını atla
+      if (row.classList.contains('empty-row')) return;
+
+      const text = row.textContent.toLowerCase();
+      if (text.includes(term)) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  });
+
+  // Sayfa yüklendiğinde arama kutusuna odaklan ve imleci sona at, ayrıca min kısıtlamalarını temizle
+  window.addEventListener('load', function () {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+      searchInput.focus();
+      // İmleci metnin sonuna taşımak için değeri sıfırlayıp tekrar atıyoruz
+      const val = searchInput.value;
+      searchInput.value = '';
+      searchInput.value = val;
+    }
+
+    // Sayfa yüklenir yüklenmez HTML veya diğer JS kodları tarafından atanan min özelliklerini zorla geçmişe çek
+    document.querySelectorAll('input[type="date"]').forEach(input => {
+      input.min = '2000-01-01';
+    });
+  });
+
+  // Araç Teslim Formu Tarih ve Kilometre Doğrulama
+  document.getElementById('returnForm').addEventListener('submit', function (e) {
+    const startVal = document.getElementById('ret_baslangic').value;
+    const endInput = document.getElementById('ret_bitis');
+    const endVal = endInput.value;
+    
+    if (startVal && endVal && endVal < startVal) {
+      e.preventDefault();
+      alert('🚨 Hata: Araç teslim tarihi, aracın kiralandığı başlangıç tarihinden önce olamaz.');
+      endInput.focus();
+      return;
+    }
+
+    const verilisKm = parseInt(document.getElementById('ret_verilisKm').value) || 0;
+    const alinisInput = document.getElementById('ret_alinisKm');
+    const alinisKm = parseInt(alinisInput.value) || 0;
+
+    if (alinisKm < verilisKm) {
+      e.preventDefault();
+      alert(`🚨 Hata: Araç dönüş kilometresi (${alinisKm} km), çıkış kilometresinden (${verilisKm} km) az olamaz.`);
+      alinisInput.focus();
+      return;
+    }
+
+    // KABİS Konum Seçilme Zorunluluğu Kontrolü
+    const teslimLat = document.getElementById('teslim_lat').value;
+    const teslimLng = document.getElementById('teslim_lng').value;
+    if (!teslimLat || !teslimLng) {
+      e.preventDefault();
+      alert('🚨 Hata: Lütfen harita üzerinden KABİS araç dönüş konumunu seçiniz!');
+      document.getElementById('teslimMap').scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+  });
+
+  function formatXml(xml) {
+    let formatted = '';
+    let reg = /(>)(<)(\/*)/g;
+    xml = xml.replace(reg, '$1\r\n$2$3');
+    let pad = 0;
+    xml.split('\r\n').forEach(function(node) {
+      let indent = 0;
+      if (node.match( /.+<\/\w[^>]*>$/ )) {
+        indent = 0;
+      } else if (node.match( /^<\/\w/ )) {
+        if (pad !== 0) pad -= 1;
+      } else if (node.match( /^<\w[^>]*[^\/]>.*$/ )) {
+        indent = 1;
+      } else {
+        indent = 0;
+      }
+      let padding = '';
+      for (let i = 0; i < pad; i++) padding += '  ';
+      formatted += padding + node + '\r\n';
+      pad += indent;
+    });
+    return formatted.trim();
+  }
+
+  function escapeHtml(html) {
+    return html
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  function showPremiumKabisModal(data) {
+    const formattedXml = escapeHtml(formatXml(data.xml));
+    const modalDiv = document.createElement('div');
+    modalDiv.id = 'kabisPremiumModal';
+    modalDiv.style.cssText = `
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      z-index: 99999;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.3s ease;
+      padding: 1.5rem;
+    `;
+    
+    modalDiv.innerHTML = `
+      <div style="
+        background: #1e293b;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        width: 100%; max-width: 650px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        display: flex; flex-direction: column;
+        max-height: 85vh;
+        transform: scale(0.9); transition: transform 0.3s ease;
+        overflow: hidden;
+        color: #f8fafc;
+        font-family: 'Outfit', sans-serif;
+      ">
+        <!-- Modal Header -->
+        <div style="
+          padding: 1.5rem;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          display: flex; align-items: center; justify-content: space-between;
+          background: rgba(30, 41, 59, 0.5);
+        ">
+          <div style="display:flex; align-items:center; gap:0.75rem;">
+            <span style="font-size:1.75rem;">${data.mode === 'live' ? '🟢' : '🚨'}</span>
+            <div style="text-align: left;">
+              <h3 style="margin:0; font-size:1.25rem; font-weight:800; color:#f8fafc; letter-spacing:-0.01em;">
+                ${data.mode === 'live' ? 'KABİS Bildirimi Başarılı' : 'KABİS Raporu'}
+              </h3>
+              <p style="margin:0; font-size:0.75rem; color:#94a3b8; font-weight:500;">
+                ${data.ref_no ? 'EGM Ref: ' + data.ref_no : ''} | Mod: ${data.mode === 'live' ? '🟢 Canlı / EGM' : 'Sandbox'}
+              </p>
+            </div>
+          </div>
+          <button id="closeKabisModalBtn" style="
+            background: rgba(255, 255, 255, 0.05);
+            border: none; border-radius: 12px;
+            width: 36px; height: 36px;
+            color: #94a3b8; font-size: 1.25rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+          ">&times;</button>
+        </div>
+        
+        <!-- Modal Body -->
+        <div style="padding: 1.5rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; flex: 1;">
+          <div style="
+            background: ${data.mode === 'live' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(59, 130, 246, 0.1)'};
+            border: 1px solid ${data.mode === 'live' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.2)'};
+            border-radius: 16px;
+            padding: 1rem;
+            display: flex; gap: 0.75rem;
+            align-items: flex-start;
+          ">
+            <span style="color:${data.mode === 'live' ? '#10b981' : '#3b82f6'}; font-size:1.25rem; margin-top: 0.1rem;">${data.mode === 'live' ? '✅' : '🔔'}</span>
+            <div style="font-size:0.875rem; line-height:1.5; color:${data.mode === 'live' ? '#6ee7b7' : '#93c5fd'}; text-align: left;">
+              ${data.mode === 'live'
+                ? `<strong>EGM'ye Başarıyla Gönderildi!</strong><br>Bildirim EGM KABİS sistemine kaydedilmiştir. EGM referans numarası: <strong>${data.ref_no || '-'}</strong>`
+                : '<strong>EGM XML Şema Uyumluluğu Doğrulandı!</strong><br>Oluşturulan bildirim dosyası, KABİS standart şemalarıyla tam uyumludur.'}
+            </div>
+          </div>
+          
+          <!-- XML Code Viewer Header -->
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:-0.25rem;">
+            <span style="font-size:0.8rem; text-transform:uppercase; color:#64748b; font-weight:700; letter-spacing:0.05em;">
+              XML Döküman İçeriği
+            </span>
+            <button id="copyKabisXmlBtn" style="
+              background: #3b82f6; border: none; border-radius: 8px;
+              padding: 0.4rem 0.8rem; color: white; font-size: 0.75rem; font-weight: 700;
+              cursor: pointer; display: flex; align-items: center; gap: 0.35rem;
+              transition: all 0.2s;
+              box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            ">
+              📋 Kopyala
+            </button>
+          </div>
+          
+          <!-- XML Code Pre -->
+          <pre style="
+            margin: 0;
+            padding: 1.25rem;
+            background: #0f172a;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            overflow: auto;
+            font-family: 'Consolas', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            color: #a7f3d0;
+            max-height: 350px;
+            text-align: left;
+            white-space: pre-wrap;
+            word-break: break-all;
+          "><code>${formattedXml}</code></pre>
+        </div>
+        
+        <!-- Modal Footer -->
+        <div style="
+          padding: 1.25rem 1.5rem;
+          border-top: 1px solid rgba(255, 255, 255, 0.08);
+          display: flex; justify-content: flex-end;
+          background: rgba(30, 41, 59, 0.3);
+        ">
+          <button id="closeKabisModalFooterBtn" style="
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 0.7rem 1.5rem;
+            color: #f8fafc; font-size: 0.875rem; font-weight: 700;
+            cursor: pointer; transition: all 0.2s;
+          ">Kapat</button>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(modalDiv);
+    
+    setTimeout(() => {
+      modalDiv.style.opacity = '1';
+      modalDiv.firstElementChild.style.transform = 'scale(1)';
+    }, 10);
+    
+    function closeModal() {
+      modalDiv.style.opacity = '0';
+      modalDiv.firstElementChild.style.transform = 'scale(0.9)';
+      setTimeout(() => {
+        modalDiv.remove();
+      }, 300);
+    }
+    
+    document.getElementById('closeKabisModalBtn').onclick = closeModal;
+    document.getElementById('closeKabisModalFooterBtn').onclick = closeModal;
+    modalDiv.onclick = function(e) {
+      if (e.target === modalDiv) closeModal();
+    };
+    
+    document.getElementById('copyKabisXmlBtn').onclick = function() {
+      navigator.clipboard.writeText(data.xml).then(() => {
+        const btn = document.getElementById('copyKabisXmlBtn');
+        btn.innerHTML = '✅ Kopyalandı!';
+        btn.style.background = '#10b981';
+        btn.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.2)';
+        setTimeout(() => {
+          btn.innerHTML = '📋 Kopyala';
+          btn.style.background = '#3b82f6';
+          btn.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.2)';
+        }, 2000);
+      });
+    };
+  }
+
+  function simulateKabis(id) {
+    const csrfToken = '{{ csrf_token() }}';
+    const btn = event.currentTarget;
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gönderiliyor...';
+
+    fetch('/kiralamalar/kabis_bildir/' + id, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken
+      }
+    })
+    .then(res => res.json().then(data => ({ ok: res.ok, data })))
+    .then(({ ok, data }) => {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+      if (ok && data.success) {
+        showPremiumKabisModal(data);
+      } else if (data.message && data.message.includes('kimlik bilgileri')) {
+        // Kimlik eksik — ayarlara yönlendir
+        showConfirm(
+          'KABİS Entegrasyon Uyarısı',
+          'KABİS Web Servis kimlik bilgileri tanımlı değil. Entegrasyonu tamamlamak için ayarlar sayfasına gitmek ister misiniz?',
+          () => { window.location.href = '/ayarlar'; }
+        );
+      } else {
+        showToast('🚨 KABİS Bildirim Hatası: ' + (data.message || 'Bilinmeyen hata.'), 'error');
+      }
+    })
+    .catch(err => {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+      console.error(err);
+      showToast('🚨 KABİS bildirimi sırasında sunucu bağlantı hatası oluştu.', 'error');
+    });
+  }
+
+  function retryKabisTeslim(id) {
+    const csrfToken = '{{ csrf_token() }}';
+    const btn = event.currentTarget;
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Tekrar Deneniyor...';
+
+    fetch('/kiralamalar/kabis_teslim_bildir/' + id, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken
+      }
+    })
+    .then(res => res.json().then(data => ({ ok: res.ok, data })))
+    .then(({ ok, data }) => {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+      if (ok && data.success) {
+        showToast('✅ KABİS Dönüş bildirimi başarıyla yapıldı!', 'success');
+        setTimeout(() => { window.location.reload(); }, 1500);
+      } else {
+        showToast('🚨 KABİS Dönüş Bildirim Hatası: ' + (data.message || 'Bilinmeyen hata.'), 'error');
+      }
+    })
+    .catch(err => {
+      btn.disabled = false;
+      btn.innerHTML = originalHtml;
+      console.error(err);
+      showToast('🚨 KABİS dönüş bildirimi sırasında bağlantı hatası oluştu.', 'error');
+    });
+  }
+
+  // --- DİJİTAL İMZA SİSTEMİ JAVASCRIPT KODLARI ---
+  let currentRentalIdToSign = null;
+  const canvases = {};
+  const contexts = {};
+  const isDrawing = {};
+  const lastX = {};
+  const lastY = {};
+  // Biyometrik verileri saklamak için global obje
+  const biometricData = {};
+
+  function initSignatureCanvas(canvasId) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    // Set up drawing properties
+    ctx.strokeStyle = '#0f172a'; // Navy dark stroke
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    canvases[canvasId] = canvas;
+    contexts[canvasId] = ctx;
+    isDrawing[canvasId] = false;
+    
+    // Sadece müşteri imzası için biyometrik veriyi topla
+    if (canvasId === 'customerCanvas' || canvasId === 'newCustomerCanvas') {
+      biometricData[canvasId] = [];
+    }
+    
+    // Helper to get coordinates
+    function getCoordinates(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: (clientX - rect.left) * (canvas.width / rect.width),
+        y: (clientY - rect.top) * (canvas.height / rect.height)
+      };
+    }
+
+    // Helper to log biometric vector
+    function logBiometric(e, coords) {
+      if (canvasId === 'customerCanvas' || canvasId === 'newCustomerCanvas') {
+        const t = Date.now();
+        // Cihaz destekliyorsa basınç(force) al, desteklemiyorsa 0.5 (standart)
+        const p = (e.touches && e.touches.length > 0 && e.touches[0].force !== undefined) ? e.touches[0].force : 0.5;
+        biometricData[canvasId].push({ x: Math.round(coords.x), y: Math.round(coords.y), t: t, p: p });
+      }
+    }
+
+    function startDrawing(e) {
+      e.preventDefault();
+      isDrawing[canvasId] = true;
+      const coords = getCoordinates(e);
+      lastX[canvasId] = coords.x;
+      lastY[canvasId] = coords.y;
+      
+      logBiometric(e, coords);
+
+      ctx.beginPath();
+      ctx.arc(coords.x, coords.y, ctx.lineWidth / 2, 0, Math.PI * 2);
+      ctx.fillStyle = ctx.strokeStyle;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(coords.x, coords.y);
+    }
+
+    function draw(e) {
+      if (!isDrawing[canvasId]) return;
+      e.preventDefault();
+      const coords = getCoordinates(e);
+      
+      logBiometric(e, coords);
+
+      ctx.lineTo(coords.x, coords.y);
+      ctx.stroke();
+      
+      lastX[canvasId] = coords.x;
+      lastY[canvasId] = coords.y;
+    }
+
+    function stopDrawing() {
+      isDrawing[canvasId] = false;
+    }
+
+    // Mouse events
+    canvas.onmousedown = startDrawing;
+    canvas.onmousemove = draw;
+    canvas.onmouseup = stopDrawing;
+    canvas.onmouseout = stopDrawing;
+
+    // Touch events for iPad/Phones
+    canvas.addEventListener('touchstart', startDrawing, { passive: false });
+    canvas.addEventListener('touchmove', draw, { passive: false });
+    canvas.addEventListener('touchend', stopDrawing);
+  }
+
+  function clearCanvas(canvasId) {
+    const canvas = canvases[canvasId];
+    if (canvas) {
+      const ctx = contexts[canvasId];
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+    }
+  }
+
+  function openSignatureModal(rentalId, customerName, agencyName) {
+    currentRentalIdToSign = rentalId;
+    
+    document.getElementById('customerNameLabel').innerText = "Kiracı: " + customerName;
+    document.getElementById('agencyNameLabel').innerText = "Yetkili: " + agencyName;
+    document.getElementById('signatureError').style.display = 'none';
+    
+    openModal('signatureModal');
+    
+    setTimeout(() => {
+      initSignatureCanvas('customerCanvas');
+      initSignatureCanvas('agencyCanvas');
+      clearCanvas('customerCanvas');
+      clearCanvas('agencyCanvas');
+    }, 150);
+  }
+
+  function isCanvasBlank(canvasId) {
+    const canvas = canvases[canvasId];
+    if (!canvas) return true;
+    const blank = document.createElement('canvas');
+    blank.width = canvas.width;
+    blank.height = canvas.height;
+    return canvas.toDataURL() === blank.toDataURL();
+  }
+
+  function saveSignatures() {
+    const errorDiv = document.getElementById('signatureError');
+    errorDiv.style.display = 'none';
+    
+    if (isCanvasBlank('customerCanvas')) {
+      errorDiv.innerText = "Lütfen müşteri imzasını doldurunuz.";
+      errorDiv.style.display = 'block';
+      return;
+    }
+    if (isCanvasBlank('agencyCanvas')) {
+      errorDiv.innerText = "Lütfen firma yetkilisi imzasını doldurunuz.";
+      errorDiv.style.display = 'block';
+      return;
+    }
+    
+    const musteriImzaData = canvases['customerCanvas'].toDataURL('image/png');
+    const firmaImzaData = canvases['agencyCanvas'].toDataURL('image/png');
+    
+    // Biyometrik veriyi JSON'a çevir
+    const biyometrikJson = JSON.stringify(biometricData['customerCanvas'] || []);
+    
+    const saveBtn = document.getElementById('signatureSaveBtn');
+    saveBtn.disabled = true;
+    saveBtn.innerText = "Kaydediliyor...";
+    
+    fetch(`/kiralamalar/imzala/${currentRentalIdToSign}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token() }}'
+      },
+      body: JSON.stringify({
+        musteriImza: musteriImzaData,
+        firmaImza: firmaImzaData,
+        biyometrikVeri: biyometrikJson
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        window.location.reload();
+      } else {
+        errorDiv.innerText = data.message || "Bir hata oluştu.";
+        errorDiv.style.display = 'block';
+        saveBtn.disabled = false;
+        saveBtn.innerText = "Sözleşmeyi İmzala ve Tamamla";
+      }
+    })
+    .catch(err => {
+      console.error("İmza kaydetme hatası:", err);
+      errorDiv.innerText = "Sunucuya bağlanılamadı.";
+      errorDiv.style.display = 'block';
+      saveBtn.disabled = false;
+      saveBtn.innerText = "Sözleşmeyi İmzala ve Tamamla";
+    });
+  }
+
+  function submitRentalFormWithSignatures() {
+    const errorDiv = document.getElementById('newSignatureError');
+    errorDiv.style.display = 'none';
+
+    if (isCanvasBlank('newCustomerCanvas')) {
+      errorDiv.innerText = "Lütfen Kiracı (Müşteri) imzasını doldurunuz. İmza alınmadan kiralama yapılmasına sistem izin vermemektedir!";
+      errorDiv.style.display = 'block';
+      return;
+    }
+    if (isCanvasBlank('newAgencyCanvas')) {
+      errorDiv.innerText = "Lütfen Firma Yetkilisi imzasını doldurunuz. İmza alınmadan kiralama yapılmasına sistem izin vermemektedir!";
+      errorDiv.style.display = 'block';
+      return;
+    }
+
+    const musteriImzaData = canvases['newCustomerCanvas'].toDataURL('image/png');
+    const firmaImzaData = canvases['newAgencyCanvas'].toDataURL('image/png');
+    const biyometrikJson = JSON.stringify(biometricData['newCustomerCanvas'] || []);
+
+    document.getElementById('r_musteriImza').value = musteriImzaData;
+    document.getElementById('r_firmaImza').value = firmaImzaData;
+    
+    // Biyometrik veri için formda gizli bir input oluştur veya varsa güncelle
+    let bioInput = document.getElementById('r_biyometrikVeri');
+    if (!bioInput) {
+      bioInput = document.createElement('input');
+      bioInput.type = 'hidden';
+      bioInput.name = 'biyometrikVeri';
+      bioInput.id = 'r_biyometrikVeri';
+      document.getElementById('rentalForm').appendChild(bioInput);
+    }
+    bioInput.value = biyometrikJson;
+
+    const saveBtn = document.getElementById('newSignatureSaveBtn');
+    saveBtn.disabled = true;
+    saveBtn.innerText = "Kaydediliyor...";
+
+    // Direct HTML Form submission to bypass submit listener
+    document.getElementById('rentalForm').submit();
+  }
+</script>
+{% endblock %}
+

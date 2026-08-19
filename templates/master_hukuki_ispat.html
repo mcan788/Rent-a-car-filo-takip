@@ -1,0 +1,279 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+  :root {
+    --master-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    --accent-red: #dc2626;
+  }
+  
+  .master-header-card {
+    background: var(--master-gradient);
+    border-radius: 20px;
+    padding: 3rem;
+    color: white;
+    margin-bottom: 2.5rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  }
+  
+  .master-header-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(220, 38, 38, 0.2) 0%, transparent 70%);
+    z-index: 1;
+  }
+
+  .ispat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    display: block;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+  }
+
+  .search-input:focus {
+    border-color: var(--accent-red);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+  }
+
+  .btn-search {
+    background: var(--accent-red);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .btn-search:hover {
+    background: #b91c1c;
+    transform: translateY(-2px);
+  }
+
+  .code-block {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: #334155;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    white-space: normal;
+    max-height: 200px;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .ispat-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    margin-bottom: 0;
+    font-size: 0.85rem;
+  }
+  
+  .ispat-table th, .ispat-table td {
+    padding: 8px 10px;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+  }
+  
+  .ispat-table th {
+    background-color: #f1f5f9;
+    font-weight: 600;
+    color: #475569;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .ispat-table tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+  
+  .ispat-table tr:hover {
+    background-color: #e2e8f0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="master-header-card">
+    <div style="position: relative; z-index: 2;">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h1 style="font-weight: 700; font-size: 2.5rem; margin-bottom: 0.5rem; letter-spacing: -0.5px;">
+            Hukuki İspat Aracı
+          </h1>
+          <p style="font-size: 1.1rem; opacity: 0.8; margin-bottom: 0; max-width: 600px;">
+            Biyometrik imza verilerini doğrulamak ve mahkemeye delil niteliğinde kriptografik sonuç üretmek için TC Kimlik/Pasaport No ile arama yapın.
+          </p>
+        </div>
+        <div class="d-none d-lg-block">
+          <i class="fas fa-balance-scale" style="font-size: 5rem; opacity: 0.2;"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row justify-content-center mb-4">
+    <div class="col-md-8">
+      <div class="ispat-card">
+        <form method="POST" action="{{ url_for('master.hukuki_ispat') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="d-flex gap-3">
+            <div class="flex-grow-1">
+              <label for="tc_kimlik" class="form-label text-muted fw-bold mb-2">Müşteri TC Kimlik veya Pasaport No</label>
+              <input type="text" id="tc_kimlik" name="tc_kimlik" class="search-input" placeholder="Örn: 12345678901" required>
+            </div>
+            <div class="d-flex align-items-end">
+              <button type="submit" class="btn-search">
+                <i class="fas fa-search me-2"></i> Sorgula
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% if searched %}
+    {% if result_data %}
+    <div class="row">
+      <div class="col-12 mb-4">
+        <div class="ispat-card" style="border-left: 4px solid var(--accent-red);">
+          <div style="display: flex; align-items: center; margin-bottom: 1.5rem; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(220, 38, 38, 0.1); display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-file-contract" style="color: #dc2626; font-size: 1.25rem;"></i>
+              </div>
+              <div>
+                <h4 style="margin: 0; font-weight: 700; font-size: 1.1rem; color: #1e293b;">Sözleşme Bilgileri</h4>
+                <small style="color: #64748b;">Bulunan Kiralama Kaydı</small>
+              </div>
+            </div>
+            <div>
+              <span style="background: #10b981; color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px;">Doğrulandı <i class="fas fa-check-circle"></i></span>
+            </div>
+          </div>
+          
+          <div class="table-responsive">
+            <table class="ispat-table">
+              <thead>
+                <tr>
+                  <th class="text-nowrap">Şirket</th>
+                  <th class="text-nowrap">Müşteri Adı</th>
+                  <th class="text-nowrap">Araç Plakası</th>
+                  <th class="text-nowrap">İmza Tarihi</th>
+                  <th class="text-nowrap">Sözleşme</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="font-weight: 600;">{{ result_data.company_name }}</td>
+                  <td>{{ result_data.musteriAdi }}</td>
+                  <td style="font-weight: 700; color: #dc2626;">{{ result_data.plaka }}</td>
+                  <td>{{ result_data.imzaTarihi }}</td>
+                  <td>
+                    <a href="{{ result_data.sozlesme_url }}" target="_blank" style="background: #2563eb; color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s;">
+                      <i class="fas fa-file-pdf"></i> Gör
+                    </a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 mb-4">
+        <div class="ispat-card">
+          <h5 class="fw-bold mb-3"><i class="fas fa-fingerprint me-2 text-primary"></i> 1. Kriptografik Özet (SHA-256)</h5>
+          <p class="text-muted small mb-2">Veri Bütünlük Özeti (Değiştirilemezlik Kanıtı). İmza atıldığı anki haliyle aynı olduğunu ispatlar.</p>
+          <div class="code-block" style="background: rgba(59, 130, 246, 0.05); border-color: rgba(59, 130, 246, 0.2);">
+            {{ result_data.hash_val }}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 mb-4">
+        <div class="ispat-card">
+          <h5 class="fw-bold mb-3"><i class="fas fa-lock me-2 text-warning"></i> 2. Şifreli Veri (AES-256)</h5>
+          <p class="text-muted small mb-2">Veritabanındaki ham metin. Mahkemeye / avukata sunulacak olan değiştirilmemiş orjinal kriptolu veri.</p>
+          <div class="code-block" style="background: rgba(245, 158, 11, 0.05); border-color: rgba(245, 158, 11, 0.2);">
+            {{ result_data.sifreli_veri }}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 mb-4">
+        <div class="ispat-card">
+          <h5 class="fw-bold mb-3"><i class="fas fa-unlock me-2 text-success"></i> 3. Çözülmüş Biyometrik Veri</h5>
+          <p class="text-muted small mb-3">
+            Sistem KABİS ve Biyometrik İmza kanunlarına %100 uygun çalışmaktadır.<br>
+            Yakalanan Biyometrik Vektör Sayısı: <strong>{{ result_data.nokta_sayisi }} adet hareket noktası</strong>
+          </p>
+          <div class="table-responsive">
+            <table class="ispat-table">
+              <thead>
+                <tr>
+                  <th class="text-nowrap">Nokta</th>
+                  <th class="text-nowrap">X Koordinatı</th>
+                  <th class="text-nowrap">Y Koordinatı</th>
+                  <th class="text-nowrap">Zaman (ms)</th>
+                  <th class="text-nowrap">Basınç</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for point in result_data.ornek_noktalar %}
+                <tr>
+                  <td>Örnek {{ loop.index }}</td>
+                  <td>{{ point.x|float|round(2) if point.x else 0 }}</td>
+                  <td>{{ point.y|float|round(2) if point.y else 0 }}</td>
+                  <td>{{ point.t }}</td>
+                  <td>{{ point.p|float|round(4) if point.p else 0 }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <small class="text-muted fst-italic">Not: Yukarıdaki veriler, parmağın ekrandaki hızını (zaman damgaları arası fark) ve konumunu ispatlar. Raporlama amaçlı sadece ilk 5 nokta gösterilmektedir.</small>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="row justify-content-center">
+      <div class="col-md-8 text-center">
+        <div class="alert alert-warning shadow-sm border-0 py-4">
+          <i class="fas fa-exclamation-triangle fs-1 text-warning mb-3"></i>
+          <h4>Kayıt Bulunamadı</h4>
+          <p class="mb-0">Girilen TC Kimlik numarasına ait, AES-256 ile şifrelenmiş biyometrik imza kaydı bulunmuyor.</p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

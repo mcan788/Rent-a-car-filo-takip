@@ -1,0 +1,830 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+  :root {
+    --master-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    --accent-blue: #3b82f6;
+    --accent-indigo: #6366f1;
+  }
+  
+  .master-header-card {
+    background: var(--master-gradient);
+    border-radius: 20px;
+    padding: 3rem;
+    color: white;
+    margin-bottom: 2.5rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  }
+  
+  .master-header-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+    z-index: 1;
+  }
+
+  .stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .stat-glass-card {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .stat-glass-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+  }
+
+  .stat-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+  }
+
+  .company-table-card {
+    background: white;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  .table-custom { width: 100%; border-collapse: separate; border-spacing: 0; }
+  .table-custom th {
+    background: #f8fafc;
+    padding: 1.25rem 1.5rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    font-weight: 700;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .table-custom td {
+    padding: 1.25rem 1.5rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  .company-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #eff6ff;
+    color: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.1rem;
+  }
+
+  .manager-badge {
+    background: #f1f5f9;
+    border-radius: 10px;
+    padding: 0.75rem;
+    font-size: 0.8rem;
+    border: 1px solid #e2e8f0;
+  }
+
+  .status-pill {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .status-active { background: #dcfce7; color: #166534; }
+  .status-inactive { background: #fee2e2; color: #991b1b; }
+
+  .action-btn {
+    padding: 0.6rem;
+    border-radius: 8px;
+    transition: all 0.2s;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #64748b;
+  }
+
+  .action-btn:hover {
+    background: #f8fafc;
+    color: #0f172a;
+    border-color: #cbd5e1;
+  }
+
+  /* Üst boşluğu kaldırma */
+  .top-bar { display: none !important; }
+  .page-content { padding-top: 0 !important; }
+  .master-header-card { margin-top: 2rem; }
+
+  /* ─── Custom Reset Modal ─────────────────────────────────── */
+  .custom-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .custom-modal {
+    background: white;
+    width: 100%;
+    max-width: 450px;
+    border-radius: 32px;
+    padding: 2.5rem;
+    text-align: center;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    transform: scale(0.9);
+    animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes modalIn { to { transform: scale(1); } }
+
+  .modal-icon-wrapper {
+    width: 80px;
+    height: 80px;
+    background: #fef3c7;
+    color: #f59e0b;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    margin: 0 auto 1.5rem;
+  }
+
+  .modal-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .btn-modal {
+    padding: 1rem;
+    border-radius: 16px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+
+  .btn-confirm { background: #f59e0b; color: white; }
+  .btn-confirm:hover { background: #d97706; transform: translateY(-2px); }
+  .btn-cancel { background: #f1f5f9; color: #64748b; }
+  .btn-cancel:hover { background: #e2e8f0; }
+
+  /* Premium Modal Inputs & Form Controls */
+  .modal-label {
+    display: flex;
+    align-items: flex-end;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 0.5rem;
+    min-height: 2.2rem; /* Guarantees perfect alignment even if one label wraps to two lines! */
+  }
+
+  .modal-input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+    outline: none;
+    background: #f8fafc;
+    color: #1e293b;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .modal-input:focus {
+    border-color: #3b82f6;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  }
+
+  .modal-input::placeholder {
+    color: #94a3b8;
+    font-weight: 500;
+  }
+
+  .custom-select-styled {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='%2364748b' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 0.8rem center !important;
+    background-size: 1.25rem !important;
+    padding-right: 2.5rem !important;
+    cursor: pointer;
+  }
+
+  /* ─── Premium Responsive Overrides ─────────────────────────── */
+  .modal-responsive-card {
+    width: 95% !important;
+    max-width: 500px !important;
+  }
+
+  @media (max-width: 1024px) {
+    .master-header-card {
+      padding: 2rem 1.5rem !important;
+      margin-top: 1rem !important;
+      margin-bottom: 1.5rem !important;
+      border-radius: 16px !important;
+    }
+    
+    .master-header-card h1 {
+      font-size: 2rem !important;
+    }
+    
+    .master-header-card p {
+      font-size: 1rem !important;
+    }
+
+    .stats-container {
+      grid-template-columns: 1fr !important;
+      gap: 1rem !important;
+      margin-bottom: 1.5rem !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .master-header-card {
+      padding: 1.5rem 1rem !important;
+      text-align: center !important;
+    }
+
+    .master-header-card h1 {
+      font-size: 1.75rem !important;
+    }
+
+    .master-header-card button {
+      width: 100% !important;
+      justify-content: center !important;
+      font-size: 0.95rem !important;
+      padding: 0.8rem 1rem !important;
+    }
+
+    .table-custom th, .table-custom td {
+      padding: 0.75rem 1rem !important;
+      font-size: 0.8rem !important;
+    }
+
+    .modal-responsive-card {
+      padding: 1.5rem !important;
+      border-radius: 20px !important;
+    }
+
+    .form-grid-responsive {
+      grid-template-columns: 1fr !important;
+      gap: 0.75rem !important;
+    }
+
+    .form-actions-responsive {
+      flex-direction: column !important;
+      gap: 0.75rem !important;
+    }
+    
+    .form-actions-responsive button {
+      width: 100% !important;
+    }
+
+    .modal-actions {
+      grid-template-columns: 1fr !important;
+      gap: 0.75rem !important;
+    }
+    
+    .btn-modal {
+      width: 100% !important;
+    }
+
+    .custom-modal {
+      padding: 1.5rem !important;
+      width: 95% !important;
+      margin: 1rem auto !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="master-header-card">
+  <div style="position: relative; z-index: 2;">
+    <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -0.02em;">Sistem Yönetimi</h1>
+    <p style="font-size: 1.1rem; opacity: 0.8; max-width: 600px;">Zyronova platformundaki tüm şirketleri, lisansları ve altyapı güvenliğini buradan yönetin.</p>
+    
+    <div style="margin-top: 2rem;">
+      <button class="btn" style="background: white; color: var(--navy); font-weight: 700; padding: 0.8rem 2rem; border-radius: 12px; border: none; box-shadow: 0 10px 20px rgba(0,0,0,0.1);" onclick="openAddCompanyModal()">
+        <i class="fas fa-plus-circle" style="margin-right: 0.5rem;"></i> Yeni Şirket Kaydet
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="stats-container">
+  <div class="stat-glass-card">
+    <div class="stat-icon-wrapper" style="background: #eff6ff; color: #2563eb;">
+      <i class="fas fa-building"></i>
+    </div>
+    <div>
+      <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Toplam Şirket</div>
+      <div style="font-size: 1.5rem; font-weight: 800; color: #1e293b;">{{ companies|length }}</div>
+    </div>
+  </div>
+
+  <div class="stat-glass-card">
+    <div class="stat-icon-wrapper" style="background: #f0fdf4; color: #16a34a;">
+      <i class="fas fa-check-double"></i>
+    </div>
+    <div>
+      <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Aktif Lisanslar</div>
+      <div style="font-size: 1.5rem; font-weight: 800; color: #1e293b;">{{ companies|selectattr('is_active', 'equalto', True)|list|length }}</div>
+    </div>
+  </div>
+
+  <div class="stat-glass-card">
+    <div class="stat-icon-wrapper" style="background: #fff7ed; color: #ea580c;">
+      <i class="fas fa-clock"></i>
+    </div>
+    <div>
+      <div style="font-size: 0.85rem; color: #64748b; font-weight: 600;">Süresi Yaklaşan</div>
+      <div style="font-size: 1.5rem; font-weight: 800; color: #1e293b;">{{ expiring_soon }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="company-table-card">
+  <div style="padding: 1.5rem 2rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+    <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #1e293b;">Kayıtlı Şirketler</h3>
+    <div style="font-size: 0.85rem; color: #64748b;">Son Güncelleme: {{ now.strftime('%H:%M') }}</div>
+  </div>
+  
+  <div style="overflow-x: auto;">
+    <div class="table-responsive">
+<table class="table-custom">
+      <thead>
+        <tr>
+          <th>Şirket Profili</th>
+          <th>Erişim Adresi</th>
+          <th>Yönetici Kimliği</th>
+          <th>Lisans Durumu</th>
+          <th style="text-align: right;">Eylem</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for company in companies %}
+        <tr>
+          <td>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <div class="company-avatar">{{ company.name[:1]|upper }}</div>
+              <div>
+                <a href="{{ url_for('master.master_company_detail', id=company.id) }}" style="text-decoration: none; color: inherit;">
+                  <div style="font-weight: 700; color: #1e293b; transition: color 0.2s; cursor: pointer;" onmouseover="this.style.color='#2563eb'" onmouseout="this.style.color='#1e293b'">{{ company.name }}</div>
+                </a>
+                <div style="font-size: 0.75rem; color: #94a3b8;">{{ company.contact_phone or 'No Phone' }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <code style="background: #f8fafc; padding: 0.4rem 0.8rem; border-radius: 6px; color: #2563eb; font-weight: 600;">
+              {{ company.subdomain }}.localhost
+            </code>
+          </td>
+          <td>
+            {% if company.manager_info %}
+            <div class="manager-badge">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="color: #475569; font-weight: 700;"><i class="fas fa-user-shield" style="margin-right: 0.4rem; color: #94a3b8;"></i>{{ company.manager_info.username }}</div>
+                <form action="{{ url_for('master.master_user_reset_password', id=company.manager_info.id) }}" method="POST" style="display: inline;" id="resetForm-{{ company.manager_info.id }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="button" 
+                     onclick="askResetPassword('{{ company.manager_info.username }}', 'resetForm-{{ company.manager_info.id }}')"
+                     style="color: #f59e0b; font-size: 0.9rem; border: none; background: none; cursor: pointer;" title="Şifreyi Sıfırla">
+                    <i class="fas fa-key"></i>
+                  </button>
+                </form>
+              </div>
+              <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 0.25rem;">
+                <i class="fas fa-shield-alt mr-1"></i> Şifre Güvenli
+              </div>
+            </div>
+            {% else %}
+            <span style="font-size: 0.8rem; color: #cbd5e1; font-style: italic;">Yönetici Atanmamış</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display: flex; flex-direction: column; gap: 0.3rem;">
+              {% if company.is_active %}
+                <span class="status-pill status-active"><i class="fas fa-check"></i> Aktif</span>
+              {% else %}
+                <span class="status-pill status-inactive"><i class="fas fa-times"></i> Pasif</span>
+              {% endif %}
+              
+              <div style="font-size: 0.7rem; color: #475569; font-weight: 700;">
+                {% if company.license_expires_at %}
+                  Bitiş: {{ company.license_expires_at.strftime('%d.%m.%Y') }}
+                {% else %}
+                  Sınırsız Lisans
+                {% endif %}
+              </div>
+              {% if company.license_key %}
+              <div style="font-size: 0.7rem; font-family: monospace; color: #2563eb; font-weight: 700;">
+                Key: {{ company.license_key }}
+              </div>
+              {% endif %}
+              {% if company.license_price %}
+              <div style="font-size: 0.7rem; color: #16a34a; font-weight: 700;">
+                Bedel: ₺{{ company.license_price }}
+              </div>
+              {% endif %}
+            </div>
+          </td>
+          <td style="text-align: right;">
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+              <form action="{{ url_for('master.master_company_toggle', id=company.id) }}" method="POST" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="action-btn" title="{{ 'Durdur' if company.is_active else 'Aktifleştir' }}" style="cursor: pointer;">
+                  <i class="fas fa-{{ 'pause' if company.is_active else 'play' }}"></i>
+                </button>
+              </form>
+              <button class="action-btn" onclick="alert('Destek Modu Aktif Ediliyor...')" title="Destek Girişi">
+                <i class="fas fa-user-ninja"></i>
+              </button>
+              
+              <form action="{{ url_for('master.master_company_delete', id=company.id) }}" method="POST" style="display: inline;" id="deleteForm-{{ company.id }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="button" class="action-btn" 
+                        onclick="askDeleteCompany('{{ company.name }}', 'deleteForm-{{ company.id }}')"
+                        style="color: #ef4444; border-color: #fee2e2;" title="Şirketi Sil">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+</div>
+  </div>
+</div>
+
+<!-- Modal UI (Sade ve Şık) -->
+<div id="addCompanyModal" style="display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); align-items:center; justify-content:center; padding: 1rem;">
+  <div class="premium-modal-container" style="display: flex; width: 100%; max-width: 1050px; height: 85vh; max-height: 800px; background: #ffffff; border-radius: 32px; overflow: hidden; box-shadow: 0 40px 80px -20px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1); position: relative; animation: modalPop 0.6s cubic-bezier(0.16, 1, 0.3, 1);">
+    
+    <!-- LEFT PANEL (BRANDING) -->
+    <div style="flex: 0 0 42%; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); padding: 3.5rem; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; color: white;">
+       <!-- abstract background elements -->
+       <div style="position:absolute; top:-10%; left:-10%; width:300px; height:300px; background:radial-gradient(circle, rgba(99,102,241,0.3) 0%, transparent 70%); border-radius:50%;"></div>
+       <div style="position:absolute; bottom:-10%; right:-10%; width:400px; height:400px; background:radial-gradient(circle, rgba(236,72,153,0.2) 0%, transparent 70%); border-radius:50%;"></div>
+       
+       <div style="position: relative; z-index: 1;">
+         <div style="display:inline-flex; align-items:center; justify-content:center; width:56px; height:56px; background:rgba(255,255,255,0.1); border-radius:18px; border:1px solid rgba(255,255,255,0.2); margin-bottom: 2.5rem; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+            <i class="fas fa-crown" style="font-size: 1.75rem; color: #fbbf24;"></i>
+         </div>
+         <h2 style="font-size: 2.5rem; font-weight: 800; line-height: 1.15; margin-bottom: 1.25rem; letter-spacing:-0.03em;">Yeni İş Ortağı<br><span style="background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; color: transparent;">Zyronova Ağına</span><br>Katılıyor</h2>
+         <p style="color: #94a3b8; font-size: 1.15rem; line-height: 1.6; max-width: 95%;">Sisteme eklenen her yeni şirket, <strong>%100 fiziksel izole edilmiş</strong> veritabanı altyapısıyla çalışır.</p>
+       </div>
+
+       <div style="position: relative; z-index: 1; margin-top: 2rem;">
+         <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 1.75rem; backdrop-filter: blur(10px);">
+           <div style="display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.25rem;">
+             <div style="width: 32px; height: 32px; background: rgba(52, 211, 153, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-shield-alt" style="color: #34d399; font-size: 1rem;"></i></div>
+             <span style="font-weight: 600; font-size: 1.05rem; color: #e2e8f0;">Uçtan Uca Şifreleme</span>
+           </div>
+           <div style="display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.25rem;">
+             <div style="width: 32px; height: 32px; background: rgba(96, 165, 250, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-database" style="color: #60a5fa; font-size: 1rem;"></i></div>
+             <span style="font-weight: 600; font-size: 1.05rem; color: #e2e8f0;">Fiziksel DB İzolasyonu</span>
+           </div>
+           <div style="display: flex; align-items: center; gap: 1.25rem;">
+             <div style="width: 32px; height: 32px; background: rgba(244, 114, 182, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-file-signature" style="color: #f472b6; font-size: 1rem;"></i></div>
+             <span style="font-weight: 600; font-size: 1.05rem; color: #e2e8f0;">Kriptografik Lisanslama</span>
+           </div>
+         </div>
+       </div>
+    </div>
+
+    <!-- RIGHT PANEL (FORM) -->
+    <div style="flex: 1; padding: 3.5rem; overflow-y: auto; background: #ffffff; position: relative;">
+      <button type="button" onclick="closeAddCompanyModal()" style="position:absolute; top:2rem; right:2rem; width: 48px; height: 48px; border-radius: 50%; background:#f8fafc; border:1px solid #e2e8f0; color:#64748b; font-size: 1.25rem; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.3s;" onmouseover="this.style.background='#ef4444'; this.style.color='white'; this.style.transform='rotate(90deg)'" onmouseout="this.style.background='#f8fafc'; this.style.color='#64748b'; this.style.transform='rotate(0deg)'">
+        <i class="fas fa-times"></i>
+      </button>
+
+      <form action="/master/company/add" method="POST" style="max-width: 480px; margin: 0 auto;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- STEP 1: Kurumsal Bilgiler -->
+        <h3 style="font-size: 1rem; color: #0f172a; font-weight: 800; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.05em; display:flex; align-items:center; gap:0.75rem;">
+          <span style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; background:#e0e7ff; color:#4f46e5; border-radius:8px; font-size:0.85rem;">1</span> Kurumsal Bilgiler
+        </h3>
+        
+        <div style="margin-bottom: 1.5rem;">
+          <div style="position: relative;">
+            <input type="text" name="name" id="compName" required style="width: 100%; padding: 1.75rem 1.25rem 0.5rem; border: 2px solid #e2e8f0; border-radius: 16px; font-size: 1.1rem; font-weight:600; color: #0f172a; background: #f8fafc; outline: none; transition: all 0.3s;" onfocus="this.style.borderColor='#4f46e5'; this.style.background='#ffffff'; this.nextElementSibling.style.color='#4f46e5'" onblur="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc'; this.nextElementSibling.style.color='#64748b'">
+            <label for="compName" style="position: absolute; left: 1.25rem; top: 0.65rem; color: #64748b; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.3s; pointer-events:none;">Şirket Ticari Ünvanı *</label>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1.5rem; display:none;">
+          <input type="text" name="tax_no" placeholder="10 Haneli Vergi No">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 3rem;">
+          <div style="position: relative;">
+            <input type="email" name="email" id="compEmail" required style="width: 100%; padding: 1.75rem 1.25rem 0.5rem; border: 2px solid #e2e8f0; border-radius: 16px; font-size: 1.05rem; font-weight:600; color: #0f172a; background: #f8fafc; outline: none; transition: all 0.3s;" onfocus="this.style.borderColor='#4f46e5'; this.style.background='#ffffff'; this.nextElementSibling.style.color='#4f46e5'" onblur="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc'; this.nextElementSibling.style.color='#64748b'">
+            <label for="compEmail" style="position: absolute; left: 1.25rem; top: 0.65rem; color: #64748b; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.3s; pointer-events:none;">E-Posta Adresi *</label>
+          </div>
+          <div style="position: relative;">
+            <input type="text" name="phone" id="compPhone" pattern="0[0-9]{10}" maxlength="11" style="width: 100%; padding: 1.75rem 1.25rem 0.5rem; border: 2px solid #e2e8f0; border-radius: 16px; font-size: 1.05rem; font-weight:600; color: #0f172a; background: #f8fafc; outline: none; transition: all 0.3s;" onfocus="this.style.borderColor='#4f46e5'; this.style.background='#ffffff'; this.nextElementSibling.style.color='#4f46e5'" onblur="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc'; this.nextElementSibling.style.color='#64748b'">
+            <label for="compPhone" style="position: absolute; left: 1.25rem; top: 0.65rem; color: #64748b; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.3s; pointer-events:none;">Telefon (05xx)</label>
+          </div>
+        </div>
+
+        <!-- STEP 2: Yönetici -->
+        <h3 style="font-size: 1rem; color: #0f172a; font-weight: 800; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.05em; display:flex; align-items:center; gap:0.75rem;">
+          <span style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; background:#dbeafe; color:#2563eb; border-radius:8px; font-size:0.85rem;">2</span> Yönetici Erişimi
+        </h3>
+        
+        <div style="margin-bottom: 3rem;">
+          <div style="position: relative;">
+            <input type="text" name="admin_username" id="compAdmin" style="width: 100%; padding: 1.75rem 1.25rem 0.5rem; border: 2px solid #e2e8f0; border-radius: 16px; font-size: 1.05rem; font-weight:600; color: #0f172a; background: #f8fafc; outline: none; transition: all 0.3s;" onfocus="this.style.borderColor='#2563eb'; this.style.background='#ffffff'; this.nextElementSibling.style.color='#2563eb'" onblur="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc'; this.nextElementSibling.style.color='#64748b'">
+            <label for="compAdmin" style="position: absolute; left: 1.25rem; top: 0.65rem; color: #64748b; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.3s; pointer-events:none;">Özel Kullanıcı Adı (Opsiyonel)</label>
+            <span style="position:absolute; right:1.25rem; top:50%; transform:translateY(-50%); font-size:0.75rem; color:#94a3b8; font-weight:700; background:#f1f5f9; padding:4px 8px; border-radius:6px; letter-spacing: 0.02em;">Oto Üretim</span>
+          </div>
+        </div>
+
+        <!-- STEP 3: Lisanslama -->
+        <h3 style="font-size: 1rem; color: #0f172a; font-weight: 800; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.05em; display:flex; align-items:center; gap:0.75rem;">
+          <span style="display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; background:#dcfce7; color:#16a34a; border-radius:8px; font-size:0.85rem;">3</span> Lisans & Kriptografi
+        </h3>
+
+        <div style="margin-bottom: 1.25rem;">
+          <div style="position: relative;">
+            <select name="license_duration" id="licenseDurationSelect" required style="width: 100%; padding: 1.75rem 3rem 0.5rem 1.25rem; border: 2px solid #e2e8f0; border-radius: 16px; font-size: 1.05rem; font-weight:700; color: #0f172a; background: #f8fafc; outline: none; transition: all 0.3s; appearance:none; cursor:pointer;" onchange="updateLicenseFields(this.value)" onfocus="this.style.borderColor='#16a34a'; this.style.background='#ffffff'; this.nextElementSibling.style.color='#16a34a'" onblur="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc'; this.nextElementSibling.style.color='#64748b'">
+              <option value="" disabled selected>Lisans tipini seçiniz...</option>
+              <option value="0.5">🚀 15 Gün Deneme (Ücretsiz)</option>
+              <option value="1">⭐ 1 Ay Standart (₺3.000)</option>
+              <option value="3">💎 3 Ay Avantajlı (₺7.000)</option>
+              <option value="6">💼 6 Ay Profesyonel (₺15.000)</option>
+              <option value="12">👑 12 Ay Kurumsal (₺30.000)</option>
+            </select>
+            <label style="position: absolute; left: 1.25rem; top: 0.65rem; color: #64748b; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.3s; pointer-events:none;">Lisans Paketi *</label>
+            <i class="fas fa-chevron-down" style="position:absolute; right:1.5rem; top:50%; transform:translateY(-50%); color:#94a3b8; pointer-events:none;"></i>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-bottom: 3.5rem;">
+          <div style="position: relative;">
+            <input type="number" name="license_price" id="customPrice" min="0" step="any" style="width: 100%; padding: 1.75rem 1.25rem 0.5rem; border: 2px solid #e2e8f0; border-radius: 16px; font-size: 1.05rem; font-weight:700; color: #0f172a; background: #f8fafc; outline: none; transition: all 0.3s;" onfocus="this.style.borderColor='#16a34a'; this.style.background='#ffffff'; this.nextElementSibling.style.color='#16a34a'" onblur="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc'; this.nextElementSibling.style.color='#64748b'">
+            <label for="customPrice" style="position: absolute; left: 1.25rem; top: 0.65rem; color: #64748b; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.3s; pointer-events:none;">Özel Fiyat (₺)</label>
+          </div>
+          <div style="position: relative;">
+            <input type="date" name="expires" id="customDate" style="width: 100%; padding: 1.75rem 1.25rem 0.5rem; border: 2px solid #e2e8f0; border-radius: 16px; font-size: 1.05rem; font-weight:700; color: #0f172a; background: #f8fafc; outline: none; transition: all 0.3s;" onfocus="this.style.borderColor='#16a34a'; this.style.background='#ffffff'; this.nextElementSibling.style.color='#16a34a'" onblur="this.style.borderColor='#e2e8f0'; this.style.background='#f8fafc'; this.nextElementSibling.style.color='#64748b'">
+            <label for="customDate" style="position: absolute; left: 1.25rem; top: 0.65rem; color: #64748b; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.3s; pointer-events:none;">Özel Bitiş</label>
+          </div>
+        </div>
+
+        <button type="submit" style="width: 100%; padding: 1.35rem; background: #0f172a; color: white; border: none; border-radius: 18px; font-size: 1.15rem; font-weight: 800; cursor: pointer; transition: all 0.3s; display:flex; align-items:center; justify-content:center; gap: 0.75rem; box-shadow: 0 15px 30px -10px rgba(15,23,42,0.5);" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 20px 40px -10px rgba(15,23,42,0.6)'; this.style.background='#1e293b'" onmouseout="this.style.transform='none'; this.style.boxShadow='0 15px 30px -10px rgba(15,23,42,0.5)'; this.style.background='#0f172a'">
+          Kurulumu Başlat <i class="fas fa-arrow-right"></i>
+        </button>
+
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<style>
+@keyframes modalPop {
+  0% { opacity: 0; transform: scale(0.96) translateY(20px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+/* Modal Scrollbar Customization for Right Panel */
+.premium-modal-container > div:last-child::-webkit-scrollbar {
+  width: 8px;
+}
+.premium-modal-container > div:last-child::-webkit-scrollbar-track {
+  background: transparent;
+}
+.premium-modal-container > div:last-child::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.premium-modal-container > div:last-child::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+</style>
+
+<!-- Custom Delete Confirmation Modal -->
+<div id="deleteModal" class="custom-modal-overlay">
+  <div class="custom-modal" style="border-top: 8px solid #ef4444;">
+    <div class="modal-icon-wrapper" style="background: #fee2e2; color: #ef4444;">
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    <h3 style="font-size: 1.5rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem;">Şirketi Sil</h3>
+    <p id="deleteModalText" style="color: #64748b; font-weight: 500; line-height: 1.5;"></p>
+    
+    <div style="background: #fef2f2; border: 1px dashed #ef4444; border-radius: 12px; padding: 1rem; margin-top: 1.5rem; color: #991b1b; font-size: 0.85rem; font-weight: 600;">
+      <i class="fas fa-exclamation-circle" style="margin-right: 0.5rem;"></i> DİKKAT: Bu işlem sonucunda şirketin tüm yönetici kayıtları silinecek ve bu işlem geriye alınamaz!
+    </div>
+    
+    <div class="modal-actions">
+      <button class="btn-modal btn-cancel" onclick="closeDeleteModal()">İptal Et</button>
+      <button id="confirmDeleteBtn" onclick="confirmDelete()" class="btn-modal" style="background: #ef4444; color: white; display: flex; align-items: center; justify-content: center;">Silmeyi Onayla</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openAddCompanyModal() { document.getElementById('addCompanyModal').style.display = 'flex'; }
+function closeAddCompanyModal() { document.getElementById('addCompanyModal').style.display = 'none'; }
+
+function updateLicenseFields(val) {
+    const priceInput = document.querySelector('input[name="license_price"]');
+    const expiresInput = document.querySelector('input[name="expires"]');
+    
+    if (val === 'custom') {
+        priceInput.value = '';
+        expiresInput.value = '';
+        return;
+    }
+    
+    const prices = {
+        '0.5': 0,
+        '1': 3000,
+        '3': 7000,
+        '6': 15000,
+        '12': 30000
+    };
+    
+    priceInput.value = prices[val] !== undefined ? prices[val] : 0;
+    
+    // Calculate expiry date
+    const today = new Date();
+    if (val === '0.5') {
+        today.setDate(today.getDate() + 15);
+    } else {
+        const months = parseInt(val);
+        today.setMonth(today.getMonth() + months);
+    }
+    
+    // Format date as yyyy-mm-dd
+    const yyyy = today.getFullYear();
+    let mm = today.getMonth() + 1;
+    let dd = today.getDate();
+    
+    if (mm < 10) mm = '0' + mm;
+    if (dd < 10) dd = '0' + dd;
+    
+    expiresInput.value = `${yyyy}-${mm}-${dd}`;
+}
+
+// Phone Input Validation (starts with 0, digits only, max 11)
+document.querySelectorAll('input[name="phone"]').forEach(input => {
+    input.addEventListener('input', function(e) {
+        let val = this.value.replace(/\D/g, ''); // Sadece rakamlar
+        if (val.length > 0 && val[0] !== '0') {
+            val = '0' + val;
+        }
+        this.value = val.substring(0, 11);
+    });
+});
+
+let activeResetFormId = null;
+
+function askResetPassword(userName, formId) {
+    const modal = document.getElementById('resetModal');
+    const text = document.getElementById('resetModalText');
+    activeResetFormId = formId;
+    
+    text.innerHTML = `<strong>${userName}</strong> kullanıcısının şifresini <strong>123456</strong> olarak sıfırlamak istediğinize emin misiniz? <br><br> Bu işlemden sonra kullanıcıdan ilk girişte şifresini değiştirmesi istenecektir.`;
+    
+    modal.style.display = 'flex';
+}
+
+function confirmReset() {
+    if (activeResetFormId) {
+        document.getElementById(activeResetFormId).submit();
+    }
+}
+
+function closeResetModal() {
+    document.getElementById('resetModal').style.display = 'none';
+}
+
+let activeDeleteFormId = null;
+
+function askDeleteCompany(companyName, formId) {
+    const modal = document.getElementById('deleteModal');
+    const text = document.getElementById('deleteModalText');
+    activeDeleteFormId = formId;
+    
+    text.innerHTML = `<strong>${companyName}</strong> şirketini sistemden tamamen silmek istediğinize emin misiniz?`;
+    
+    modal.style.display = 'flex';
+}
+
+function confirmDelete() {
+    if (activeDeleteFormId) {
+        document.getElementById(activeDeleteFormId).submit();
+    }
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('resetModal');
+    const deleteModal = document.getElementById('deleteModal');
+    const addModal = document.getElementById('addCompanyModal');
+    if (event.target == modal) closeResetModal();
+    if (event.target == deleteModal) closeDeleteModal();
+    if (event.target == addModal) closeAddCompanyModal();
+}
+</script>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+    {% if category == 'modal_success' %}
+      <div id="companyCreatedModal" style="position:fixed; z-index:99999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter: blur(4px); display:flex; align-items:center; justify-content:center;">
+        <div style="background:white; padding:2.5rem; border-radius:24px; max-width:500px; width:95%; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+          <div style="text-align:center; margin-bottom:1.5rem;">
+            <div style="width:64px; height:64px; background:#dcfce7; color:#16a34a; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 1rem; font-size:2rem;">
+              <i class="fas fa-check"></i>
+            </div>
+            <h2 style="margin:0; color:#166534; font-size:1.5rem; font-weight:800;">Şirket Başarıyla Oluşturuldu!</h2>
+            <p style="color:#475569; margin-top:0.5rem; font-size:0.95rem;">Lütfen aşağıdaki bilgileri güvenli bir yere kopyalayın.</p>
+          </div>
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:1.2rem; margin-bottom:1.5rem; font-size:0.95rem; color:#0f172a; line-height:1.7;" id="newCompanyDetails">
+             <!-- JS will populate -->
+          </div>
+          <div style="display:flex; gap:1rem;">
+            <button onclick="copyCompanyDetails()" class="btn" style="flex:1; background:#3b82f6; color:white; font-weight:700; padding:1rem; border:none; border-radius:12px; cursor:pointer;">
+              <i class="fas fa-copy" style="margin-right:0.5rem;"></i> Kopyala
+            </button>
+            <button onclick="document.getElementById('companyCreatedModal').style.display='none'" class="btn" style="flex:1; background:#f1f5f9; color:#475569; font-weight:700; padding:1rem; border:none; border-radius:12px; cursor:pointer;">Kapat</button>
+          </div>
+        </div>
+      </div>
+      <script>
+        const companyData = {{ message|safe }};
+        const detailsHtml = `
+          <strong>Şirket:</strong> ${companyData.companyName}<br>
+          <strong>Veritabanı:</strong> ${companyData.subdomain}<br>
+          <strong>Yönetici Hesabı:</strong> ${companyData.adminUser}<br>
+          <strong>Yönetici Şifresi:</strong> <span style="background:#dbeafe; color:#1e40af; padding:0.2rem 0.5rem; border-radius:6px; font-weight:800; font-family:monospace; font-size:1.1em;">${companyData.adminPass}</span><br>
+          <strong>Lisans Anahtarı:</strong> <span style="font-family:monospace;">${companyData.licenseKey}</span>
+        `;
+        document.getElementById('newCompanyDetails').innerHTML = detailsHtml;
+
+        const rawText = `Şirket: ${companyData.companyName}\nVeritabanı: ${companyData.subdomain}\nYönetici Hesabı: ${companyData.adminUser}\nYönetici Şifresi: ${companyData.adminPass}\nLisans Anahtarı: ${companyData.licenseKey}`;
+
+        function copyCompanyDetails() {
+            navigator.clipboard.writeText(rawText).then(() => {
+                alert("Bilgiler başarıyla panoya kopyalandı!");
+            });
+        }
+      </script>
+    {% endif %}
+  {% endfor %}
+{% endwith %}
+{% endblock %}

@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-row">
+    <div>
+      <h2 class="page-title">Sistem Kayıtları</h2>
+      <p class="page-subtitle">Şirket bünyesinde gerçekleştirilen tüm işlemlerin dökümü</p>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-4" style="border: none; box-shadow: var(--shadow-sm);">
+  <div class="card-header" style="background: white; border-bottom: 1px solid var(--border); padding: 1.5rem 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0; font-size: 1.1rem; color: var(--navy);"><i class="fas fa-history" style="margin-right: 0.75rem; color: var(--blue);"></i> İşlem Geçmişi</h3>
+      <span class="badge" style="background: var(--bg); color: var(--text-light); font-weight: 600;">Sayfa {{ page }} / {{ pages if pages > 0 else 1 }}</span>
+    </div>
+  </div>
+  <div class="card-body" style="padding: 0;">
+    <div class="table-responsive">
+<table class="data-table" style="width: 100%; border-collapse: collapse;">
+        <thead>
+          <tr style="background: #fafafa; border-bottom: 1px solid var(--border);">
+            <th style="padding: 1rem 2rem; text-align: left; font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; width: 180px;">Tarih / Saat</th>
+            <th style="padding: 1rem 1rem; text-align: left; font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; width: 220px;">Kullanıcı</th>
+            <th style="padding: 1rem 1rem; text-align: left; font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; width: 120px;">İşlem Tipi</th>
+            <th style="padding: 1rem 1rem; text-align: left; font-size: 0.75rem; color: var(--text-light); text-transform: uppercase;">Detaylar</th>
+            <th style="padding: 1rem 2rem; text-align: right; font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; width: 150px;">IP Adresi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in logs %}
+          <tr style="border-bottom: 1px solid var(--border); transition: background 0.2s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+            <td style="padding: 1.25rem 2rem;">
+              <div style="font-weight: 600; color: var(--navy); font-size: 0.9rem;">{{ log.timestamp.strftime('%d.%m.%Y') }}</div>
+              <div style="font-size: 0.75rem; color: var(--text-light); margin-top: 0.25rem;">{{ log.timestamp.strftime('%H:%M:%S') }}</div>
+            </td>
+            <td style="padding: 1.25rem 1rem;">
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div class="log-avatar" {% if log.user and log.user.is_deleted %} style="opacity: 0.5; grayscale(100%);" {% endif %}>{{ (log.user.name or log.user.username)[0].upper() if log.user else '?' }}</div>
+                <div style="display: flex; flex-direction: column;">
+                  <div style="font-weight: 600; color: var(--text); font-size: 0.9rem;">
+                    {{ log.user.name or log.user.username if log.user else 'Sistem' }}
+                    {% if log.user and log.user.is_deleted %}
+                      <span style="font-size: 0.6rem; color: #ef4444; background: #fee2e2; padding: 2px 6px; border-radius: 4px; margin-left: 4px; font-weight: 800; text-transform: uppercase; border: 1px solid #fecaca;">Silindi</span>
+                    {% endif %}
+                  </div>
+                  {% if log.user %}
+                  <div style="font-size: 0.7rem; color: var(--text-light);">@{{ log.user.username }}</div>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+            <td style="padding: 1.25rem 1rem;">
+              {% if log.action == 'login' %}
+                <span class="log-badge badge-green"><i class="fas fa-sign-in-alt"></i> Giriş</span>
+              {% elif 'delete' in log.action or 'sil' in log.action %}
+                <span class="log-badge badge-red"><i class="fas fa-trash-alt"></i> Silme</span>
+              {% elif 'add' in log.action or 'ekle' in log.action %}
+                <span class="log-badge badge-blue"><i class="fas fa-plus-circle"></i> Ekleme</span>
+              {% else %}
+                <span class="log-badge badge-gray"><i class="fas fa-cog"></i> İşlem</span>
+              {% endif %}
+            </td>
+            <td style="padding: 1.25rem 1rem; color: var(--text); font-size: 0.9rem; line-height: 1.5;">
+              {{ log.details or '-' }}
+            </td>
+            <td style="padding: 1.25rem 2rem; text-align: right;">
+              <code style="background: var(--bg); padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; color: var(--text-light);">{{ log.ip_address }}</code>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" style="padding: 4rem 2rem; text-align: center; color: var(--text-light);">
+              <i class="fas fa-ghost" style="font-size: 2rem; margin-bottom: 1rem; display: block; opacity: 0.3;"></i>
+              Henüz hiç işlem kaydı bulunmuyor.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination-wrapper">
+      <div class="pagination-info-text">
+        {% set start_item = (page - 1) * 15 + 1 %}
+        {% set end_item = [page * 15, total] | min %}
+        {% if total > 0 %}
+          <span>{{ start_item }}–{{ end_item }} / {{ total }} kayıt</span>
+        {% else %}
+          <span>Kayıt bulunamadı</span>
+        {% endif %}
+      </div>
+      {% if pages > 1 %}
+      <div class="pagination">
+        <a href="{{ url_for('main.logs', page=page-1) }}" 
+           class="pagination-btn {% if not has_prev %}disabled{% endif %}"
+           {% if not has_prev %}onclick="return false;"{% endif %}>
+          <i class="fas fa-chevron-left"></i>
+        </a>
+        
+        {% for p in range(1, pages + 1) %}
+          {% if p == 1 or p == pages or (p >= page - 2 and p <= page + 2) %}
+            <a href="{{ url_for('main.logs', page=p) }}" 
+               class="pagination-btn {{ 'active' if p == page else '' }}">
+              {{ p }}
+            </a>
+          {% elif p == page - 3 or p == page + 3 %}
+            <span class="pagination-dots">...</span>
+          {% endif %}
+        {% endfor %}
+        
+        <a href="{{ url_for('main.logs', page=page+1) }}" 
+           class="pagination-btn {% if not has_next %}disabled{% endif %}"
+           {% if not has_next %}onclick="return false;"{% endif %}>
+          <i class="fas fa-chevron-right"></i>
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<style>
+.log-avatar {
+  width: 32px;
+  height: 32px;
+  background: var(--bg);
+  color: var(--navy);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: 1px solid var(--border);
+}
+.log-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.badge-blue { background: #eff6ff; color: #2563eb; }
+.badge-green { background: #f0fdf4; color: #16a34a; }
+.badge-red { background: #fef2f2; color: #dc2626; }
+.badge-gray { background: #f8fafc; color: #64748b; }
+
+/* ─── Pagination wrapper ─────────────────────────────── */
+.pagination-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  border-top: 1px solid var(--border);
+  background: #fafafa;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.pagination-info-text {
+  font-size: 0.82rem;
+  color: var(--text-light);
+  font-weight: 500;
+}
+.pagination {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+.pagination-btn:hover:not(.disabled):not(.active) {
+  background: var(--bg);
+  border-color: var(--blue);
+  color: var(--blue);
+}
+.pagination-btn.active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: white;
+}
+.pagination-btn.disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.pagination-dots {
+  padding: 0 0.25rem;
+  color: var(--text-light);
+  font-size: 0.85rem;
+}
+
+/* ─── Premium Responsive Overrides ─────────────────────────── */
+.table-responsive {
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+  width: 100% !important;
+}
+
+@media (max-width: 768px) {
+  .card-header > div[style*="display: flex; justify-content: space-between"],
+  .card-header > div[style*="display:flex; justify-content:space-between"] {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+
+  .data-table th:nth-child(5),
+  .data-table td:nth-child(5) {
+    display: none !important; /* Hide IP address column on narrow screens to save space */
+  }
+}
+</style>
+{% endblock %}

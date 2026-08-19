@@ -1,0 +1,1723 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+  :root {
+    --p-primary: #2563eb;
+    --p-soft: #f8fafc;
+    --p-border: #e2e8f0;
+    --p-text: #1e293b;
+    --p-muted: #64748b;
+  }
+
+  .premium-profile-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  /* Left Side: Identity Card */
+  .identity-card {
+    background: white;
+    border-radius: 32px;
+    padding: 2.5rem;
+    border: 1px solid var(--p-border);
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.02), 0 8px 10px -6px rgba(0,0,0,0.02);
+    text-align: center;
+    position: sticky;
+    top: 2rem;
+  }
+
+  .avatar-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 1.5rem;
+  }
+  .avatar-circle {
+    width: 100%;
+    height: 100%;
+    border-radius: 40px;
+    background: linear-gradient(135deg, #2563eb, #60a5fa);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: 800;
+    color: white;
+    box-shadow: 0 20px 40px -10px rgba(37, 99, 235, 0.4);
+    transform: rotate(-5deg);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .avatar-container:hover .avatar-circle {
+    transform: rotate(0deg) scale(1.05);
+  }
+  .status-dot {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    background: #10b981;
+    border: 4px solid white;
+    border-radius: 50%;
+  }
+
+  /* Right Side: Command Center */
+  .command-center {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .welcome-banner {
+    background: linear-gradient(120deg, #1e293b 0%, #0f172a 100%);
+    border-radius: 32px;
+    padding: 3rem;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 50px -15px rgba(15, 23, 42, 0.3);
+  }
+  .welcome-banner::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(37, 99, 235, 0.2) 0%, transparent 70%);
+    z-index: 0;
+  }
+
+  .glass-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+  .glass-stat {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    transition: all 0.3s;
+  }
+  .glass-stat:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-5px);
+  }
+  .glass-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(37, 99, 235, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #60a5fa;
+    font-size: 1.2rem;
+  }
+
+  .section-card {
+    background: white;
+    border-radius: 32px;
+    padding: 2.5rem;
+    border: 1px solid var(--p-border);
+  }
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .section-title h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--p-text);
+  }
+
+  .quick-action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1.25rem;
+  }
+  .quick-action-btn {
+    padding: 1.5rem;
+    background: var(--p-soft);
+    border: 1px solid transparent;
+    border-radius: 24px;
+    text-align: center;
+    transition: all 0.3s;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+  }
+  .quick-action-btn:hover {
+    background: white;
+    border-color: var(--p-primary);
+    box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.1);
+    transform: scale(1.02);
+  }
+  .quick-action-btn i {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+    display: block;
+    color: var(--p-primary);
+  }
+  .quick-action-btn span {
+    font-weight: 700;
+    color: var(--p-text);
+    font-size: 0.85rem;
+  }
+
+  .timeline {
+    position: relative;
+    padding-left: 2rem;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--p-border);
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -2.35rem;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid var(--p-primary);
+  }
+  .timeline-content {
+    background: var(--p-soft);
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+  }
+  .timeline-time {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--p-muted);
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .timeline-text {
+    font-size: 0.9rem;
+    color: var(--p-text);
+    font-weight: 600;
+  }
+
+  /* Admin Grid Overrides */
+  .perm-grid-v2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+  .perm-category {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .perm-header {
+    background: #f1f5f9;
+    padding: 0.75rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .perm-header h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #1e293b;
+    font-weight: 700;
+  }
+  .perm-body {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .perm-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #475569;
+    cursor: pointer;
+    margin: 0;
+  }
+  .perm-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    margin: 0;
+  }
+
+  /* ─── Custom Delete Modal ─────────────────────────────────── */
+  .custom-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .custom-modal {
+    background: white;
+    width: 100%;
+    max-width: 450px;
+    border-radius: 32px;
+    padding: 2.5rem;
+    text-align: center;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    transform: scale(0.9);
+    animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes modalIn { to { transform: scale(1); } }
+
+  .modal-icon-wrapper {
+    width: 80px;
+    height: 80px;
+    background: #fee2e2;
+    color: #ef4444;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    margin: 0 auto 1.5rem;
+  }
+
+  .modal-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+
+  .btn-modal {
+    padding: 1rem;
+    border-radius: 16px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-confirm { background: #ef4444; color: white; }
+  .btn-confirm:hover { background: #dc2626; transform: translateY(-2px); }
+  .btn-cancel { background: #f1f5f9; color: #64748b; }
+  .btn-cancel:hover { background: #e2e8f0; }
+  /* Profile Tabs */
+  .profile-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    background: white;
+    padding: 0.75rem;
+    border-radius: 24px;
+    border: 1px solid var(--p-border);
+    width: fit-content;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .profile-tab-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: 16px;
+    border: none;
+    background: transparent;
+    color: var(--p-muted);
+    font-weight: 700;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    white-space: nowrap;
+  }
+  .profile-tab-btn i { font-size: 1.1rem; }
+  .profile-tab-btn.active {
+    background: var(--p-primary);
+    color: white;
+    box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.3);
+  }
+  .profile-tab-btn:not(.active):hover {
+    background: var(--p-soft);
+    color: var(--p-text);
+  }
+
+  .profile-tab-content {
+    display: none;
+    animation: fadeIn 0.4s ease;
+    min-width: 0;
+    max-width: 100%;
+  }
+  .profile-tab-content.active {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  /* Logs Specific */
+  .log-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 8px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  .badge-blue { background: #eff6ff; color: #2563eb; }
+  .badge-green { background: #f0fdf4; color: #16a34a; }
+  .badge-red { background: #fef2f2; color: #dc2626; }
+  .badge-gray { background: #f8fafc; color: #64748b; }
+
+  /* Settings Specific */
+  .banner-upload-box {
+    border: 2px dashed #e2e8f0;
+    border-radius: 24px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background: #f8fafc;
+    position: relative;
+  }
+  .banner-upload-box:hover {
+    border-color: #2563eb;
+    background: #eff6ff;
+  }
+  .preview-wrapper {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    height: 200px;
+  }
+  .preview-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+
+  #bannerInput {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  /* ─── Premium Responsive Overrides ─────────────────────────── */
+  .settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 2rem;
+  }
+
+  .two-factor-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 32px;
+    border: 1px solid #e2e8f0;
+    margin-top: 2rem;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.02);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 2rem;
+  }
+
+  .two-factor-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  .table-responsive table th,
+  .table-responsive table td {
+    white-space: nowrap;
+  }
+
+  @media (max-width: 1024px) {
+    .premium-profile-grid {
+      grid-template-columns: 1fr !important;
+      gap: 1.5rem !important;
+    }
+
+    .identity-card {
+      position: relative !important;
+      top: unset !important;
+      padding: 1.5rem !important;
+      border-radius: 24px !important;
+    }
+
+    .settings-grid {
+      grid-template-columns: 1fr !important;
+      gap: 1.5rem !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .welcome-banner {
+      padding: 1.5rem !important;
+      border-radius: 24px !important;
+    }
+
+    .welcome-banner h1, .welcome-banner h2 {
+      font-size: 1.5rem !important;
+    }
+
+    .welcome-banner p {
+      font-size: 0.85rem !important;
+    }
+
+    .glass-stat-grid {
+      grid-template-columns: 1fr !important;
+      gap: 1rem !important;
+    }
+
+    .section-card {
+      padding: 1.5rem !important;
+      border-radius: 24px !important;
+    }
+
+    .profile-tabs {
+      display: flex !important;
+      overflow-x: auto !important;
+      white-space: nowrap !important;
+      -webkit-overflow-scrolling: touch;
+      width: 100% !important;
+      padding: 0.5rem !important;
+      gap: 0.5rem !important;
+    }
+    
+    .profile-tab-btn {
+      flex: 1 0 auto !important;
+      padding: 0.6rem 1.2rem !important;
+      font-size: 0.85rem !important;
+    }
+
+    .form-grid-2, .form-grid-3, .form-grid-4 {
+      grid-template-columns: 1fr !important;
+      gap: 0.75rem !important;
+    }
+
+    .modal-actions {
+      grid-template-columns: 1fr !important;
+      gap: 0.75rem !important;
+    }
+
+    .btn-modal {
+      width: 100% !important;
+    }
+
+    .custom-modal {
+      padding: 1.5rem !important;
+      width: 95% !important;
+      margin: 1rem auto !important;
+    }
+
+    .two-factor-card {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      padding: 1.5rem !important;
+      gap: 1.5rem !important;
+      border-radius: 24px !important;
+    }
+    
+    .two-factor-header {
+      flex-direction: column !important;
+      align-items: center !important;
+      text-align: center !important;
+    }
+    
+    .two-factor-card a, .two-factor-card button {
+      width: 100% !important;
+      justify-content: center !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .quick-action-grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set is_admin = current_user.is_manager or current_user.can_manage_personnel %}
+
+<div class="premium-profile-grid">
+  <!-- Left Side: Profile & Security -->
+  <aside>
+    <div class="identity-card">
+      <div class="avatar-container">
+        <div class="avatar-circle">
+          {{ (current_user.name or current_user.username)[0].upper() }}
+        </div>
+        <div class="status-dot"></div>
+      </div>
+      
+      <h2 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: #0f172a;">{{ current_user.name or current_user.username }}</h2>
+      <p style="margin: 0.5rem 0 1.5rem; font-size: 0.9rem; color: #64748b; font-weight: 600;">{{ current_user.role.title() }}</p>
+
+      <div style="background: #f8fafc; border-radius: 24px; padding: 1.5rem; margin-bottom: 2rem; text-align: left;">
+        <div style="margin-bottom: 1.25rem;">
+          <label style="font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Şirket</label>
+          <div style="font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 0.5rem; margin-top: 4px;">
+            <i class="fas fa-building" style="color: #3b82f6;"></i>
+            {{ current_user.company_name }}
+          </div>
+        </div>
+        <div>
+          <label style="font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em;">Kullanıcı Kimliği</label>
+          <div style="font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 0.5rem; margin-top: 4px;">
+            <i class="fas fa-fingerprint" style="color: #64748b;"></i>
+            <code>{{ current_user.username }}</code>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: left;">
+        <h4 style="font-size: 0.8rem; font-weight: 800; color: #0f172a; text-transform: uppercase; margin-bottom: 1.25rem;">Şifre Güvenliği</h4>
+        <form action="{{ url_for('auth.sifre_degistir') }}" method="POST">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div style="position: relative; margin-bottom: 1rem;">
+            <input type="password" name="current_password" id="currentPassword" placeholder="Mevcut Şifreniz" required
+              style="width: 100%; padding: 1rem 1.25rem; border-radius: 16px; border: 1px solid #e2e8f0; background: #f8fafc; font-size: 0.9rem;">
+          </div>
+          <div style="position: relative; margin-bottom: 1rem;">
+            <input type="password" name="new_password" id="newPassword" placeholder="Yeni şifreniz" required
+              style="width: 100%; padding: 1rem 1.25rem; border-radius: 16px; border: 1px solid #e2e8f0; background: #f8fafc; font-size: 0.9rem;">
+            <i class="fas fa-eye" id="passIcon" onclick="togglePass('newPassword', 'passIcon')" style="position: absolute; right: 1.25rem; top: 50%; transform: translateY(-50%); color: #94a3b8; cursor: pointer;"></i>
+          </div>
+          <div style="position: relative; margin-bottom: 0.5rem;">
+            <input type="password" name="confirm_password" id="confirmPassword" placeholder="Yeni şifre (Tekrar)" required
+              style="width: 100%; padding: 1rem 1.25rem; border-radius: 16px; border: 1px solid #e2e8f0; background: #f8fafc; font-size: 0.9rem;">
+            <i class="fas fa-eye" id="confirmPassIcon" onclick="togglePass('confirmPassword', 'confirmPassIcon')" style="position: absolute; right: 1.25rem; top: 50%; transform: translateY(-50%); color: #94a3b8; cursor: pointer;"></i>
+          </div>
+          
+          <div id="passwordStrength" style="margin-bottom: 1rem;">
+            <div style="display: flex; gap: 4px; margin-bottom: 4px;">
+              <div class="strength-bar" style="height: 4px; flex: 1; background: #e2e8f0; border-radius: 2px; transition: all 0.3s;"></div>
+              <div class="strength-bar" style="height: 4px; flex: 1; background: #e2e8f0; border-radius: 2px; transition: all 0.3s;"></div>
+              <div class="strength-bar" style="height: 4px; flex: 1; background: #e2e8f0; border-radius: 2px; transition: all 0.3s;"></div>
+              <div class="strength-bar" style="height: 4px; flex: 1; background: #e2e8f0; border-radius: 2px; transition: all 0.3s;"></div>
+            </div>
+            <div id="strengthText" style="font-size: 0.65rem; font-weight: 800; text-transform: uppercase; color: #94a3b8;">Şifre Gücü</div>
+          </div>
+
+          <div id="passwordMatchMessage" style="font-size: 0.75rem; font-weight: 700; margin-bottom: 1rem; display: none;"></div>
+          
+          <button type="submit" id="submitPassBtn" class="btn btn-primary" style="width: 100%; border-radius: 16px; padding: 1rem; font-weight: 700;">
+            Şifreyi Güncelle
+          </button>
+        </form>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Right Side: Dashboard & Activity -->
+  <main class="command-center">
+    <!-- Tabs Header -->
+    <div class="profile-tabs">
+      <button class="profile-tab-btn active" onclick="switchProfileTab(this, 'general')">
+        <i class="fas fa-user-circle"></i> Genel
+      </button>
+      <button class="profile-tab-btn" onclick="switchProfileTab(this, 'contract')">
+        <i class="fas fa-file-contract"></i> Kiralama Sözleşmesi
+      </button>
+      {% if is_admin %}
+      <button class="profile-tab-btn" onclick="switchProfileTab(this, 'logs')">
+        <i class="fas fa-history"></i> Denetim Günlüğü
+      </button>
+      <button class="profile-tab-btn" onclick="switchProfileTab(this, 'settings')">
+        <i class="fas fa-sliders"></i> Ayarlar
+      </button>
+      {% endif %}
+    </div>
+
+    <!-- TAB: GENEL -->
+    <div id="profile-tab-general" class="profile-tab-content active">
+      <!-- Welcome Banner -->
+      <div class="welcome-banner">
+        <div style="position: relative; z-index: 1;">
+          <span style="background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase;">Zyronova Premium</span>
+          <h1 style="font-size: 2.5rem; font-weight: 800; margin: 1rem 0 0.5rem;">İyi günler, {{ current_user.name.split(' ')[0] if current_user.name else current_user.username }}!</h1>
+          <p style="font-size: 1.1rem; opacity: 0.8;">Sistem şu an tam kapasiteyle çalışıyor. Bugün için her şey hazır.</p>
+          
+          <div class="glass-stat-grid">
+            <div class="glass-stat">
+              <div class="glass-icon"><i class="fas fa-shield-alt"></i></div>
+              <div>
+                <div style="font-size: 0.7rem; font-weight: 800; opacity: 0.7; text-transform: uppercase;">Güvenlik</div>
+                <div style="font-size: 1rem; font-weight: 800;">Aktif & Güvenli</div>
+              </div>
+            </div>
+            <div class="glass-stat">
+              <div class="glass-icon"><i class="fas fa-bolt"></i></div>
+              <div>
+                <div style="font-size: 0.7rem; font-weight: 800; opacity: 0.7; text-transform: uppercase;">Sistem Hızı</div>
+                <div style="font-size: 1rem; font-weight: 800;">12ms Gecikme</div>
+              </div>
+            </div>
+            <div class="glass-stat">
+              <div class="glass-icon"><i class="fas fa-check-circle"></i></div>
+              <div>
+                <div style="font-size: 0.7rem; font-weight: 800; opacity: 0.7; text-transform: uppercase;">Lisans</div>
+                <div style="font-size: 1rem; font-weight: 800;">Kurumsal Aktif</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2FA Güvenlik Paneli (Yeni Yerinde) -->
+      <div class="two-factor-card">
+          <div class="two-factor-header">
+              <div style="width: 64px; height: 64px; background: {{ '#ecfdf5' if current_user.is_2fa_enabled else '#fff1f2' }}; color: {{ '#10b981' if current_user.is_2fa_enabled else '#e11d48' }}; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 1.75rem; box-shadow: 0 10px 20px -5px {{ 'rgba(16, 185, 129, 0.2)' if current_user.is_2fa_enabled else 'rgba(225, 29, 72, 0.2)' }};">
+                  <i class="fas {{ 'fa-shield-check' if current_user.is_2fa_enabled else 'fa-shield-exclamation' }}"></i>
+              </div>
+              <div>
+                  <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
+                      <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0;">İki Faktörlü Doğrulama</h3>
+                      <span style="font-size: 0.65rem; font-weight: 800; padding: 0.25rem 0.75rem; border-radius: 12px; background: {{ '#10b981' if current_user.is_2fa_enabled else '#e11d48' }}; color: white; letter-spacing: 0.05em;">
+                        {{ 'AKTİF' if current_user.is_2fa_enabled else 'PASİF' }}
+                      </span>
+                  </div>
+                  <p style="font-size: 0.95rem; color: #64748b; margin: 0; font-weight: 500;">Hesabınıza ekstra bir güvenlik katmanı ekleyerek verilerinizi koruyun.</p>
+              </div>
+          </div>
+          
+          {% if not current_user.is_2fa_enabled %}
+              <a href="{{ url_for('auth.two_factor_setup') }}" class="btn btn-primary" style="padding: 1rem 2rem; border-radius: 16px; font-weight: 700; display: flex; align-items: center; gap: 0.75rem; box-shadow: 0 15px 30px -10px rgba(37, 99, 235, 0.4);">
+                  <i class="fas fa-plus-circle"></i> Kurulumu Başlat
+              </a>
+          {% else %}
+              <button onclick="openDisable2FA()" class="btn btn-outline" style="padding: 1rem 2rem; border-radius: 16px; font-weight: 700; display: flex; align-items: center; gap: 0.75rem; border-color: #e2e8f0; color: #e11d48;">
+                  <i class="fas fa-power-off"></i> Korumayı Kapat
+              </button>
+          {% endif %}
+      </div>
+
+      {% if is_admin %}
+        <!-- Admin Content: Personnel List -->
+        <div class="section-card">
+          <div class="section-title">
+            <div style="width: 48px; height: 48px; border-radius: 14px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+              <i class="fas fa-users"></i>
+            </div>
+            <div>
+              <h3>Personel Yönetimi</h3>
+              <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Ekibinizi ve yetkilerini bu panelden yönetebilirsiniz.</p>
+            </div>
+            <button class="btn btn-primary" onclick="togglePersonelForm()" style="margin-left: auto; border-radius: 14px; padding: 0.75rem 1.5rem;">
+              <i class="fas fa-plus mr-2"></i> Yeni Personel
+            </button>
+          </div>
+
+          <div id="addPersonelForm" style="display: none; background: #f8fafc; border-radius: 24px; padding: 2rem; margin-bottom: 2rem; border: 1px solid #e2e8f0;">
+            <form action="{{ url_for('main.personel_ekle') }}" method="POST">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <div class="form-grid-2" style="margin-bottom: 1.5rem;">
+                <div class="form-group">
+                  <label style="font-weight: 700; margin-bottom: 0.5rem; display: block; font-size: 0.85rem;">Ad Soyad</label>
+                  <input type="text" name="name" class="form-control" placeholder="Ahmet Yılmaz" required style="width: 100%; padding: 0.85rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                </div>
+                <div class="form-group">
+                  <label style="font-weight: 700; margin-bottom: 0.5rem; display: block; font-size: 0.85rem;">Kullanıcı Adı</label>
+                  <input type="text" name="username" class="form-control" placeholder="ahmet_y" required style="width: 100%; padding: 0.85rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                </div>
+                <div class="form-group">
+                  <label style="font-weight: 700; margin-bottom: 0.5rem; display: block; font-size: 0.85rem;">Şifre</label>
+                  <input type="password" name="password" class="form-control" placeholder="••••••••" required style="width: 100%; padding: 0.85rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                </div>
+                <div class="form-group">
+                  <label style="font-weight: 700; margin-bottom: 0.5rem; display: block; font-size: 0.85rem;">Şifre</label>
+                  <input type="password" name="password" class="form-control" placeholder="********" required style="width: 100%; padding: 0.85rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                </div>
+                
+                {% if current_user.company_id == 1 %}
+                <div class="form-group">
+                  <label style="font-weight: 700; margin-bottom: 0.5rem; display: block; font-size: 0.85rem;">Departman / Modül</label>
+                  {% set my_perms = current_user.get_permissions() %}
+                  <select name="company_id" id="departmentSelect" class="form-control" style="width: 100%; padding: 0.85rem; border-radius: 12px; border: 1px solid #e2e8f0;" onchange="updateRoles()">
+                    <option value="1">Yönetim / Merkez (Master)</option>
+                    <option value="2">Rent A Car Departmanı</option>
+                    {% if current_user.is_manager or my_perms.get('tur_takip_manage', {}).get('all') %}
+                    <option value="3">Tur Takip Departmanı</option>
+                    {% endif %}
+                  </select>
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                  <label style="font-weight: 700; margin-bottom: 0.5rem; display: block; font-size: 0.85rem;">Rol</label>
+                  <select name="role_id" id="roleSelect" class="form-control" style="width: 100%; padding: 0.85rem; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    {% if current_user.company_id == 1 %}
+                      <option value="13" data-dept="1">Personel (Merkez)</option>
+                      <option value="12" data-dept="1">Admin (Merkez)</option>
+                      {% if current_user.is_super_admin %}
+                      <option value="11" data-dept="1">Süper Admin</option>
+                      {% endif %}
+                      
+                      <option value="22" data-dept="2" style="display:none;">Rent A Car Personel</option>
+                      <option value="21" data-dept="2" style="display:none;">Rent A Car Yönetici</option>
+                      
+                      <option value="32" data-dept="3" style="display:none;">Tur Takip Personel</option>
+                      <option value="31" data-dept="3" style="display:none;">Tur Takip Yönetici</option>
+                    {% else %}
+                      <option value="22">Rent A Car Personel</option>
+                      <option value="21">Rent A Car Yönetici</option>
+                      <option value="32">Tur Takip Personel</option>
+                      <option value="31">Tur Takip Yönetici</option>
+                    {% endif %}
+                  </select>
+                </div>
+              </div>
+
+              <script>
+                function updateRoles() {
+                  const dept = document.getElementById('departmentSelect');
+                  if (!dept) return;
+                  const roleSelect = document.getElementById('roleSelect');
+                  const deptId = dept.value;
+                  
+                  let firstVisible = null;
+                  for (let i = 0; i < roleSelect.options.length; i++) {
+                    const opt = roleSelect.options[i];
+                    if (opt.getAttribute('data-dept') === deptId) {
+                      opt.style.display = '';
+                      if (!firstVisible) firstVisible = opt;
+                    } else {
+                      opt.style.display = 'none';
+                    }
+                  }
+                  if (firstVisible) {
+                    roleSelect.value = firstVisible.value;
+                  }
+                }
+                
+                document.addEventListener('DOMContentLoaded', updateRoles);
+              </script>
+              <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn btn-primary" style="flex: 1; border-radius: 12px; padding: 1rem;">Personeli Kaydet</button>
+                <button type="button" class="btn" onclick="togglePersonelForm()" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem;">Vazgeç</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="overflow-x">
+            <div class="table-responsive">
+<table style="width: 100%; min-width: 550px; border-collapse: separate; border-spacing: 0 0.75rem;">
+              <thead>
+                <tr style="text-align: left; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;">
+                  <th style="padding: 0 1rem;">İsim & Kullanıcı</th>
+                  <th>Erişim Rolü</th>
+                  <th style="text-align: right; padding-right: 1rem;">İşlemler</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for u in users %}
+                <tr style="background: #f8fafc; border-radius: 20px;">
+                  <td style="padding: 1.25rem 1rem; border-radius: 20px 0 0 20px;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                      <div style="width: 40px; height: 40px; border-radius: 12px; background: white; color: #2563eb; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                        {{ (u.name or u.username)[0].upper() }}
+                      </div>
+                      <div>
+                        <div style="font-weight: 700; color: #1e293b; font-size: 0.95rem;">{{ u.name or u.username }}</div>
+                        <div style="font-size: 0.75rem; color: #64748b;">@{{ u.username }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span style="padding: 6px 12px; border-radius: 10px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; 
+                      {% if u.role_id == 11 %} background: #fef3c7; color: #92400e;
+                      {% elif u.role_id in [12, 21, 31] %} background: #dcfce7; color: #166534;
+                      {% else %} background: white; color: #64748b; border: 1px solid #e2e8f0; {% endif %}">
+                      {{ u.role_display_name }}
+                    </span>
+                  </td>
+                  <td style="text-align: right; padding-right: 1rem; border-radius: 0 20px 20px 0;">
+                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem;">
+                      <button class="btn btn-sm" onclick="openResetPasswordModal('{{ u.id }}', '{{ u.name or u.username }}')" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; font-size: 0.75rem; padding: 0.6rem 1.2rem; border-radius: 12px; font-weight: 700;">
+                        <i class="fas fa-lock mr-2"></i> Şifre Sıfırla
+                      </button>
+                      <button class="btn btn-sm" onclick="toggleYetki('{{ u.id }}')" style="background: #2563eb; color: white; border: none; font-size: 0.75rem; padding: 0.6rem 1.2rem; border-radius: 12px; font-weight: 700;">
+                        <i class="fas fa-key mr-2"></i> Yetki Tanımla
+                      </button>
+                      {% if u.id != current_user.id and not u.is_super_admin %}
+                      <button type="button" 
+                        onclick="confirmDelete('{{ u.name or u.username }}', '{{ url_for('main.personel_sil', id=u.id) }}')"
+                        style="color: #ef4444; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 12px; background: #fee2e2; border: none; cursor: pointer;" 
+                        title="Personeli Sil">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                      {% endif %}
+                    </div>
+                  </td>
+                </tr>
+
+                <tr id="yetki-{{ u.id }}" style="display: none;">
+                  <td colspan="3" style="padding: 1rem 0;">
+                    <div style="background: white; border: 1px solid #e2e8f0; border-radius: 24px; padding: 2rem; box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);">
+                      <form action="{{ url_for('main.personel_yetki_guncelle', id=u.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {% set perms = u.get_permissions() %}
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                          <h4 style="margin: 0; font-size: 1rem; color: #0f172a;"><i class="fas fa-lock-open mr-2" style="color: #2563eb;"></i> Erişim Limitleri</h4>
+                          <button type="submit" class="btn btn-primary" style="padding: 0.6rem 1.5rem; border-radius: 12px;">Yetkileri Güncelle</button>
+                        </div>
+
+                          <div class="perm-grid-v2">
+                          {% if u.company_id == 1 %}
+                          <!-- SaaS Master Permissions -->
+                          {% for key, icon, label, actions in [
+                            ('master_dashboard', 'fa-gem', 'Yönetim Paneli', []),
+                            ('company_manage', 'fa-building', 'Şirket Yönetimi', ['add', 'edit', 'suspend', 'delete']),
+                            ('security_manage', 'fa-shield-halved', 'Güvenlik Merkezi', []),
+                            ('system_logs', 'fa-fingerprint', 'Sistem Logları', []),
+                            ('system_settings', 'fa-sliders', 'Sistem Ayarları', []),
+                            ('support_access', 'fa-user-ninja', 'Destek Erişimi', []),
+                            ('tur_takip_manage', 'fa-map-marked-alt', 'Tur Takip Yönetimi', [])
+                          ] %}
+                          <div class="perm-category">
+                            <div class="perm-header">
+                              <h4><i class="fas {{ icon }}"></i> {{ label }}</h4>
+                              <label class="perm-item" style="margin: 0;">
+                                <input type="checkbox" name="p_{{ key }}_all" {{ 'checked' if perms[key].all }}>
+                                <span class="perm-toggle-all">Yetki Ver</span>
+                              </label>
+                            </div>
+                            {% if actions %}
+                            <div class="perm-body">
+                              {% for act in actions %}
+                              <label class="perm-item">
+                                <input type="checkbox" name="p_{{ key }}_actions" value="{{ act }}" {{ 'checked' if act in perms[key].actions|default([]) }}> 
+                                {{ act|replace('add','Ekle')|replace('edit','Düzenle')|replace('suspend','Durdur')|replace('delete','Sil') }}
+                              </label>
+                              {% endfor %}
+                            </div>
+                            {% endif %}
+                          </div>
+                          {% endfor %}
+                          
+                          {% else %}
+                          <!-- Fleet Tenant Permissions -->
+                          {% for cat_id, icon, label, cards_or_actions in [
+                            ('dashboard', 'fa-th-large', 'Dashboard', perms.dashboard.cards),
+                            ('araclar', 'fa-car-side', 'Araçlar', perms.araclar.actions),
+                            ('kiralamalar', 'fa-clipboard-list', 'Kiralamalar', perms.kiralamalar.actions)
+                          ] %}
+                          <div class="perm-category" id="cat-{{ cat_id }}-{{ u.id }}">
+                            <div class="perm-header" onclick="toggleCat('{{ cat_id }}-{{ u.id }}')">
+                              <h4><i class="fas {{ icon }}"></i> {{ label }}</h4>
+                              <label class="perm-item" style="margin: 0;" onclick="event.stopPropagation()">
+                                <input type="checkbox" name="p_{{ cat_id[:4] }}_all" {{ 'checked' if perms[cat_id].all }}>
+                                <span class="perm-toggle-all">Göster</span>
+                              </label>
+                            </div>
+                            <div class="perm-body">
+                              {% if cat_id == 'dashboard' %}
+                                {% for val, txt in [('stats','İstatistikler'), ('revenue','Ciro Grafiği'), ('rentals','Son Kiralamalar'), ('vehicles','Araç Durumları')] %}
+                                <label class="perm-item"><input type="checkbox" name="p_dash_cards" value="{{ val }}" {{ 'checked' if val in cards_or_actions }}> {{ txt }}</label>
+                                {% endfor %}
+                              {% elif cat_id == 'araclar' %}
+                                {% for val, txt in [('add','Ekleme'), ('edit','Düzenleme'), ('delete','Silme')] %}
+                                <label class="perm-item"><input type="checkbox" name="p_arac_actions" value="{{ val }}" {{ 'checked' if val in cards_or_actions }}> {{ txt }}</label>
+                                {% endfor %}
+                              {% else %}
+                                {% for val, txt in [('add','Yeni Kiralama'), ('edit','Düzenleme'), ('delete','Silme'), ('extend','Süre Uzatma')] %}
+                                <label class="perm-item"><input type="checkbox" name="p_kira_actions" value="{{ val }}" {{ 'checked' if val in cards_or_actions }}> {{ txt }}</label>
+                                {% endfor %}
+                              {% endif %}
+                            </div>
+                          </div>
+                          {% endfor %}
+
+                          {% for key, icon, label in [
+                            ('ciro_analiz_all', 'fa-chart-line', 'Ciro Analizi'),
+                            ('rapor_all', 'fa-file-invoice', 'Raporlar'),
+                            ('servis_all', 'fa-tools', 'Servis (Bakım)'),
+                            ('excel_all', 'fa-file-excel', 'Excel İşlemleri'),
+                            ('logs_all', 'fa-history', 'Denetim Günlüğü'),
+                            ('ayarlar_all', 'fa-cog', 'Ayarlar')
+                          ] %}
+                          <div class="perm-category">
+                            <div class="perm-header" style="cursor: default;">
+                              <h4><i class="fas {{ icon }}"></i> {{ label }}</h4>
+                              <label class="perm-item" style="margin: 0;">
+                                {% set perm_key = key.rsplit('_', 1)[0] %}
+                                <input type="checkbox" name="p_{{ key }}" {{ 'checked' if perms[perm_key].all }}>
+                                <span class="perm-toggle-all">Göster</span>
+                              </label>
+                            </div>
+                          </div>
+                          {% endfor %}
+                          {% endif %}
+                          
+                          <div class="perm-category" style="background: #eff6ff; border-color: #bfdbfe;">
+                            <div class="perm-header" style="background: #dbeafe; cursor: default;">
+                              <h4 style="color: #1e40af;"><i class="fas fa-user-shield"></i> Sistem Yetkisi</h4>
+                            </div>
+                            <div class="perm-body" style="display: block;">
+                              <label class="perm-item" style="color: #1e40af; font-weight: 700;">
+                                <input type="checkbox" name="can_manage_personnel" {{ 'checked' if u.can_manage_personnel }}> Personel Yönetebilir
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+</div>
+          </div>
+        </div>
+      {% else %}
+        <!-- Staff Content: Quick Actions & Timeline -->
+        <div class="section-card">
+          <div class="section-title">
+            <div style="width: 48px; height: 48px; border-radius: 14px; background: #fff7ed; color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+              <i class="fas fa-rocket"></i>
+            </div>
+            <div>
+              <h3>Hızlı Erişim</h3>
+              <p style="margin: 0; font-size: 0.85rem; color: #64748b;">En sık kullandığınız sayfalara buradan hızlıca ulaşın.</p>
+            </div>
+          </div>
+          
+          {% set perms = current_user.get_permissions() %}
+          <div class="quick-action-grid">
+            {% if current_user.is_master_user %}
+              {% if perms.get('master_dashboard', {}).get('all') or current_user.is_manager %}
+              <a href="{{ url_for('main.dashboard') }}" class="quick-action-btn">
+                <i class="fas fa-gem"></i>
+                <span>Şirket Yönetimi</span>
+              </a>
+              {% endif %}
+              
+              {% if perms.get('security_manage', {}).get('all') or current_user.is_manager %}
+              <a href="{{ url_for('master.master_security') }}" class="quick-action-btn">
+                <i class="fas fa-shield-halved"></i>
+                <span>Güvenlik Merkezi</span>
+              </a>
+              {% endif %}
+              
+              {% if perms.get('system_settings', {}).get('all') or current_user.is_manager %}
+              <a href="{{ url_for('master.master_ai_settings') }}" class="quick-action-btn">
+                <i class="fas fa-brain"></i>
+                <span>Yapay Zeka Merkezi</span>
+              </a>
+              {% endif %}
+              
+              {% if perms.get('support_access', {}).get('all') or current_user.is_manager %}
+              <a href="{{ url_for('master.master_support') }}" class="quick-action-btn">
+                <i class="fas fa-headset"></i>
+                <span>Destek Talepleri</span>
+              </a>
+              {% endif %}
+            {% else %}
+              {% if perms.get('dashboard', {}).get('all') or current_user.is_manager %}
+              <a href="{{ url_for('main.dashboard') }}" class="quick-action-btn">
+                <i class="fas fa-th-large"></i>
+                <span>Dashboard</span>
+              </a>
+              {% endif %}
+              
+              {% if perms.get('araclar', {}).get('all') or current_user.is_manager %}
+              <a href="{{ url_for('fleet.araclar') }}" class="quick-action-btn">
+                <i class="fas fa-car-side"></i>
+                <span>Araç Listesi</span>
+              </a>
+              {% endif %}
+              
+              {% if perms.get('kiralamalar', {}).get('all') or current_user.is_manager %}
+              <a href="{{ url_for('fleet.kiralamalar') }}" class="quick-action-btn">
+                <i class="fas fa-clipboard-list"></i>
+                <span>Kiralamalar</span>
+              </a>
+              {% endif %}
+              
+              {% if perms.get('servis', {}).get('all') or current_user.is_manager %}
+              <a href="{{ url_for('fleet.servis_page') }}" class="quick-action-btn">
+                <i class="fas fa-tools"></i>
+                <span>Servis Kayıtları</span>
+              </a>
+              {% endif %}
+              
+              {% if perms.get('ciro_analiz', {}).get('all') or current_user.is_manager %}
+              <a href="{{ url_for('main.ciro_analiz') }}" class="quick-action-btn">
+                <i class="fas fa-chart-line"></i>
+                <span>Ciro Analizi</span>
+              </a>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-title">
+            <div style="width: 48px; height: 48px; border-radius: 14px; background: #f0fdf4; color: #16a34a; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+              <i class="fas fa-history"></i>
+            </div>
+            <div>
+              <h3>Son Hareketleriniz</h3>
+              <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Sistem üzerindeki son aktiviteleriniz.</p>
+            </div>
+          </div>
+          
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-content">
+                <span class="timeline-time">Bugün, 09:42</span>
+                <div class="timeline-text">Sisteme başarılı bir şekilde giriş yapıldı.</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-content">
+                <span class="timeline-time">Dün, 17:15</span>
+                <div class="timeline-text">Şifre güvenliği kontrol edildi ve güncel tutuldu.</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-content">
+                <span class="timeline-time">19 Nisan, 14:20</span>
+                <div class="timeline-text">Profil bilgileri Zyronova bulut sistemiyle senkronize edildi.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- TAB: CONTRACT -->
+    <div id="profile-tab-contract" class="profile-tab-content">
+      <div class="section-card">
+        <div class="section-title">
+          <div style="width: 48px; height: 48px; border-radius: 14px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+            <i class="fas fa-file-signature"></i>
+          </div>
+          <div>
+            <h3>Kiralama Sözleşmesi Şablonu</h3>
+            <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Müşterilerinizle araç kiralarken imzalanacak olan dijital sözleşme şablonu.</p>
+          </div>
+        </div>
+
+        <script id="rawContractData" type="application/json">
+          {{ (g.current_company.contract_template or '') | tojson | safe }}
+        </script>
+        <form action="{{ url_for('main.update_contract_template') }}" method="POST" id="contractSettingsForm">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="contract_template" id="hidden_contract_template">
+          
+          <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; font-size: 0.75rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.5rem;">Sözleşme Şablon Metni (Çoklu Dil)</label>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 10px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; overflow-x: auto;">
+              <button type="button" class="contract-tab-btn active" data-lang="TR" style="background: var(--blue); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap;">Türkçe (TR)</button>
+              <button type="button" class="contract-tab-btn" data-lang="EN" style="background: #f1f5f9; color: #475569; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap;">English (EN)</button>
+              <button type="button" class="contract-tab-btn" data-lang="DE" style="background: #f1f5f9; color: #475569; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap;">Deutsch (DE)</button>
+              <button type="button" class="contract-tab-btn" data-lang="RU" style="background: #f1f5f9; color: #475569; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap;">Русский (RU)</button>
+            </div>
+
+            <textarea id="ui_contract_template" rows="18" required {% if not is_admin %}readonly style="background-color: #f1f5f9; cursor: not-allowed;"{% endif %}
+              placeholder="Seçili dil için sözleşme şablonunu buraya yazın..."
+              style="width: 100%; padding: 1.25rem; border-radius: 16px; border: 1px solid #e2e8f0; font-size: 0.9rem; line-height: 1.6; font-family: inherit; resize: vertical;"></textarea>
+          </div>
+          {% if is_admin %}
+          <button type="submit" class="btn btn-primary" style="width: 100%; border-radius: 16px; padding: 1rem; font-weight: 700;">
+            <i class="fas fa-save mr-2"></i> Sözleşme Şablonunu Kaydet &amp; Güncelle
+          </button>
+          {% else %}
+          <p style="font-size: 0.8rem; color: #ef4444; font-weight: 700; text-align: center; margin-top: 1rem;">
+            <i class="fas fa-lock mr-1"></i> Sözleşme şablonunu düzenlemek için yönetici yetkisi gereklidir.
+          </p>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+
+    <!-- TAB: LOGS -->
+    {% if is_admin %}
+    <div id="profile-tab-logs" class="profile-tab-content">
+      <div class="section-card">
+        <div class="section-title" style="display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 1rem; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 48px; height: 48px; border-radius: 14px; background: #f1f5f9; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+              <i class="fas fa-history"></i>
+            </div>
+            <div>
+              <h3>Denetim Günlüğü</h3>
+              <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Şirket bünyesinde gerçekleştirilen son 100 işlem.</p>
+            </div>
+          </div>
+          <a href="{{ url_for('main.logs') }}" class="btn btn-secondary" style="padding: 0.6rem 1.2rem; border-radius: 10px; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; background: #f1f5f9; border: 1px solid #cbd5e1; color: #1e293b; text-decoration: none; transition: all 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+            <i class="fas fa-list-ol"></i>
+            <span>Detaylı Sayfalı Geçmiş</span>
+          </a>
+        </div>
+
+        <div class="overflow-x">
+          <div class="table-responsive">
+<table style="width: 100%; min-width: 800px; border-collapse: separate; border-spacing: 0 0.5rem;">
+            <thead>
+              <tr style="text-align: left; color: #94a3b8; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em;">
+                <th style="padding: 0 1rem;">Tarih & Saat</th>
+                <th>Kullanıcı</th>
+                <th>İşlem</th>
+                <th>Detaylar</th>
+                <th style="text-align: right; padding-right: 1rem;">IP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for log in logs %}
+              <tr style="background: #f8fafc; font-size: 0.85rem;">
+                <td style="padding: 1rem; border-radius: 12px 0 0 12px;">
+                  <div style="font-weight: 700; color: #1e293b;">{{ log.timestamp.strftime('%d.%m.%Y') }}</div>
+                  <div style="font-size: 0.7rem; color: #94a3b8;">{{ log.timestamp.strftime('%H:%M:%S') }}</div>
+                </td>
+                <td>
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <div style="width: 28px; height: 28px; border-radius: 8px; background: white; color: #64748b; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.7rem; border: 1px solid #e2e8f0;">
+                      {{ (log.user.name or log.user.username)[0].upper() if log.user else 'S' }}
+                    </div>
+                    <span style="font-weight: 600;">{{ log.user.name or log.user.username if log.user else 'Sistem' }}</span>
+                  </div>
+                </td>
+                <td>
+                  {% if log.action == 'login' %}
+                    <span class="log-badge badge-green">Giriş</span>
+                  {% elif 'delete' in log.action or 'sil' in log.action %}
+                    <span class="log-badge badge-red">Silme</span>
+                  {% elif 'add' in log.action or 'ekle' in log.action %}
+                    <span class="log-badge badge-blue">Ekleme</span>
+                  {% else %}
+                    <span class="log-badge badge-gray">İşlem</span>
+                  {% endif %}
+                </td>
+                <td style="color: #475569; padding-right: 1rem;">
+                  <div style="max-width: 320px; white-space: normal; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word;">
+                    {{ log.details }}
+                  </div>
+                </td>
+                <td style="text-align: right; padding-right: 1rem; border-radius: 0 12px 12px 0;">
+                  <code style="font-size: 0.7rem; color: #94a3b8;">{{ log.ip_address }}</code>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: SETTINGS -->
+    <div id="profile-tab-settings" class="profile-tab-content">
+      <div class="settings-grid">
+        <div class="section-card">
+          <div class="section-title">
+            <div style="width: 48px; height: 48px; border-radius: 14px; background: #eff6ff; color: #2563eb; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+              <i class="fas fa-palette"></i>
+            </div>
+            <div>
+              <h3>Görünüm Ayarları</h3>
+              <p style="margin: 0; font-size: 0.85rem; color: #64748b;">Dashboard banner görselini özelleştirin.</p>
+            </div>
+          </div>
+
+          <div class="preview-wrapper">
+            <img src="{{ HERO_IMAGE }}" alt="Mevcut Banner" id="currentBannerPreview">
+          </div>
+
+          <form action="{{ url_for('main.upload_banner') }}" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="banner-upload-box" id="uploadBox">
+              <input type="file" name="banner" id="bannerInput" accept="image/*" required onchange="handleFileSelect(this)">
+              <div id="uploadContent">
+                <i class="fas fa-cloud-arrow-up" style="font-size: 1.5rem; color: #94a3b8; margin-bottom: 0.5rem;"></i>
+                <p style="margin: 0; font-weight: 700; color: #475569; font-size: 0.9rem;">Yeni Banner Yükle</p>
+                <p style="margin: 0.25rem 0 0 0; font-size: 0.75rem; color: #94a3b8;">PNG veya JPG (Max. 5MB)</p>
+              </div>
+              <div id="filePreview" style="display:none;">
+                 <p id="fileName" style="font-size: 0.8rem; font-weight: 800; color: #2563eb; margin: 0;"></p>
+                 <span style="font-size: 0.7rem; color: #94a3b8;">Değiştirmek için tıklayın</span>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="submitBanner" disabled style="width: 100%; margin-top: 1.5rem; border-radius: 16px; padding: 1rem;">
+              <i class="fas fa-check-circle mr-2"></i> Bannerı Güncelle
+            </button>
+          </form>
+        </div>
+
+  
+
+        <div class="section-card">
+          <div class="section-title">
+            <div style="width: 48px; height: 48px; border-radius: 14px; background: #f8fafc; color: #1e293b; display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
+              <i class="fas fa-info-circle"></i>
+            </div>
+            <h3>Sistem Bilgisi</h3>
+          </div>
+          
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="background: #f8fafc; padding: 1.25rem; border-radius: 20px;">
+              <div style="font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Versiyon</div>
+              <div style="font-weight: 700; color: #1e293b;">v2.5.0 Premium</div>
+            </div>
+            <div style="background: #f0fdf4; padding: 1.25rem; border-radius: 20px; border: 1px solid #dcfce7;">
+              <div style="font-size: 0.65rem; font-weight: 800; color: #16a34a; text-transform: uppercase;">Lisans</div>
+              <div style="font-weight: 700; color: #14532d;">Sınırsız Kurumsal</div>
+            </div>
+            <div style="background: #eff6ff; padding: 1.25rem; border-radius: 20px; border: 1px solid #dbeafe;">
+              <div style="font-size: 0.65rem; font-weight: 800; color: #2563eb; text-transform: uppercase;">Sunucu Lokasyonu</div>
+              <div style="font-weight: 700; color: #1e40af;">Türkiye / İstanbul</div>
+            </div>
+          </div>
+        </div>
+
+
+
+<!-- KABİS Entegrasyon Ayarları -->
+  <div class="section-card" style="display: none !important;">
+    <div class="settings-header">
+      <div class="header-icon" style="background: #fef3c7; color: #d97706; box-shadow: 0 8px 16px rgba(217, 119, 6, 0.1);">
+        <i class="fas fa-tower-broadcast"></i>
+      </div>
+      <div>
+        <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a;">KABİS Entegrasyon Ayarları</h3>
+        <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: #64748b;">EGM Web Servis Bağlantı Parametreleri</p>
+      </div>
+    </div>
+
+    <!-- Bağlantı Durum Rozeti -->
+    {% if g.current_company.kabis_username and g.current_company.kabis_password and g.current_company.kabis_sirket_kodu %}
+    <div style="display:flex; align-items:center; gap:0.6rem; background:#ecfdf5; border:1px solid #a7f3d0; border-radius:12px; padding:0.75rem 1.25rem; margin-bottom:1rem;">
+      <i class="fas fa-circle-check" style="color:#059669; font-size:1rem;"></i>
+      <span style="font-weight:700; font-size:0.85rem; color:#065f46;">KABİS Web Servis Kimlik Bilgileri Tanımlı — Gerçek Bildirim Aktif</span>
+    </div>
+    {% else %}
+    <div style="display:flex; align-items:center; gap:0.6rem; background:#fff7ed; border:1px solid #fed7aa; border-radius:12px; padding:0.75rem 1.25rem; margin-bottom:1rem;">
+      <i class="fas fa-triangle-exclamation" style="color:#d97706; font-size:1rem;"></i>
+      <span style="font-weight:700; font-size:0.85rem; color:#92400e;">Kimlik bilgileri eksik — KABİS bildirimi çalışmayacak</span>
+    </div>
+    {% endif %}
+
+    <!-- EGM IP Uyarısı -->
+    <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:12px; padding:1rem 1.25rem; margin-bottom:1.5rem;">
+      <h4 style="margin:0 0 0.5rem 0; font-size:0.9rem; font-weight:800; color:#1e40af;"><i class="fas fa-info-circle"></i> ÖNEMLİ: EGM IP Beyaz Liste Ayarı</h4>
+      <p style="margin:0 0 0.5rem 0; font-size:0.8rem; color:#1e3a8a; line-height:1.5;">
+        Gerçek KABİS entegrasyonunun çalışabilmesi için <strong>arackiralama.egm.gov.tr</strong> adresinden kendi KABİS panelinize giriş yapıp, <strong>Ayarlar → API / Web Servis IP Adresi</strong> kısmına platformumuzun sunucu IP adresini eklemelisiniz:
+      </p>
+      <div style="background:#dbeafe; padding:0.5rem 1rem; border-radius:8px; font-family:monospace; font-weight:bold; color:#1e3a8a; text-align:center; font-size:1.1rem; letter-spacing:1px; margin-bottom:0.5rem;">
+        70.40.138.116
+      </div>
+      <p style="margin:0; font-size:0.75rem; color:#3b82f6;">
+        <em>Not: Platform sağlayıcınızdan güncel sunucu IP adresini talep ediniz.</em>
+      </p>
+    </div>
+
+    <form action="{{ url_for('main.update_kabis_settings') }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <!-- Vergi No -->
+      <div class="mb-4">
+        <label for="tax_no" class="form-label" style="font-weight: 700; font-size: 0.85rem; color: #334155; margin-bottom: 0.5rem; display: block;">
+          Acente Vergi Numarası (10 Hane)
+        </label>
+        <div style="position: relative; display: flex; align-items: center;">
+          <i class="fas fa-file-invoice" style="position: absolute; left: 1rem; color: #94a3b8; font-size: 1rem;"></i>
+          <input type="text" name="tax_no" id="tax_no" class="form-control"
+                 placeholder="0000000000" maxlength="10" minlength="10"
+                 pattern="\d{10}" title="Lütfen 10 haneli vergi numaranızı girin"
+                 value="{{ g.current_company.tax_no or '' }}"
+                 style="width: 100%; padding: 1rem 1rem 1rem 2.75rem; border-radius: 16px; border: 1px solid #e2e8f0; font-size: 0.95rem; font-weight: 600; color: #1e293b; background: #f8fafc; transition: all 0.3s ease;">
+        </div>
+      </div>
+
+      <!-- KABİS Kullanıcı Adı -->
+      <div class="mb-4">
+        <label for="kabis_username" class="form-label" style="font-weight: 700; font-size: 0.85rem; color: #334155; margin-bottom: 0.5rem; display: block;">
+          KABİS Web Servis Kullanıcı Adı
+        </label>
+        <div style="position: relative; display: flex; align-items: center;">
+          <i class="fas fa-user-shield" style="position: absolute; left: 1rem; color: #94a3b8; font-size: 1rem;"></i>
+          <input type="text" name="kabis_username" id="kabis_username" class="form-control"
+                 placeholder="EGM'den aldığınız kullanıcı adı"
+                 value="{{ g.current_company.kabis_username or '' }}"
+                 autocomplete="off"
+                 style="width: 100%; padding: 1rem 1rem 1rem 2.75rem; border-radius: 16px; border: 1px solid #e2e8f0; font-size: 0.95rem; font-weight: 600; color: #1e293b; background: #f8fafc; transition: all 0.3s ease;">
+        </div>
+      </div>
+
+      <!-- KABİS Şifre -->
+      <div class="mb-4">
+        <label for="kabis_password" class="form-label" style="font-weight: 700; font-size: 0.85rem; color: #334155; margin-bottom: 0.5rem; display: block;">
+          KABİS Web Servis Şifresi
+        </label>
+        <div style="position: relative; display: flex; align-items: center;">
+          <i class="fas fa-lock" style="position: absolute; left: 1rem; color: #94a3b8; font-size: 1rem;"></i>
+          <input type="password" name="kabis_password" id="kabis_password" class="form-control"
+                 placeholder="{{ '••••••••' if g.current_company.kabis_password else 'EGM şifrenizi girin' }}"
+                 autocomplete="new-password"
+                 style="width: 100%; padding: 1rem 1rem 1rem 2.75rem; border-radius: 16px; border: 1px solid #e2e8f0; font-size: 0.95rem; font-weight: 600; color: #1e293b; background: #f8fafc; transition: all 0.3s ease;">
+        </div>
+        <p style="margin: 0.4rem 0 0 0; font-size: 0.75rem; color: #94a3b8;">Boş bırakırsanız mevcut şifre değişmez.</p>
+      </div>
+
+      <!-- EGM Şirket Kodu -->
+      <div class="mb-4">
+        <label for="kabis_sirket_kodu" class="form-label" style="font-weight: 700; font-size: 0.85rem; color: #334155; margin-bottom: 0.5rem; display: block;">
+          EGM Şirket Kodu
+        </label>
+        <div style="position: relative; display: flex; align-items: center;">
+          <i class="fas fa-building" style="position: absolute; left: 1rem; color: #94a3b8; font-size: 1rem;"></i>
+          <input type="text" name="kabis_sirket_kodu" id="kabis_sirket_kodu" class="form-control"
+                 placeholder="EGM'den aldığınız şirket kodu"
+                 value="{{ g.current_company.kabis_sirket_kodu or '' }}"
+                 style="width: 100%; padding: 1rem 1rem 1rem 2.75rem; border-radius: 16px; border: 1px solid #e2e8f0; font-size: 0.95rem; font-weight: 600; color: #1e293b; background: #f8fafc; transition: all 0.3s ease;">
+        </div>
+        <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #64748b; line-height: 1.4;">
+          EGM tarafından araç kiralama firmanıza tahsis edilen şirket kodudur. KABİS bildirimlerinde bu kod kullanılır.
+        </p>
+      </div>
+
+      <button type="submit" class="save-btn" style="background: #d97706; box-shadow: 0 10px 20px rgba(217, 119, 6, 0.2); transition: all 0.3s ease; border: none; cursor: pointer;">
+        <i class="fas fa-save"></i> KABİS Ayarlarını Kaydet
+      </button>
+    </form>
+  </div>
+      </div>
+    </div>
+    {% endif %}
+  </main>
+</div>
+
+<!-- Reset Password Modal -->
+<div id="resetPasswordModal" class="custom-modal-overlay">
+  <div class="custom-modal">
+    <div class="modal-icon-wrapper" style="background: #eff6ff; color: #2563eb;">
+      <i class="fas fa-key"></i>
+    </div>
+    <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #0f172a;">Şifre Sıfırla</h3>
+    <p id="resetModalText" style="margin: 0.5rem 0 1.5rem; font-size: 0.9rem; color: #64748b; line-height: 1.5;"></p>
+    
+    <form id="resetPasswordForm" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div style="text-align: left; margin-bottom: 1.5rem;">
+        <label style="display: block; font-size: 0.75rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-bottom: 0.5rem;">Yeni Şifre</label>
+        <input type="password" name="new_password" required placeholder="••••••••"
+          style="width: 100%; padding: 1rem 1.25rem; border-radius: 16px; border: 1px solid #e2e8f0; background: #f8fafc; font-size: 0.9rem;">
+      </div>
+      
+      <div class="modal-actions">
+        <button type="button" class="btn-modal btn-cancel" onclick="closeResetPasswordModal()">İptal</button>
+        <button type="submit" class="btn-modal btn-confirm" style="background: #2563eb;">Şifreyi Güncelle</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function confirmDelete(name, url) {
+    showConfirm(
+      'Personeli Sil',
+      `"${name}" isimli personeli silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`,
+      () => {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = url;
+        
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        form.appendChild(csrfInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+      },
+      true
+    );
+  }
+  function toggleYetki(userId) {
+    const row = document.getElementById('yetki-' + userId);
+    row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+  }
+  
+  function toggleCat(catId) {
+    const cat = document.getElementById('cat-' + catId);
+    cat.classList.toggle('active');
+  }
+
+  function togglePersonelForm() {
+    const form = document.getElementById('addPersonelForm');
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  }
+  
+  function togglePass(inputId = 'newPassword', iconId = 'passIcon') {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+      input.type = 'password';
+      icon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+  }
+
+  function openResetPasswordModal(userId, userName) {
+    const modal = document.getElementById('resetPasswordModal');
+    const text = document.getElementById('resetModalText');
+    const form = document.getElementById('resetPasswordForm');
+    
+    text.innerHTML = `<strong>${userName}</strong> kullanıcısı için yeni bir şifre belirleyin.`;
+    form.action = `/personel/sifre_sifirla/${userId}`;
+    modal.style.display = 'flex';
+  }
+
+  function closeResetPasswordModal() {
+    document.getElementById('resetPasswordModal').style.display = 'none';
+  }
+
+  function switchProfileTab(btn, tabName) {
+    document.querySelectorAll('.profile-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.profile-tab-content').forEach(c => c.classList.remove('active'));
+    
+    btn.classList.add('active');
+    document.getElementById('profile-tab-' + tabName).classList.add('active');
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeTab = urlParams.get('tab');
+    if (activeTab) {
+      const btn = Array.from(document.querySelectorAll('.profile-tab-btn')).find(b => b.getAttribute('onclick').includes(`'${activeTab}'`));
+      if (btn) {
+        switchProfileTab(btn, activeTab);
+      }
+    }
+  });
+
+  function handleFileSelect(input) {
+    const box = document.getElementById('uploadBox');
+    const content = document.getElementById('uploadContent');
+    const preview = document.getElementById('filePreview');
+    const fileName = document.getElementById('fileName');
+    const submitBtn = document.getElementById('submitBanner');
+
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      fileName.textContent = file.name;
+      content.style.display = 'none';
+      preview.style.display = 'block';
+      box.style.borderColor = '#2563eb';
+      box.style.background = '#eff6ff';
+      submitBtn.disabled = false;
+    }
+  }
+
+  // Password Strength & Matching Logic
+  const newPass = document.getElementById('newPassword');
+  const confirmPass = document.getElementById('confirmPassword');
+  const matchMsg = document.getElementById('passwordMatchMessage');
+  const submitBtnPass = document.getElementById('submitPassBtn');
+  const strengthBars = document.querySelectorAll('.strength-bar');
+  const strengthText = document.getElementById('strengthText');
+
+  function checkStrength(p) {
+    let strength = 0;
+    if (p.length >= 8) strength++;
+    if (/[A-Z]/.test(p)) strength++;
+    if (/[0-9]/.test(p)) strength++;
+    if (/[^A-Za-z0-9]/.test(p)) strength++;
+    
+    strengthBars.forEach((bar, i) => {
+      if (i < strength) {
+        bar.style.background = strength <= 2 ? '#ef4444' : (strength === 3 ? '#f59e0b' : '#10b981');
+      } else {
+        bar.style.background = '#e2e8f0';
+      }
+    });
+
+    const texts = ['', 'ZAYIF', 'ORTA', 'GÜÇLÜ', 'ÇOK GÜÇLÜ'];
+    strengthText.textContent = 'Şifre Gücü: ' + (texts[strength] || 'Şifre Gücü');
+    strengthText.style.color = strength <= 2 ? '#ef4444' : (strength === 3 ? '#f59e0b' : '#10b981');
+    return strength;
+  }
+
+  function validatePasswords() {
+    const strength = checkStrength(newPass.value);
+    
+    if (confirmPass.value === "") {
+      matchMsg.style.display = 'none';
+      submitBtnPass.disabled = true;
+      return;
+    }
+
+    matchMsg.style.display = 'block';
+    const isMatching = newPass.value === confirmPass.value;
+    const isStrongEnough = strength >= 3;
+
+    if (isMatching) {
+      matchMsg.textContent = isStrongEnough ? '✓ Şifreler eşleşiyor ve güvenli' : '✕ Şifre çok zayıf (En az 8 karakter, büyük harf ve rakam içermeli)';
+      matchMsg.style.color = isStrongEnough ? '#10b981' : '#f59e0b';
+      submitBtnPass.disabled = !isStrongEnough;
+    } else {
+      matchMsg.textContent = '✕ Şifreler eşleşmiyor';
+      matchMsg.style.color = '#ef4444';
+      submitBtnPass.disabled = true;
+    }
+  }
+
+  if (newPass && confirmPass) {
+    newPass.addEventListener('input', validatePasswords);
+    confirmPass.addEventListener('input', validatePasswords);
+  }
+
+  // Initialize on load
+  document.addEventListener('DOMContentLoaded', function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    if (tab) {
+      const btn = document.querySelector(`.profile-tab-btn[onclick*="${tab}"]`);
+      if (btn) switchProfileTab(btn, tab);
+    }
+  });
+
+  window.addEventListener('click', function(event) {
+    const rpModal = document.getElementById('resetPasswordModal');
+    const d2faBackdrop = document.getElementById('disable2faBackdrop');
+    if (event.target === rpModal) closeResetPasswordModal();
+    if (event.target === d2faBackdrop) d2faBackdrop.classList.remove('active');
+  });
+
+  function openDisable2FA() {
+      document.getElementById('disable2faBackdrop').classList.add('active');
+  }
+  function closeDisable2FA() {
+      document.getElementById('disable2faBackdrop').classList.remove('active');
+  }
+</script>
+
+<!-- Disable 2FA Modal -->
+<div id="disable2faBackdrop" class="modal-backdrop">
+    <div id="disable2faModal" class="modal" style="max-width: 450px !important;">
+        <div class="modal-header">
+            <h2 class="modal-title">2FA'yı Devre Dışı Bırak</h2>
+            <button onclick="closeDisable2FA()" class="btn-close">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 2rem;">
+            <p style="font-size: 0.95rem; color: #64748b; margin-bottom: 1.5rem; line-height: 1.5;">Güvenlik nedeniyle 2FA'yı kapatmak için kimlik doğrulayıcı uygulamanızdaki (Google Authenticator vb.) 6 haneli kodu girmeniz gerekmektedir.</p>
+            <form action="{{ url_for('auth.two_factor_disable') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label class="form-label">2FA Doğrulama Kodu</label>
+                    <input type="text" name="totp_code" class="form-input" required placeholder="000000" maxlength="6" pattern="[0-9]{6}" autocomplete="off" style="letter-spacing: 0.5em; text-align: center; font-size: 1.2rem; font-weight: 700;">
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="button" onclick="closeDisable2FA()" class="btn btn-outline" style="flex: 1;">İptal</button>
+                    <button type="submit" class="btn btn-danger" style="flex: 1; font-weight: 700;">Onayla ve Kapat</button>
+                </div>
+            </form>
+        </div>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Multi-Language Contract Settings Logic
+    let rawTemplate = "";
+    let templateData = { "TR": "", "EN": "", "DE": "", "RU": "" };
+    
+    const rawDataElement = document.getElementById('rawContractData');
+    if (rawDataElement) {
+        try {
+            rawTemplate = JSON.parse(rawDataElement.textContent || '""');
+            if (rawTemplate.startsWith('{')) {
+                let parsed = JSON.parse(rawTemplate);
+                templateData = Object.assign(templateData, parsed);
+            } else {
+                templateData["TR"] = rawTemplate;
+            }
+        } catch(e) {
+            templateData["TR"] = rawTemplate; // Fallback to TR for legacy plain text
+        }
+    }
+    
+    let currentLang = "TR";
+    const uiTextarea = document.getElementById('ui_contract_template');
+    const hiddenInput = document.getElementById('hidden_contract_template');
+    const tabBtns = document.querySelectorAll('.contract-tab-btn');
+    const form = document.getElementById('contractSettingsForm');
+    
+    if (uiTextarea && tabBtns.length > 0) {
+        uiTextarea.value = templateData[currentLang] || "";
+        
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Save current
+                templateData[currentLang] = uiTextarea.value;
+                
+                // Switch tabs visually
+                tabBtns.forEach(b => {
+                    b.style.background = '#f1f5f9';
+                    b.style.color = '#475569';
+                    b.classList.remove('active');
+                });
+                this.style.background = 'var(--blue)';
+                this.style.color = 'white';
+                this.classList.add('active');
+                
+                currentLang = this.getAttribute('data-lang');
+                uiTextarea.value = templateData[currentLang] || "";
+            });
+        });
+        
+        if (form) {
+            form.addEventListener('submit', function() {
+                templateData[currentLang] = uiTextarea.value; // Save active tab before submit
+                hiddenInput.value = JSON.stringify(templateData);
+            });
+        }
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+  @media (max-width: 768px) {
+    /* Header Row and Badges Group */
+    .page-header-row {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 1rem !important;
+    }
+    
+    .currency-badge-group {
+      width: 100% !important;
+      justify-content: flex-start !important;
+      flex-wrap: wrap !important;
+      gap: 0.5rem !important;
+    }
+
+    .currency-badge {
+      flex: 1 1 auto !important;
+    }
+  }
+
+  @media (max-width: 600px) {
+    /* Chart Header select collapse */
+    .card-header[style*="display:flex; justify-content:space-between"],
+    .card-header[style*="display: flex; justify-content: space-between"] {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 0.75rem !important;
+    }
+    .card-header[style*="display:flex; justify-content:space-between"] select,
+    .card-header[style*="display: flex; justify-content: space-between"] select {
+      width: 100% !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="page-header">
+  <div class="page-header-row">
+    <div>
+      <h2 class="page-title">Ciro Analizi</h2>
+      <p class="page-subtitle">Detaylı gelir, maliyet ve kar analizi</p>
+    </div>
+    
+    <div class="currency-badge-group light">
+      <div class="currency-badge">
+        <i class="fas fa-dollar-sign"></i>
+        <span class="label">USD/TRY</span>
+        <span class="value">{{ "%.2f"|format(currency_rates['USD']['buying']) }}</span>
+      </div>
+      <div class="currency-badge">
+        <i class="fas fa-euro-sign"></i>
+        <span class="label">EUR/TRY</span>
+        <span class="value">{{ "%.2f"|format(currency_rates['EUR']['buying']) }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Overall Stats moved to top -->
+<div class="mini-stats-grid mb-4 pt-4">
+  <div class="mini-stat">
+    <div class="label">Kayıtlı Toplam Araç</div>
+    <div class="value">{{ arac_sayisi|fnum }}</div>
+  </div>
+  <div class="mini-stat">
+    <div class="label">Toplam Kiralanma Sayısı</div>
+    <div class="value">{{ kiralama_sayisi|fnum }}</div>
+  </div>
+</div>
+
+<!-- Currency Summary Cards -->
+<div class="card mb-4">
+  <div class="card-header border-0 pb-0">
+    <div class="tabs">
+      {% for pb, data in currency_totals.items() %}
+      {% set tab_id = 'c-' ~ pb|replace('₺', 'tl')|replace('$', 'usd')|replace('€', 'eur') %}
+      <button class="tab-btn {% if pb == '₺' %}active{% endif %}" onclick="switchCurrencyTab(this, '{{ tab_id }}')">
+        {% if pb == '₺' %}₺ (TL){% elif pb == '$' %}$ (USD){% elif pb == '€' %}€ (EUR){% else %}{{ pb }}{% endif %}
+      </button>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="card-body">
+    {% for pb, data in currency_totals.items() %}
+    {% set tab_id = 'c-' ~ pb|replace('₺', 'tl')|replace('$', 'usd')|replace('€', 'eur') %}
+    <div class="tab-content {% if pb == '₺' %}active{% endif %}" id="{{ tab_id }}">
+      <div class="period-cards-row stagger-children">
+        <div class="period-summary-card">
+          <div class="top">
+            <div class="icon-box navy"><i class="fas fa-arrow-trend-up"></i></div>
+            <span class="title">Toplam Gelir ({{ pb }})</span>
+          </div>
+          <div class="amount">{{ data.gelir|currency(pb) }}</div>
+        </div>
+
+        <div class="period-summary-card">
+          <div class="top">
+            <div class="icon-box red"><i class="fas fa-arrow-trend-down"></i></div>
+            <span class="title">Toplam Gider ({{ pb }})</span>
+          </div>
+          <div class="amount text-red">{{ data.gider|currency(pb) }}</div>
+        </div>
+
+        <div class="period-summary-card">
+          <div class="top">
+            <div class="icon-box green"><i class="fas fa-sack-dollar"></i></div>
+            <span class="title">Net Kar ({{ pb }})</span>
+          </div>
+          <div class="amount {% if data.kar >= 0 %}text-green{% else %}text-red{% endif %}">{{ data.kar|currency(pb) }}</div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Monthly Trend Chart -->
+<div class="card mb-3">
+  <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+    <h3>Aylık Gelir - Maliyet - Kar Trendi</h3>
+    <select id="trendCurrency" class="form-select" style="width: auto;" onchange="updateMultiCurrencyChart()">
+      <option value="₺">₺ (TL)</option>
+      <option value="$">$ (USD)</option>
+      <option value="€">€ (EUR)</option>
+    </select>
+  </div>
+  <div class="card-body">
+    <div class="chart-container" style="height:320px;">
+      <canvas id="trendChart"></canvas>
+    </div>
+  </div>
+</div>
+
+{% include '_vehicle_tabs.html' %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+
+  function switchCurrencyTab(btn, tabId) {
+    const card = btn.closest('.card');
+    card.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    card.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    card.querySelector('#' + tabId).classList.add('active');
+  }
+
+  function switchVehicleTab(btn, plaka) {
+    // Butonları güncelle
+    document.querySelectorAll('.vehicle-tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // İçerikleri güncelle
+    document.querySelectorAll('.vehicle-perf-content').forEach(c => c.classList.remove('active'));
+    const target = document.getElementById('v-perf-' + plaka);
+    if(target) target.classList.add('active');
+  }
+
+  let trendChartInstance = null;
+  const monthlyData = {{ monthly_data| tojson }};
+
+  function updateMultiCurrencyChart() {
+    const pb = document.getElementById('trendCurrency').value;
+
+    const dataGelir = monthlyData.map(d => d[`gelir_${pb}`] || 0);
+    const dataGider = monthlyData.map(d => d[`gider_${pb}`] || 0);
+    const dataKar = monthlyData.map(d => (d[`gelir_${pb}`] || 0) - (d[`gider_${pb}`] || 0));
+
+    if (trendChartInstance) {
+      trendChartInstance.destroy();
+    }
+
+    if (monthlyData.length > 0) {
+      trendChartInstance = new Chart(document.getElementById('trendChart'), {
+        type: 'line',
+        data: {
+          labels: monthlyData.map(d => d.name),
+          datasets: [
+            {
+              label: `Gelir (${pb})`,
+              data: dataGelir,
+              borderColor: '#1E3A5F',
+              backgroundColor: 'rgba(30,58,95,0.1)',
+              fill: true,
+              tension: 0.4,
+              borderWidth: 2,
+            },
+            {
+              label: `Maliyet (${pb})`,
+              data: dataGider,
+              borderColor: '#EF4444',
+              backgroundColor: 'transparent',
+              borderDash: [5, 5],
+              tension: 0.4,
+              borderWidth: 2,
+            },
+            {
+              label: `Kar (${pb})`,
+              data: dataKar,
+              borderColor: '#22C55E',
+              backgroundColor: 'rgba(34,197,94,0.1)',
+              fill: true,
+              tension: 0.4,
+              borderWidth: 2,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top', labels: { usePointStyle: true, padding: 16, font: { size: 12 } } }
+          },
+          scales: {
+            y: {
+              ticks: {
+                callback: function (v) {
+                  return pb + (v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v);
+                },
+                font: { size: 11 }
+              },
+              grid: { color: '#E2E8F0' }
+            },
+            x: { ticks: { font: { size: 11 } }, grid: { display: false } }
+          }
+        }
+      });
+    }
+  }
+
+  // Initialize on load
+  document.addEventListener('DOMContentLoaded', function () {
+    updateMultiCurrencyChart();
+  });
+</script>
+{% endblock %}

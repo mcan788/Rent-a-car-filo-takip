@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Araç Ciro Hesaplama ve Filo Yönetim Sistemi. Gelişmiş analizler ve araç takibi.">
+  <title>ZYRONOVA - Araç Ciro Hesaplama</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap"></noscript>
+  <!-- Font Awesome: async load to prevent render blocking -->
+  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css', v='1.4') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <meta name="theme-color" content="#1E3A5F">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  {% block head %}{% endblock %}
+  <style>
+    .notification-item {
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .notification-item:hover {
+      background: rgba(0,0,0,0.02);
+    }
+    .notification-dismiss {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      color: #94a3b8;
+      border: none;
+      background: #f1f5f9;
+      cursor: pointer;
+      opacity: 0;
+      transition: all 0.2s;
+      z-index: 2;
+    }
+    .notification-item:hover .notification-dismiss {
+      opacity: 1;
+    }
+    .notification-dismiss:hover {
+      background: #fee2e2;
+      color: #ef4444;
+      transform: translateY(-50%) scale(1.1);
+    }
+    .clear-all-btn {
+      background: none;
+      border: none;
+      color: #3b82f6;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+      transition: color 0.2s;
+    }
+    .clear-all-btn:hover {
+      color: #2563eb;
+      text-decoration: underline;
+    }
+
+    /* ─── Toast Notifications ─────────────────────────────────── */
+    .toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 1000000;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      pointer-events: none;
+    }
+
+    .toast-item {
+      pointer-events: auto;
+      min-width: 320px;
+      max-width: 420px;
+      background: white;
+      border-radius: 16px;
+      padding: 16px 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-left: 6px solid #3b82f6;
+      animation: toast-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .toast-item.success { border-left-color: #10b981; }
+    .toast-item.error { border-left-color: #ef4444; }
+    .toast-item.info { border-left-color: #3b82f6; }
+    .toast-item.warning { border-left-color: #f59e0b; }
+
+    .toast-icon {
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+    .toast-item.success .toast-icon { color: #10b981; }
+    .toast-item.error .toast-icon { color: #ef4444; }
+    .toast-item.info .toast-icon { color: #3b82f6; }
+
+    .toast-content {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #1e293b;
+      flex: 1;
+    }
+
+    .toast-close {
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: color 0.2s;
+    }
+    .toast-close:hover { color: #1e293b; }
+
+    @keyframes toast-in {
+      from { transform: translateX(100%) scale(0.9); opacity: 0; }
+      to { transform: translateX(0) scale(1); opacity: 1; }
+    }
+
+    @keyframes toast-out {
+      from { transform: translateX(0) scale(1); opacity: 1; }
+      to { transform: translateX(100%) scale(0.9); opacity: 0; }
+    }
+
+    .toast-item.fade-out {
+      animation: toast-out 0.4s ease forwards;
+    }
+
+    /* ─── Global Modal Styles ─────────────────────────────────── */
+    .global-modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(8px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    .global-modal-backdrop.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .global-modal {
+      background: white;
+      width: 100%;
+      max-width: 420px;
+      border-radius: 24px;
+      padding: 2rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      transform: scale(0.9);
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .global-modal-backdrop.active .global-modal {
+      transform: scale(1);
+    }
+    .global-modal-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      margin: 0 auto 1.5rem;
+    }
+    .global-modal-icon.warning { background: #fffbeb; color: #f59e0b; }
+    .global-modal-icon.danger { background: #fef2f2; color: #ef4444; }
+    .global-modal-icon.success { background: #ecfdf5; color: #10b981; }
+    .global-modal-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #0f172a;
+      text-align: center;
+      margin-bottom: 0.75rem;
+    }
+    .global-modal-text {
+      color: #64748b;
+      text-align: center;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 2rem;
+    }
+    .global-modal-actions {
+      display: flex;
+      gap: 1rem;
+    }
+    .global-modal-btn {
+      flex: 1;
+      padding: 0.75rem;
+      border-radius: 12px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .global-modal-btn.cancel { background: #f1f5f9; color: #64748b; }
+    .global-modal-btn.cancel:hover { background: #e2e8f0; }
+    .global-modal-btn.confirm { background: #2563eb; color: white; }
+    .global-modal-btn.confirm:hover { background: #1d4ed8; transform: translateY(-2px); }
+    .global-modal-btn.confirm.danger { background: #ef4444; }
+    .global-modal-btn.confirm.danger:hover { background: #dc2626; }
+  </style>
+</head>
+
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <button class="sidebar-close" onclick="closeSidebar()" aria-label="Menüyü Kapat">
+        <i class="fas fa-times"></i>
+      </button>
+      <div class="sidebar-header">
+        <div class="sidebar-logo">
+          <i class="fas fa-car"></i>
+        </div>
+        <div class="sidebar-brand">
+          <h1>ZYRONOVA</h1>
+          <p>Ciro Yönetimi</p>
+        </div>
+      </div>
+
+      {% if not current_user.is_master_user %}
+      <div class="fleet-counter">
+        <div class="label">TOPLAM FİLO</div>
+        <div class="count">{{ vehicle_count }}</div>
+        <div class="sub">araç kayıtlı</div>
+      </div>
+      {% endif %}
+
+      <nav class="sidebar-nav">
+        {% if current_user.is_master_user %}
+        <!-- Super Admin Nav -->
+        {% set perms = current_user.get_permissions() %}
+        
+        {% if perms.master_dashboard.all or current_user.is_manager %}
+        <a href="{{ url_for('main.dashboard') }}" class="nav-link {{ 'active' if active_page == 'master_dashboard' }}" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-radius: 12px; margin-bottom: 0.5rem;">
+          <i class="fas fa-gem" style="color: #3b82f6;"></i>
+          <span style="font-weight: 700;">Şirket Yönetimi</span>
+          <i class="fas fa-chevron-right nav-chevron"></i>
+        </a>
+        {% endif %}
+        
+        {% if perms.tur_takip_manage.all or current_user.is_manager %}
+          <script>
+            function ssoRedirect(url, token) {
+                document.cookie = "sso_tur_takip_token=" + token + "; path=/; max-age=60";
+                window.location.href = url;
+            }
+          </script>
+          <a href="#" onclick="ssoRedirect('{{ session.get('tur_takip_url', 'http://localhost:5173') }}/super-admin', '{{ session.get('tur_takip_token', '') }}')" class="nav-link" style="border-radius: 12px; margin-bottom: 0.5rem; color: #10b981;">
+            <i class="fas fa-route" style="color: #10b981;"></i>
+            <span style="font-weight: 700;">Tur Takip SaaS</span>
+          <i class="fas fa-chevron-right nav-chevron"></i>
+        </a>
+        {% endif %}
+        
+        {% if perms.system_logs.all or current_user.is_manager %}
+        <a href="{{ url_for('main.logs') }}" class="nav-link {{ 'active' if active_page == 'logs' }}" style="border-radius: 12px; margin-bottom: 0.5rem;">
+          <i class="fas fa-fingerprint"></i>
+          <span>Denetim Günlüğü</span>
+          <i class="fas fa-chevron-right nav-chevron"></i>
+        </a>
+        {% endif %}
+        
+        {% if perms.security_manage.all or current_user.is_manager %}
+        <a href="{{ url_for('master.hukuki_ispat') }}" class="nav-link {{ 'active' if active_page == 'master_hukuki_ispat' }}" style="border-radius: 12px; margin-bottom: 0.5rem; color: #dc2626;">
+          <i class="fas fa-balance-scale" style="color: #dc2626;"></i>
+          <span style="font-weight: 700;">Hukuki İspat</span>
+          <i class="fas fa-chevron-right nav-chevron"></i>
+        </a>
+        <a href="{{ url_for('master.master_security') }}" class="nav-link {{ 'active' if active_page == 'master_security' }}" style="border-radius: 12px; opacity: 0.8; margin-bottom: 0.5rem;">
+          <i class="fas fa-shield-halved"></i>
+          <span>Güvenlik Merkezi</span>
+          <i class="fas fa-chevron-right nav-chevron"></i>
+        </a>
+        {% endif %}
+        
+        {% if perms.system_settings.all or current_user.is_manager %}
+        <a href="{{ url_for('master.master_ai_settings') }}" class="nav-link {{ 'active' if active_page == 'master_ai_settings' }}" style="border-radius: 12px; margin-bottom: 0.5rem; color: #a855f7;">
+          <i class="fas fa-brain" style="color: #a855f7;"></i>
+          <span style="font-weight: 700;">Yapay Zeka Merkezi</span>
+          <i class="fas fa-chevron-right nav-chevron"></i>
+        </a>
+        {% endif %}
+        
+        {% if perms.support_access.all or current_user.is_manager %}
+        <a href="{{ url_for('master.master_support') }}" class="nav-link {{ 'active' if active_page == 'master_support' }}" style="border-radius: 12px; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-headset"></i>
+            <span>Destek Talepleri</span>
+          </div>
+          {% if support_tickets_count > 0 %}
+            <span style="background: #ef4444; color: white; border-radius: 20px; padding: 2px 8px; font-size: 0.75rem; font-weight: bold; min-width: 20px; text-align: center;">{{ support_tickets_count }}</span>
+          {% else %}
+            <i class="fas fa-chevron-right nav-chevron"></i>
+          {% endif %}
+        </a>
+        {% endif %}
+        
+        <a href="{{ url_for('main.profil') }}" class="nav-link {{ 'active' if active_page == 'profil' }}" style="border-radius: 12px;">
+          <i class="fas fa-user-gear"></i>
+          <span>Profilim</span>
+          <i class="fas fa-chevron-right nav-chevron"></i>
+        </a>
+        {% else %}
+        <!-- Client Nav -->
+        {% set perms = current_user.get_permissions() %}
+        
+        {% if perms.dashboard.all %}
+        <a href="{{ url_for('main.dashboard') }}" class="nav-link {{ 'active' if active_page == 'dashboard' }}">
+          <i class="fas fa-th-large"></i>
+          <span>Dashboard</span>
+          <i class="fas fa-chevron-right nav-chevron"></i>
+        </a>
+        {% endif %}
+
+        {% if perms.araclar.all %}
+        <a href="{{ url_for('fleet.araclar') }}" class="nav-link {{ 'active' if active_page == 'araclar' }}">
+          <i class="fas fa-car-side"></i>
+          <span>Araçlar</span>
+          <i class="fas fa-chevron-right nav-chevron"></i>
+        </a>
+        {% endif %}
+
+        {% if perms.kiralamalar.all %}
+        <a href="{{ url_for('fleet.kiralamalar') }}" class="nav-link {{ 'active' if active_page == 'kiralamalar' }}">
+          <i class="fas fa-clipboard-list"></i>
+          <span>Kiralamalar</span>
+          <i class="fas fa-chevron-right nav-chevron"></i>
+        </a>
+        {% endif %}
+        
+        {% if perms.ciro_analiz.all %}
+        <a href="{{ url_for('main.ciro_analiz') }}" class="nav-link {{ 'active' if active_page == 'ciro_analiz' }}">
+          <i class="fas fa-chart-line"></i>
+          <span>Ciro Analizi</span>
+          <i class="fas fa-chevron-right nav-chevron"></i>
+        </a>
+        {% endif %}
+        
+        {% if perms.rapor.all %}
+        <a href="{{ url_for('reports.rapor') }}" class="nav-link {{ 'active' if active_page == 'rapor' }}">
+          <i class="fas fa-file-invoice"></i>
+          <span>Rapor</span>
+          <i class="fas fa-chevron-right nav-chevron"></i>
+        </a>
+        {% endif %}
+
+        {% if perms.servis.all %}
+        <a href="{{ url_for('fleet.servis_page') }}" class="nav-link {{ 'active' if active_page == 'servis' }}">
+          <i class="fas fa-tools"></i>
+          <span>Servis (Bakım)</span>
+          <i class="fas fa-chevron-right nav-chevron"></i>
+        </a>
+        {% endif %}
+        
+        {% if perms.excel.all %}
+        <a href="{{ url_for('reports.excel_page') }}" class="nav-link {{ 'active' if active_page == 'excel' }}">
+          <i class="fas fa-file-excel"></i>
+          <span>Excel İşlemleri</span>
+          <i class="fas fa-chevron-right nav-chevron"></i>
+        </a>
+        {% endif %}
+
+        <a href="{{ url_for('support.destek_talepleri') }}" class="nav-link {{ 'active' if active_page == 'support' }}">
+          <i class="fas fa-headset"></i>
+          <span>Destek Talepleri</span>
+          <i class="fas fa-chevron-right nav-chevron"></i>
+        </a>
+        {% if perms.logs.all %}
+        <a href="{{ url_for('main.logs') }}" class="nav-link {{ 'active' if active_page == 'logs' }}">
+          <i class="fas fa-history"></i>
+          <span>Denetim Günlüğü</span>
+          <i class="fas fa-chevron-right nav-chevron"></i>
+        </a>
+        {% endif %}
+        <a href="{{ url_for('main.profil') }}" class="nav-link {{ 'active' if active_page in ['profil', 'logs', 'ayarlar'] }}">
+          <i class="fas fa-user-gear"></i>
+          <span>Profilim</span>
+          <i class="fas fa-chevron-right nav-chevron"></i>
+        </a>
+        {% endif %}
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">
+            {{ (current_user.name or current_user.username)[0].upper() }}
+          </div>
+          <div class="user-details">
+            <p class="user-name">{{ current_user.name or current_user.username }}</p>
+            <p class="user-role">
+              {{ current_user.role_display_name }}
+            </p>
+          </div>
+          <a href="{{ url_for('auth.logout') }}" class="logout-btn" title="Çıkış Yap" aria-label="Sistemden Çıkış Yap">
+            <i class="fas fa-sign-out-alt"></i>
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <div class="mobile-overlay" id="mobileOverlay" onclick="closeSidebar()"></div>
+    <main class="main-content">
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <div class="nav-left">
+          <button class="mobile-toggle" onclick="toggleSidebar()" id="mobile-toggle" aria-label="Menüyü Aç">
+            <i class="fas fa-bars"></i>
+          </button>
+        </div>
+
+        <div class="top-bar-right">
+          {% if not current_user.is_master_user %}
+          <div class="notifications-dropdown">
+            <button class="notification-btn" onclick="toggleNotifications()" aria-label="Bildirimler">
+              <i class="fas fa-bell"></i>
+              {% set total_alerts = maintenance_alerts|length + insurance_alerts|length + inspection_alerts|length + rental_expiration_alerts|length %}
+              {% if total_alerts > 0 %}
+              <span class="notification-badge">{{ total_alerts }}</span>
+              {% endif %}
+            </button>
+            <div id="notificationPanel" class="notification-panel">
+              <div class="notification-header">
+                <h3>Bildirimler</h3>
+                {% if total_alerts > 0 %}
+                <button class="clear-all-btn" onclick="clearAllAlerts(event)">Tümünü Temizle</button>
+                {% endif %}
+              </div>
+              <div class="notification-list">
+                {% if total_alerts == 0 %}
+                <div class="empty-notifications">
+                  <i class="fas fa-bell-slash"></i>
+                  <p>Henüz bildirim yok.</p>
+                </div>
+                {% endif %}
+
+                {% for r in rental_expiration_alerts %}
+                <div class="notification-item" onclick="window.location.href='{{ url_for('fleet.kiralamalar', search=r.plaka) }}'">
+                  <div class="icon" style="background: var(--red-light); color: var(--red);"><i class="fas fa-calendar-times"></i></div>
+                  <div class="content">
+                    <p class="title">Kiralama Süresi Bitti!</p>
+                    <p class="desc"><strong>{{ r.plaka }}</strong> aracının süresi doldu.</p>
+                  </div>
+                  <button class="notification-dismiss" onclick="dismissAlert(event, this, 'rental_expiration', '{{ r.id }}', '{{ r.bitisTarihi }}')" aria-label="Bildirimi Kapat">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+                {% endfor %}
+
+                {% for v in maintenance_alerts %}
+                <div class="notification-item" onclick="window.location.href='{{ url_for('fleet.servis_page') }}'">
+                  <div class="icon" style="background: var(--red-light); color: var(--red);"><i class="fas fa-wrench"></i></div>
+                  <div class="content">
+                    <p class="title">Bakım Zamanı!</p>
+                    <p class="desc"><strong>{{ v.plaka }}</strong> bakım km'sine ulaştı.</p>
+                  </div>
+                  <button class="notification-dismiss" onclick="dismissAlert(event, this, 'maintenance', '{{ v.id }}', '{{ v.bakimYapildigiKm }}')" aria-label="Bildirimi Kapat">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+                {% endfor %}
+
+                {% for v in insurance_alerts %}
+                <div class="notification-item" onclick="window.location.href='{{ url_for('fleet.araclar', search=v.plaka) }}'">
+                  <div class="icon warning"><i class="fas fa-shield-alt"></i></div>
+                  <div class="content">
+                    <p class="title">Sigorta Bitiş</p>
+                    <p class="desc"><strong>{{ v.plaka }}</strong> sigortası yaklaşıyor.</p>
+                  </div>
+                  <button class="notification-dismiss" onclick="dismissAlert(event, this, 'insurance', '{{ v.id }}', '{{ v.sigortaBitisTarihi }}')" aria-label="Bildirimi Kapat">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+                {% endfor %}
+
+                {% for v in inspection_alerts %}
+                <div class="notification-item" onclick="window.location.href='{{ url_for('fleet.araclar', search=v.plaka) }}'">
+                  <div class="icon warning"><i class="fas fa-calendar-check"></i></div>
+                  <div class="content">
+                    <p class="title">Muayene Bitiş</p>
+                    <p class="desc"><strong>{{ v.plaka }}</strong> muayenesi yaklaşıyor.</p>
+                  </div>
+                  <button class="notification-dismiss" onclick="dismissAlert(event, this, 'inspection', '{{ v.id }}', '{{ v.vizeBitisTarihi }}')" aria-label="Bildirimi Kapat">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="page-content">
+      <div class="toast-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+          {% if category != 'modal_success' %}
+          <div class="toast-item {{ category if category != 'message' else 'info' }}">
+            <div class="toast-icon">
+              <i class="fas {{ 'fa-check-circle' if category == 'success' else 'fa-exclamation-circle' if category == 'error' else 'fa-info-circle' }}"></i>
+            </div>
+            <div class="toast-content">{{ message }}</div>
+            <div class="toast-close" onclick="this.parentElement.classList.add('fade-out'); setTimeout(() => this.parentElement.remove(), 400);">
+              <i class="fas fa-times"></i>
+            </div>
+          </div>
+          {% endif %}
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+      </div>
+
+        {% if license_warning %}
+        <div class="license-warning-banner {{ license_warning.level }}" style="
+          margin-bottom: 24px;
+          padding: 16px 20px;
+          border-radius: 16px;
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 0.95rem;
+          font-weight: 500;
+          backdrop-filter: blur(10px);
+          transition: all 0.3s ease;
+          box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+          {% if license_warning.level == 'danger' %}
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+          {% else %}
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            color: #d97706;
+          {% endif %}
+        ">
+          <div style="
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            flex-shrink: 0;
+            {% if license_warning.level == 'danger' %}
+              background: rgba(239, 68, 68, 0.12);
+            {% else %}
+              background: rgba(245, 158, 11, 0.12);
+            {% endif %}
+          ">
+            <i class="fas {% if license_warning.level == 'danger' %}fa-radiation fa-spin{% else %}fa-triangle-exclamation{% endif %}"></i>
+          </div>
+          <div style="flex: 1; line-height: 1.5;">
+            {{ license_warning.message }}
+          </div>
+          <a href="mailto:info@zyronova.com?subject=Lisans Yenileme Talebi - {{ g.current_company.name }}" style="
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            {% if license_warning.level == 'danger' %}
+              background: #ef4444;
+              color: white;
+              box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+            {% else %}
+              background: #f59e0b;
+              color: white;
+              box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+            {% endif %}
+          " onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+            <i class="fas fa-arrows-rotate"></i> Şimdi Yenile
+          </a>
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+
+  <div class="mobile-overlay" id="overlay" onclick="closeSidebar()"></div>
+  
+  <!-- Global Modal UI -->
+  <div class="global-modal-backdrop" id="globalModalBackdrop">
+    <div class="global-modal">
+      <div class="global-modal-icon" id="globalModalIcon"><i class="fas fa-exclamation-triangle"></i></div>
+      <h3 class="global-modal-title" id="globalModalTitle">Onay Gerekli</h3>
+      <p class="global-modal-text" id="globalModalText">Bu işlemi gerçekleştirmek istediğinizden emin misiniz?</p>
+      <div class="global-modal-actions">
+        <button class="global-modal-btn cancel" id="globalModalCancelBtn" onclick="closeGlobalModal()">İptal</button>
+        <button class="global-modal-btn confirm" id="globalModalConfirmBtn">Onayla</button>
+      </div>
+    </div>
+  </div>
+  
+  {% block modals %}{% endblock %}
+
+  <script>
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.add('active');
+      document.getElementById('overlay').classList.add('active');
+    }
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('active');
+      document.getElementById('overlay').classList.remove('active');
+    }
+    function toggleNotifications() {
+      document.getElementById('notificationPanel').classList.toggle('active');
+    }
+    document.addEventListener('click', (e) => {
+      // Bildirim panelini kapat
+      if (!e.target.closest('.notifications-dropdown')) {
+        const notifPanel = document.getElementById('notificationPanel');
+        if (notifPanel) notifPanel.classList.remove('active');
+      }
+      
+      // Aksiyon menülerini kapat (Dropdown dışına tıklandığında veya menü içindeki bir butona tıklandığında)
+      const dropdown = e.target.closest('.action-dropdown');
+      if (!dropdown || e.target.closest('.action-item')) {
+        document.querySelectorAll('.action-dropdown.active').forEach(d => {
+          d.classList.remove('active');
+          d.classList.remove('open-up');
+        });
+      }
+    });
+
+    function toggleActionMenu(btn, event) {
+      event.stopPropagation();
+      const dropdown = btn.closest('.action-dropdown');
+      
+      // Diğer tüm açık menüleri kapat
+      document.querySelectorAll('.action-dropdown.active').forEach(d => {
+        if (d !== dropdown) {
+          d.classList.remove('active');
+          d.classList.remove('open-up');
+        }
+      });
+      
+      if (!dropdown.classList.contains('active')) {
+        // Calculate if it's close to the bottom of the screen or table
+        const rect = btn.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        if (spaceBelow < 280) { // If there is less than 280px of space below the button
+          dropdown.classList.add('open-up');
+        } else {
+          dropdown.classList.remove('open-up');
+        }
+      } else {
+        dropdown.classList.remove('open-up');
+      }
+      
+      dropdown.classList.toggle('active');
+    }
+
+    async function dismissAlert(event, btn, alertType, targetId, stateValue) {
+      if (event) {
+        event.stopPropagation(); // Linke tıklamayı engelle
+        event.preventDefault();
+      }
+      if (!btn) return;
+      const item = btn.closest('.notification-item');
+      if (!item) return;
+      
+      try {
+        const response = await fetch('/dismiss_alert', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+          },
+          body: JSON.stringify({ alert_type: alertType, target_id: targetId, state_value: stateValue })
+        });
+        
+        if (response.ok) {
+          // Öğeyi arayüzden kaldır
+          item.style.opacity = '0';
+          item.style.transform = 'translateX(20px)';
+          setTimeout(() => {
+            item.remove();
+            updateNotificationBadge();
+          }, 300);
+        }
+      } catch (error) {
+        console.error('Bildirim kapatılamadı:', error);
+      }
+    }
+
+    async function clearAllAlerts(event) {
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+      
+      try {
+        const response = await fetch('/clear_all_alerts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+          }
+        });
+        
+        if (response.ok) {
+          const items = document.querySelectorAll('.notification-item');
+          items.forEach(item => {
+            item.style.opacity = '0';
+            item.style.transform = 'translateX(20px)';
+          });
+          
+          setTimeout(() => {
+            items.forEach(item => item.remove());
+            updateNotificationBadge();
+            // Tümünü Temizle butonunu gizle
+            const clearBtn = document.querySelector('.clear-all-btn');
+            if (clearBtn) clearBtn.remove();
+          }, 300);
+        }
+      } catch (error) {
+        console.error('Bildirimler temizlenemedi:', error);
+      }
+    }
+
+    function updateNotificationBadge() {
+      const badge = document.querySelector('.notification-badge');
+      const items = document.querySelectorAll('.notification-item');
+      const count = items.length;
+      
+      if (count > 0) {
+        if (badge) {
+          badge.textContent = count;
+        } else {
+          // Badge yoksa oluştur (normalde olması lazım ama güvenlik için)
+          const btn = document.querySelector('.notification-btn');
+          const newBadge = document.createElement('span');
+          newBadge.className = 'notification-badge';
+          newBadge.textContent = count;
+          btn.appendChild(newBadge);
+        }
+      } else {
+        if (badge) badge.remove();
+        // Boş liste mesajını göster
+        const list = document.querySelector('.notification-list');
+        list.innerHTML = `
+          <div class="empty-notifications">
+            <i class="fas fa-bell-slash"></i>
+            <p>Henüz bildirim yok.</p>
+          </div>
+        `;
+      }
+    }
+
+    // Global Notification System
+    function showToast(message, type = 'info') {
+      const container = document.querySelector('.toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast-item ${type}`;
+      const icon = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle');
+      
+      toast.innerHTML = `
+        <div class="toast-icon"><i class="fas ${icon}"></i></div>
+        <div class="toast-content"></div>
+        <div class="toast-close"><i class="fas fa-times"></i></div>
+      `;
+      toast.querySelector('.toast-content').textContent = message;
+      
+      container.appendChild(toast);
+      
+      toast.querySelector('.toast-close').onclick = () => {
+        toast.classList.add('fade-out');
+        setTimeout(() => toast.remove(), 400);
+      };
+      
+      let dismissTimeout;
+      
+      const startDismissTimer = () => {
+        dismissTimeout = setTimeout(() => {
+          if (toast.parentElement) {
+            toast.classList.add('fade-out');
+            setTimeout(() => toast.remove(), 400);
+          }
+        }, 30000); // 30 saniye
+      };
+      
+      const stopDismissTimer = () => {
+        clearTimeout(dismissTimeout);
+      };
+      
+      // Mouse etkilesim olaylari
+      toast.onmouseenter = stopDismissTimer;
+      toast.onmouseleave = startDismissTimer;
+      
+      // Ilk zamanlayiciyi baslat
+      startDismissTimer();
+    }
+
+    let globalModalCallback = null;
+
+    function showConfirm(title, text, callback, isDanger = false) {
+      const backdrop = document.getElementById('globalModalBackdrop');
+      const icon = document.getElementById('globalModalIcon');
+      const titleEl = document.getElementById('globalModalTitle');
+      const textEl = document.getElementById('globalModalText');
+      const confirmBtn = document.getElementById('globalModalConfirmBtn');
+      const cancelBtn = document.getElementById('globalModalCancelBtn');
+
+      titleEl.textContent = title;
+      textEl.textContent = text;
+      confirmBtn.className = `global-modal-btn confirm ${isDanger ? 'danger' : ''}`;
+      icon.className = `global-modal-icon ${isDanger ? 'danger' : 'warning'}`;
+      icon.innerHTML = `<i class="fas ${isDanger ? 'fa-trash-alt' : 'fa-exclamation-triangle'}"></i>`;
+      cancelBtn.style.display = 'block';
+
+      globalModalCallback = callback;
+      confirmBtn.onclick = () => {
+        if (globalModalCallback) globalModalCallback();
+        closeGlobalModal();
+      };
+
+      backdrop.classList.add('active');
+    }
+
+    function showAlert(title, text, type = 'success') {
+      const backdrop = document.getElementById('globalModalBackdrop');
+      const icon = document.getElementById('globalModalIcon');
+      const titleEl = document.getElementById('globalModalTitle');
+      const textEl = document.getElementById('globalModalText');
+      const confirmBtn = document.getElementById('globalModalConfirmBtn');
+      const cancelBtn = document.getElementById('globalModalCancelBtn');
+
+      titleEl.textContent = title;
+      textEl.textContent = text;
+      confirmBtn.className = `global-modal-btn confirm`;
+      confirmBtn.textContent = 'Tamam';
+      icon.className = `global-modal-icon ${type}`;
+      icon.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>`;
+      cancelBtn.style.display = 'none';
+
+      confirmBtn.onclick = () => closeGlobalModal();
+      backdrop.classList.add('active');
+    }
+
+    function closeGlobalModal() {
+      document.getElementById('globalModalBackdrop').classList.remove('active');
+      setTimeout(() => {
+        document.getElementById('globalModalConfirmBtn').textContent = 'Onayla';
+      }, 300);
+    }
+
+    // Replace native alert/confirm
+    window.alert = (msg) => showToast(msg, 'info');
+    
+    // Sidebar Functions
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('mobileOverlay');
+      sidebar.classList.toggle('active');
+      overlay.classList.toggle('active');
+    }
+
+    function closeSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('mobileOverlay');
+      sidebar.classList.remove('active');
+      overlay.classList.remove('active');
+    }
+
+    // Smart Device Detection
+    function detectDevice() {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+      if (isMobile) {
+        document.body.classList.add('is-mobile-device');
+      }
+      if (isStandalone) {
+        document.body.classList.add('is-pwa-app');
+        console.log('App is running in standalone mode!');
+      }
+    }
+    
+    // Run on load
+    detectDevice();
+    // PWA Service Worker Kaldırma (Önbellek sorunlarını çözmek için)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for(let registration of registrations) {
+          registration.unregister();
+          console.log('Service Worker unregistered successfully.');
+        }
+      });
+    }
+  </script>
+  {% block scripts %}{% endblock %}
+  
+  {% if current_user.is_authenticated %}
+  <!-- Telemetry Widget (Beyond Enterprise Performance Widget) -->
+  <div class="telemetry-widget" style="
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(12px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 100px;
+      padding: 6px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.85);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      z-index: 999999;
+      pointer-events: auto;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  " onmouseover="this.style.background='rgba(15, 23, 42, 0.85)'; this.style.borderColor='rgba(59, 130, 246, 0.4)'; this.style.transform='translateY(-2px) scale(1.02)'" onmouseout="this.style.background='rgba(15, 23, 42, 0.65)'; this.style.borderColor='rgba(255, 255, 255, 0.08)'; this.style.transform='translateY(0) scale(1)'">
+      <span style="
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #10b981;
+          display: inline-block;
+          box-shadow: 0 0 10px #10b981, 0 0 20px #10b981;
+          animation: telemetry-pulse 2s infinite;
+      "></span>
+      <span style="letter-spacing: 0.03em;">Engine v2.5</span>
+      <span style="color: rgba(255, 255, 255, 0.25);">|</span>
+      <span style="color: #3b82f6;"><i class="fas fa-bolt" style="margin-right: 2px;"></i> {{ latency_ms }} ms</span>
+  </div>
+  <style>
+      @media (max-width: 768px) {
+          .telemetry-widget {
+              display: none !important;
+          }
+      }
+      @keyframes telemetry-pulse {
+          0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+          70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+      }
+  </style>
+  {% endif %}
+  <script src="{{ url_for('static', filename='js/kvkk_banner.js') }}" defer></script>
+  <!-- Chart.js: loaded asynchronously to avoid blocking FCP/LCP -->
+  <script src="{{ url_for('static', filename='js/chart.min.js') }}" async></script>
+</body>
+
+</html>

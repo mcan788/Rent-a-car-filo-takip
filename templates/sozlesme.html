@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kiralama Sözleşmesi - {{ rental.plaka }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #0f172a;
+      --secondary: #475569;
+      --accent: #2563eb;
+      --border: #cbd5e1;
+      --bg: #f8fafc;
+      --text: #0f172a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      color: var(--text);
+      background-color: var(--bg);
+      line-height: 1.5;
+      padding: 2rem 1.5rem;
+    }
+
+    .contract-container {
+      max-width: 850px;
+      margin: 0 auto;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 3rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      position: relative;
+    }
+
+    /* Actions Header (Hidden on Print) */
+    .actions-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      max-width: 850px;
+      margin: 0 auto 1.5rem auto;
+      background: rgba(30, 41, 59, 0.05);
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      border: 1px solid rgba(30, 41, 59, 0.1);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background-color: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: #1d4ed8;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      background-color: white;
+      border: 1px solid var(--border);
+      color: var(--secondary);
+    }
+
+    .btn-outline:hover {
+      background-color: #f1f5f9;
+      color: var(--primary);
+    }
+
+    /* Contract Document Styling */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .company-info h1 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -0.02em;
+    }
+
+    .company-info p {
+      font-size: 0.85rem;
+      color: var(--secondary);
+      margin-top: 0.25rem;
+    }
+
+    .document-title {
+      text-align: right;
+    }
+
+    .document-title h2 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .document-title p {
+      font-size: 0.85rem;
+      color: var(--secondary);
+      margin-top: 0.25rem;
+      font-weight: 600;
+    }
+
+    /* Grid Sections */
+    .section-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .info-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .info-card-header {
+      background-color: #f1f5f9;
+      padding: 0.75rem 1rem;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--primary);
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .info-table td {
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .info-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .info-label {
+      font-weight: 600;
+      color: var(--secondary);
+      width: 40%;
+    }
+
+    .info-value {
+      color: var(--primary);
+      font-weight: 500;
+    }
+
+    /* Terms Section */
+    .terms-section {
+      margin-bottom: 2rem;
+    }
+
+    .terms-header {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+      text-transform: uppercase;
+    }
+
+    .terms-list {
+      padding-left: 1.25rem;
+      font-size: 0.75rem;
+      color: var(--secondary);
+      line-height: 1.6;
+    }
+
+    .terms-list li {
+      margin-bottom: 0.5rem;
+      text-align: justify;
+    }
+
+    /* Signatures Area */
+    .signatures-section {
+      margin-top: 3rem;
+      border-top: 1px dashed var(--border);
+      padding-top: 2rem;
+    }
+
+    .signatures-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      text-align: center;
+    }
+
+    .signature-box {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      background-color: #fafafa;
+      min-height: 180px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .signature-title {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--primary);
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+    }
+
+    .signature-img {
+      max-height: 100px;
+      max-width: 100%;
+      object-fit: contain;
+    }
+
+    .no-signature {
+      font-style: italic;
+      color: #94a3b8;
+      margin: auto;
+      font-size: 0.85rem;
+    }
+
+    .signature-meta {
+      font-size: 0.75rem;
+      color: var(--secondary);
+      margin-top: 1rem;
+      font-weight: 500;
+    }
+
+    .contract-footer {
+      text-align: center;
+      margin-top: 3rem;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      border-top: 1px solid #f1f5f9;
+      padding-top: 1.5rem;
+    }
+
+    /* Printable CSS rules */
+    @media print {
+      body {
+        background-color: white;
+        padding: 0;
+      }
+      .actions-bar {
+        display: none !important;
+      }
+      .contract-container {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+      }
+      .btn {
+        display: none !important;
+      }
+    }
+
+    /* ── Responsive: Tablet & Mobile ── */
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem 0.75rem;
+      }
+
+      .contract-container {
+        padding: 1.5rem 1rem;
+        border-radius: 12px;
+      }
+
+      /* Şirket başlığı + belge no: dikey dizilim */
+      .header {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .document-title {
+        text-align: left;
+      }
+
+      .company-info h1 {
+        font-size: 1.35rem;
+      }
+
+      .document-title h2 {
+        font-size: 1.2rem;
+      }
+
+      /* 2-sütunlu grid → tek sütun */
+      .section-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      /* İmza kutuları → tek sütun */
+      .signatures-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .signature-box {
+        min-height: 140px;
+      }
+
+      /* Üst buton çubuğu */
+      .actions-bar {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: flex-start;
+        padding: 0.75rem 1rem;
+      }
+
+      .actions-bar > div {
+        width: 100%;
+      }
+
+      .actions-bar .btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      /* Tablo hücreleri */
+      .info-table td {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.75rem;
+      }
+
+      .info-label {
+        width: 45%;
+      }
+
+      /* Sözleşme şartları */
+      .terms-list {
+        font-size: 0.72rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 0.5rem;
+      }
+
+      .contract-container {
+        padding: 1rem 0.75rem;
+        border-radius: 8px;
+      }
+
+      .company-info h1 {
+        font-size: 1.1rem;
+      }
+
+      /* Tablo: label üstte, value altta (2 satır) */
+      .info-table tr {
+        display: block;
+        border-bottom: 1px solid #f1f5f9;
+        padding: 0.5rem 0;
+      }
+
+      .info-table tr:last-child {
+        border-bottom: none;
+      }
+
+      .info-table td {
+        display: block;
+        width: 100% !important;
+        border-bottom: none;
+        padding: 0.15rem 0.75rem;
+      }
+
+      .info-label {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        padding-bottom: 0;
+      }
+
+      .info-value {
+        font-size: 0.85rem;
+        padding-top: 0;
+      }
+
+      .signatures-section {
+        margin-top: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Actions Bar (Screen Only) -->
+  <div class="actions-bar">
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+      <a href="/kiralamalar" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Kiralamalara Dön
+      </a>
+      {% if rental.is_signed %}
+      <span style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.85rem; background: #dcfce7; color: #15803d; padding: 0.35rem 0.75rem; border-radius: 20px; font-weight: 700; border: 1px solid #bbf7d0;">
+        <i class="fas fa-check-circle"></i> Dijital İmzalı Sözleşme
+      </span>
+      {% else %}
+      <span style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.85rem; background: #fee2e2; color: #b91c1c; padding: 0.35rem 0.75rem; border-radius: 20px; font-weight: 700; border: 1px solid #fecaca;">
+        <i class="fas fa-exclamation-triangle"></i> İmzasız Sözleşme
+      </span>
+      {% endif %}
+    </div>
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
+      <button class="btn btn-primary" onclick="window.print()">
+        <i class="fas fa-print"></i> Yazdır / PDF Olarak Kaydet
+      </button>
+      <button class="btn" style="background: #10b981; color: white; border-color: #10b981;" onclick="downloadAsJpeg()" id="downloadJpgBtn">
+        <i class="fas fa-image"></i> KABİS İçin JPG İndir
+      </button>
+    </div>
+  </div>
+
+  <!-- Contract Container -->
+  <div class="contract-container">
+    
+    <!-- Document Header -->
+    <div class="header">
+      <div class="company-info">
+        <h1>{{ company.name|upper }}</h1>
+        <p><i class="fas fa-phone mr-1"></i> Tel: {{ company.contact_phone or '-' }}</p>
+        <p><i class="fas fa-envelope mr-1"></i> E-Posta: {{ company.contact_email or '-' }}</p>
+        {% if company.tax_no %}
+        <p><i class="fas fa-file-invoice mr-1"></i> Vergi No: {{ company.tax_no }}</p>
+        {% endif %}
+      </div>
+      <div class="document-title">
+        <h2>Kiralama Sözleşmesi</h2>
+        <p>Sözleşme No: RNT-{{ rental.id[:8]|upper }}</p>
+        <p>Tarih: {{ rental.baslangicTarihi|fdate }}</p>
+      </div>
+    </div>
+
+    <!-- Details Grid -->
+    <div class="section-grid">
+      
+      <!-- Kiracı Bilgileri -->
+      <div class="info-card">
+        <div class="info-card-header">
+          <i class="fas fa-user"></i> Kiracı (Müşteri) Bilgileri
+        </div>
+        <div class="table-responsive">
+<table class="info-table">
+          <tr>
+            <td class="info-label">Adı Soyadı</td>
+            <td class="info-value">{{ rental.musteriAdi }}</td>
+          </tr>
+          <tr>
+            <td class="info-label">Kimlik / TC No</td>
+            <td class="info-value">{{ rental.tcKimlik or '-' }}</td>
+          </tr>
+          <tr>
+            <td class="info-label">Uyruk</td>
+            <td class="info-value">{{ rental.uyruk }}</td>
+          </tr>
+          <tr>
+            <td class="info-label">Ehliyet No</td>
+            <td class="info-value">{{ rental.ehliyetNo or '-' }}</td>
+          </tr>
+          <tr>
+            <td class="info-label">Ehliyet Tarihleri</td>
+            <td class="info-value">
+              {% if rental.ehliyetVerilisTarihi and rental.ehliyetGecerlilikTarihi %}
+                Veriliş: {{ rental.ehliyetVerilisTarihi|fdate }}<br>Geçerlilik: {{ rental.ehliyetGecerlilikTarihi|fdate }}
+              {% else %}
+                -
+              {% endif %}
+            </td>
+          </tr>
+          <tr>
+            <td class="info-label">İkametgah / Adres</td>
+            <td class="info-value" style="font-size: 0.8rem;">{{ rental.adres or '-' }}</td>
+          </tr>
+          {% if rental.konaklamaTipi == 'otel_pansiyon' %}
+          <tr>
+            <td class="info-label">Oda Numarası</td>
+            <td class="info-value">{{ rental.odaNo or '-' }}</td>
+          </tr>
+          {% endif %}
+        </table>
+</div>
+      </div>
+
+      <!-- Araç ve Kiralama Bilgileri -->
+      <div class="info-card">
+        <div class="info-card-header">
+          <i class="fas fa-car"></i> Kiralama ve Araç Bilgileri
+        </div>
+        <div class="table-responsive">
+<table class="info-table">
+          <tr>
+            <td class="info-label">Plaka</td>
+            <td class="info-value" style="font-weight: 700;">{{ rental.plaka }}</td>
+          </tr>
+          <tr>
+            <td class="info-label">Araç Bilgisi</td>
+            <td class="info-value">{{ rental.marka }} {{ rental.model }}</td>
+          </tr>
+          <tr>
+            <td class="info-label">Alış KM (Çıkış)</td>
+            <td class="info-value">{{ rental.verilisteKm|km }}</td>
+          </tr>
+          {% if rental.alinistaKm > 0 %}
+          <tr>
+            <td class="info-label">İade KM (Dönüş)</td>
+            <td class="info-value">{{ rental.alinistaKm|km }}</td>
+          </tr>
+          <tr>
+            <td class="info-label">Kullanılan KM</td>
+            <td class="info-value">{{ rental.kullanilanKm|km }}</td>
+          </tr>
+          {% endif %}
+          <tr>
+            <td class="info-label">Kiralama Dönemi</td>
+            <td class="info-value">
+              Başlangıç: {{ rental.baslangicTarihi|fdate }} {{ rental.baslangicSaati or '09:00' }}<br>
+              Bitiş: {{ rental.bitisTarihi|fdate }} {{ rental.bitisSaati or '09:00' }}
+            </td>
+          </tr>
+          <tr>
+            <td class="info-label">Süre / Fiyat</td>
+            <td class="info-value">
+              Süre: {{ rental.kiralamaSuresi }} Gün<br>
+              Günlük: {{ rental.gunlukFiyat|currency(rental.paraBirimi) }}
+            </td>
+          </tr>
+          <tr>
+            <td class="info-label">Ödeme Türü</td>
+            <td class="info-value">{{ rental.odemeYontemi or 'Nakit' }}</td>
+          </tr>
+          <tr style="border-top: 1px solid var(--border); background-color: #f8fafc;">
+            <td class="info-label" style="font-weight: 700; color: var(--accent);">Toplam Tutar</td>
+            <td class="info-value" style="font-weight: 700; color: var(--accent); font-size: 1rem;">
+              {{ rental.toplamFiyat|currency(rental.paraBirimi) }}
+            </td>
+          </tr>
+        </table>
+</div>
+      </div>
+
+    </div>
+
+    <!-- Terms and Conditions -->
+    <div class="terms-section">
+      <div class="terms-header">Sözleşme Genel Koşulları</div>
+      <div class="terms-text" style="font-size: 0.75rem; color: var(--secondary); line-height: 1.6; text-align: justify; white-space: pre-line;">{{ final_contract_text }}</div>
+    </div>
+
+    <!-- Signatures Section -->
+    <div class="signatures-section">
+      <div class="signatures-grid">
+        
+        <!-- Müşteri İmza -->
+        <div class="signature-box">
+          <div class="signature-title">Kiracı (Müşteri) İmzası</div>
+          {% if rental.musteriImza %}
+          <img src="{{ rental.musteriImza }}" alt="Müşteri İmzası" class="signature-img">
+          {% else %}
+          <div class="no-signature">Henüz imzalanmadı</div>
+          {% endif %}
+          <div class="signature-meta">
+            Ad Soyad: {{ rental.musteriAdi }}<br>
+            T.C./Pasaport: {{ rental.tcKimlik or '-' }}
+          </div>
+        </div>
+
+        <!-- Yetkili İmza -->
+        <div class="signature-box">
+          <div class="signature-title">Kiralayan (Firma) Yetkilisi</div>
+          {% if rental.firmaImza %}
+          <img src="{{ rental.firmaImza }}" alt="Firma İmzası" class="signature-img">
+          {% else %}
+          <div class="no-signature">Henüz imzalanmadı</div>
+          {% endif %}
+          <div class="signature-meta">
+            Firma: {{ company.name }}<br>
+            Temsilci: {{ rental.personelAdi or 'Sistem Yöneticisi' }}
+          </div>
+        </div>
+
+      </div>
+      
+      {% if rental.is_signed and rental.imzaTarihi %}
+      <div style="text-align: center; margin-top: 1.5rem; font-size: 0.8rem; color: var(--secondary); font-weight: 600;">
+        <i class="fas fa-lock text-green mr-1"></i> Bu sözleşme {{ rental.imzaTarihi }} tarihinde taraflarca dijital olarak imzalanmış ve onaylanmıştır.
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <div class="contract-footer">
+      <p>Bu belge dijital olarak imzalanmış olup, ıslak imzalı sözleşme ile aynı yasal hükümlere tabidir.</p>
+      <p style="margin-top: 0.25rem;">© 2026 {{ company.name }} - Powered by Zyronova SaaS</p>
+    </div>
+
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script>
+    function downloadAsJpeg() {
+      const btn = document.getElementById('downloadJpgBtn');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Hazırlanıyor...';
+      btn.disabled = true;
+
+      const element = document.querySelector('.contract-container');
+      const termsText = document.querySelector('.terms-text');
+      
+      // Temporarily force desktop width and larger, darker fonts for crystal clear capture
+      const originalWidth = element.style.width;
+      const originalMaxWidth = element.style.maxWidth;
+      const originalFontSize = termsText ? termsText.style.fontSize : '';
+      const originalColor = termsText ? termsText.style.color : '';
+      
+      element.style.width = '1200px';
+      element.style.maxWidth = '1200px';
+      if (termsText) {
+        termsText.style.fontSize = '1.1rem';
+        termsText.style.color = '#000000';
+        termsText.style.fontWeight = '500';
+      }
+      
+      html2canvas(element, { 
+        scale: 2, // 2 is enough if fonts are large, prevents file size from exploding over 4MB
+        useCORS: true,
+        windowWidth: 1200,
+        backgroundColor: '#ffffff'
+      }).then(canvas => {
+        // Restore original styles
+        element.style.width = originalWidth;
+        element.style.maxWidth = originalMaxWidth;
+        if (termsText) {
+          termsText.style.fontSize = originalFontSize;
+          termsText.style.color = originalColor;
+          termsText.style.fontWeight = '';
+        }
+
+        // Compress JPEG to keep it under 4MB
+        const imgData = canvas.toDataURL('image/jpeg', 0.85); 
+        const link = document.createElement('a');
+        link.download = 'Sozlesme_{{ rental.plaka }}_{{ rental.isim }}.jpg';
+        link.href = imgData;
+        link.click();
+        
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }).catch(err => {
+        // Restore original styles in case of error
+        element.style.width = originalWidth;
+        element.style.maxWidth = originalMaxWidth;
+        if (termsText) {
+          termsText.style.fontSize = originalFontSize;
+          termsText.style.color = originalColor;
+          termsText.style.fontWeight = '';
+        }
+        console.error('JPG indirme hatası:', err);
+        alert('Resim oluşturulurken bir hata oluştu.');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      });
+    }
+  </script>
+</body>
+</html>

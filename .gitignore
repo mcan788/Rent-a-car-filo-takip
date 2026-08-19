@@ -1,0 +1,45 @@
+# Environments
+.env
+.venv/
+env/
+venv/
+ENV/
+
+# Python caching
+__pycache__/
+*.py[cod]
+*$py.class
+
+# User Uploads (Güvenlik ve KVKK gereği github'a gitmemeli)
+static/uploads/*
+!static/uploads/.gitkeep
+
+# IDEs ve Editörler
+.vscode/
+.idea/
+*.swp
+
+# Log dosyaları
+*.log
+err.log
+out.log
+
+# Mac OS görünmez dosyaları
+.DS_Store
+
+# Flask instance klasörü (SQLite DB, gizli config)
+instance/
+
+# Güvenlik log dosyaları (hassas bilgi içerir)
+security_breach.log
+*.log
+
+# Geliştirici scriptleri (production'da olmamalı)
+reseed_data.py
+generate_examples.py
+apply_performance_indexes.py
+migrate_*.py
+update_*.py
+reset_*.py
+scratch/
+

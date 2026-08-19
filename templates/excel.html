@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+  @media (max-width: 768px) {
+    /* Grids collapse */
+    .import-type-grid,
+    .export-grid {
+      grid-template-columns: 1fr !important;
+      gap: 1rem !important;
+    }
+
+    /* Template Bar vertical stack */
+    .template-bar {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 1rem !important;
+    }
+    
+    .template-bar-info {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 0.5rem !important;
+    }
+    
+    .template-bar a,
+    .template-bar .btn {
+      width: 100% !important;
+      justify-content: center !important;
+    }
+
+    /* Expected Columns Grid Collapse */
+    div[style*="grid-template-columns:repeat(3,1fr)"],
+    div[style*="grid-template-columns: repeat(3, 1fr)"] {
+      grid-template-columns: 1fr !important;
+      gap: 0.5rem !important;
+    }
+
+    /* File Input card row layout */
+    div[style*="display:flex; align-items:center; justify-content:space-between;"],
+    div[style*="display: flex; align-items: center; justify-content: space-between;"] {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 1rem !important;
+    }
+    
+    div[style*="display:flex; align-items:center; justify-content:space-between;"] button,
+    div[style*="display: flex; align-items: center; justify-content: space-between;"] button {
+      width: 100% !important;
+      justify-content: center !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="page-header">
+  <div>
+    <h2 class="page-title">Excel İşlemleri</h2>
+    <p class="page-subtitle">Verilerinizi Excel ile içe/dışa aktarın</p>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs" style="margin-bottom:1.5rem;">
+  <button class="tab-btn active" onclick="switchExcelTab(this, 'import')">
+    <i class="fas fa-upload" style="margin-right:0.35rem;"></i> İçe Aktar
+  </button>
+  <button class="tab-btn" onclick="switchExcelTab(this, 'export')">
+    <i class="fas fa-download" style="margin-right:0.35rem;"></i> Dışa Aktar
+  </button>
+</div>
+
+<!-- Import Tab -->
+<div class="tab-content active" id="tab-import">
+  <!-- Import Type Selection -->
+  <div class="import-type-grid">
+    <button class="import-type-card active" id="typeArac" onclick="setImportType('arac')">
+      <i class="fas fa-car-side"></i>
+      <div class="card-title">Araç Verisi</div>
+      <div class="card-desc">Plaka, marka, model, yıl, renk, durum</div>
+    </button>
+    <button class="import-type-card" id="typeKiralama" onclick="setImportType('kiralama')">
+      <i class="fas fa-clipboard-list"></i>
+      <div class="card-title">Kiralama Verisi</div>
+      <div class="card-desc">KM, fiyat, maliyet, hasar bilgileri</div>
+    </button>
+  </div>
+
+  <!-- Template Download -->
+  <div class="template-bar">
+    <div class="template-bar-info">
+      <i class="fas fa-file-excel"></i>
+      <div>
+        <div class="title">Şablon dosyasını indirin</div>
+        <div class="desc">Doğru sütun başlıkları ile hazırlanmış Excel şablonu</div>
+      </div>
+    </div>
+    <a id="templateLink" href="{{ url_for('reports.excel_template', type='arac') }}" class="btn btn-outline btn-sm">
+      <i class="fas fa-download"></i> Şablon İndir
+    </a>
+  </div>
+
+  <!-- Drop Zone -->
+  <form method="POST" action="{{ url_for('reports.excel_import') }}" enctype="multipart/form-data" id="importForm">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="import_type" id="importTypeInput" value="arac">
+    <input type="file" name="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none;"
+      onchange="handleFileSelect()">
+
+    <div class="drop-zone" id="dropZone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)"
+      ondrop="handleDrop(event)" onclick="document.getElementById('fileInput').click()">
+      <i class="fas fa-cloud-arrow-up"></i>
+      <div class="title" id="dropTitle">Excel dosyanızı sürükleyin</div>
+      <div class="subtitle">veya <span>dosya seçmek için tıklayın</span></div>
+      <div class="formats">.xlsx, .xls veya .csv formatları desteklenir</div>
+    </div>
+
+    <!-- Selected File Info -->
+    <div id="selectedFileInfo" style="display:none; margin-bottom:1.5rem;">
+      <div class="card" style="padding:1rem;">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div style="display:flex; align-items:center; gap:0.75rem;">
+            <i class="fas fa-file-excel" style="font-size:1.5rem; color:var(--navy);"></i>
+            <div>
+              <div class="font-semibold" id="selectedFileName"></div>
+              <div style="font-size:0.75rem; color:var(--text-muted);" id="selectedFileSize"></div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-upload"></i> İçe Aktar
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <!-- Expected Columns Reference -->
+  <div class="card" style="margin-top:1rem;">
+    <div class="card-header">
+      <h3 style="font-size:0.875rem;">Beklenen Sütun Başlıkları</h3>
+    </div>
+    <div class="card-body">
+      <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.75rem;">Excel dosyanızda aşağıdaki sütun
+        başlıklarını kullanın</p>
+      <div id="columnsArac">
+        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0.5rem;">
+          {% for col in ['Plaka', 'Marka', 'Model', 'Yıl', 'Renk', 'Durum'] %}
+          <div
+            style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0.75rem;background:var(--bg);border-radius:0.375rem;border:1px solid var(--border);">
+            <span
+              style="width:6px;height:6px;border-radius:50%;background:{{ 'var(--red)' if col in ['Plaka','Marka'] else 'var(--green)' }};"></span>
+            <span style="font-size:0.8rem;">{{ col }}{{ ' *' if col in ['Plaka','Marka'] else '' }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div id="columnsKiralama" style="display:none;">
+        <div style="display:flex; flex-wrap:wrap; gap:0.5rem;">
+          {% for col in ['Plaka', 'Marka', 'Model', 'Müşteri', 'Başlangıç Tarihi', 'Bitiş Tarihi', 'Veriliş KM', 'Alınış
+          KM', 'Günlük Fiyat', 'Toplam Fiyat', 'Yakıt Maliyeti', 'Bakım Maliyeti', 'Sigorta Maliyeti', 'Diğer
+          Maliyetler', 'Hasar Durumu', 'Hasar Açıklama', 'Hasar Maliyeti', 'Notlar'] %}
+          <span class="badge blue">{{ col }}</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Export Tab -->
+<div class="tab-content" id="tab-export">
+  <div class="export-grid">
+    <div class="export-card">
+      <i class="fas fa-car-side"></i>
+      <div class="title">Araç Verileri</div>
+      <div class="desc">Tüm araç kayıtlarını Excel olarak indirin</div>
+      <a href="{{ url_for('reports.excel_export', type='arac') }}" class="btn btn-primary">
+        <i class="fas fa-download"></i> İndir
+      </a>
+    </div>
+    <div class="export-card">
+      <i class="fas fa-clipboard-list"></i>
+      <div class="title">Kiralama Verileri</div>
+      <div class="desc">Tüm kiralama kayıtlarını Excel olarak indirin</div>
+      <a href="{{ url_for('reports.excel_export', type='kiralama') }}" class="btn btn-primary">
+        <i class="fas fa-download"></i> İndir
+      </a>
+    </div>
+  </div>
+
+  <!-- Info Box -->
+  <div class="card" style="margin-top:1.5rem; background:var(--bg);">
+    <div class="card-body" style="padding:1.25rem;">
+      <div style="display:flex; align-items:flex-start; gap:0.75rem;">
+        <i class="fas fa-circle-info" style="color:var(--navy); margin-top:0.15rem;"></i>
+        <div>
+          <p style="font-size:0.875rem; font-weight:500;">Dışa aktarma hakkında</p>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-top:0.25rem;">
+            Dışa aktarılan dosyalar .xlsx formatında indirilir. Tüm kayıtlı veriler dahil edilir.
+            Dosyalar otomatik olarak sütun genişliği ayarlanmış şekilde oluşturulur.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let currentImportType = 'arac';
+
+  function switchExcelTab(btn, tabId) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + tabId).classList.add('active');
+  }
+
+  function setImportType(type) {
+    currentImportType = type;
+    document.getElementById('importTypeInput').value = type;
+
+    document.getElementById('typeArac').classList.toggle('active', type === 'arac');
+    document.getElementById('typeKiralama').classList.toggle('active', type === 'kiralama');
+
+    document.getElementById('columnsArac').style.display = type === 'arac' ? 'block' : 'none';
+    document.getElementById('columnsKiralama').style.display = type === 'kiralama' ? 'block' : 'none';
+
+    document.getElementById('templateLink').href = '/excel/template/' + type;
+
+    // Reset file selection
+    document.getElementById('fileInput').value = '';
+    document.getElementById('selectedFileInfo').style.display = 'none';
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    document.getElementById('dropZone').classList.add('drag-over');
+    document.getElementById('dropTitle').textContent = 'Dosyayı bırakın';
+  }
+
+  function handleDragLeave(e) {
+    e.preventDefault();
+    document.getElementById('dropZone').classList.remove('drag-over');
+    document.getElementById('dropTitle').textContent = 'Excel dosyanızı sürükleyin';
+  }
+
+  function handleDrop(e) {
+    e.preventDefault();
+    document.getElementById('dropZone').classList.remove('drag-over');
+    document.getElementById('dropTitle').textContent = 'Excel dosyanızı sürükleyin';
+
+    const file = e.dataTransfer.files[0];
+    if (file && /\.(xlsx|xls|csv)$/i.test(file.name)) {
+      // Transfer file to input
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      document.getElementById('fileInput').files = dt.files;
+      showSelectedFile(file);
+    }
+  }
+
+  function handleFileSelect() {
+    const file = document.getElementById('fileInput').files[0];
+    if (file) showSelectedFile(file);
+  }
+
+  function showSelectedFile(file) {
+    document.getElementById('selectedFileName').textContent = file.name;
+    const size = file.size < 1024 ? file.size + ' B' :
+      file.size < 1048576 ? (file.size / 1024).toFixed(1) + ' KB' :
+        (file.size / 1048576).toFixed(1) + ' MB';
+    document.getElementById('selectedFileSize').textContent = size;
+    document.getElementById('selectedFileInfo').style.display = 'block';
+  }
+</script>
+{% endblock %}

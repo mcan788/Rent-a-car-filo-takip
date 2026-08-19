@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geciken Araç Teslimatları - {{ company_name if company_name else 'Zyronova' }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-red: #ef4444;
+            --accent-blue: #3b82f6;
+            --border-color: #334155;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .header-title i {
+            color: var(--accent-red);
+            font-size: 1.5rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            flex: 1;
+            width: 100%;
+        }
+
+        .error-card {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--accent-red);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .error-card i {
+            font-size: 3rem;
+            color: var(--accent-red);
+            margin-bottom: 1rem;
+        }
+
+        .error-card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .stat-title {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent-red);
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .rental-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .rental-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            border-color: #475569;
+        }
+
+        .card-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.02);
+        }
+
+        .plate-badge {
+            background-color: var(--text-main);
+            color: #000;
+            padding: 0.3rem 0.8rem;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: 2px solid #cbd5e1;
+        }
+
+        .car-model {
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .card-body {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .info-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background-color: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .info-icon.alert {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--accent-red);
+        }
+
+        .info-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 0.2rem;
+        }
+
+        .info-value {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .info-value.danger {
+            color: var(--accent-red);
+            font-weight: 700;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            border: 1px dashed var(--border-color);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: #10b981;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+        }
+
+        @media (max-width: 768px) {
+            .grid-container {
+                grid-template-columns: 1fr;
+            }
+            .header {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-title">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Geciken Araçlar</span>
+        </div>
+        {% if company_name %}
+        <div style="font-weight: 600; color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 0.5rem 1rem; border-radius: 8px;">
+            {{ company_name }}
+        </div>
+        {% endif %}
+    </header>
+
+    <div class="container">
+        
+        {% if error %}
+            <div class="error-card">
+                <i class="fas fa-shield-alt"></i>
+                <h2>Erişim Engellendi</h2>
+                <p>{{ error }}</p>
+            </div>
+        {% else %}
+            
+            {% if rentals %}
+                <div class="stats-bar">
+                    <div class="stat-card">
+                        <span class="stat-title">Toplam Geciken Araç</span>
+                        <span class="stat-value">{{ rentals|length }}</span>
+                    </div>
+                </div>
+
+                <div class="grid-container">
+                    {% for r in rentals %}
+                    <div class="rental-card">
+                        <div class="card-header">
+                            <span class="plate-badge">{{ r.plaka }}</span>
+                            <span class="car-model">{{ r.marka }} {{ r.model }}</span>
+                        </div>
+                        <div class="card-body">
+                            
+                            <div class="info-row">
+                                <div class="info-icon"><i class="fas fa-user"></i></div>
+                                <div class="info-content">
+                                    <span class="info-label">Müşteri</span>
+                                    <span class="info-value">{{ r.musteriAdi }}</span>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <div class="info-icon"><i class="fas fa-phone"></i></div>
+                                <div class="info-content">
+                                    <span class="info-label">İletişim</span>
+                                    <span class="info-value">
+                                        {{ r.musteriTelefon or 'Belirtilmedi' }}
+                                        {% if r.musteriTelefon %}
+                                        <a href="tel:{{ r.musteriTelefon }}" style="color: var(--accent-blue); text-decoration: none; margin-left: 5px;"><i class="fas fa-external-link-alt"></i></a>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <div class="info-icon"><i class="fas fa-calendar-check"></i></div>
+                                <div class="info-content">
+                                    <span class="info-label">Çıkış Tarihi</span>
+                                    <span class="info-value">{{ r.baslangicTarihi }} {{ r.baslangicSaati or '' }}</span>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <div class="info-icon alert"><i class="fas fa-clock"></i></div>
+                                <div class="info-content">
+                                    <span class="info-label">Planlanan Dönüş</span>
+                                    <span class="info-value danger">{{ r.bitisTarihi }} {{ r.bitisSaati or '' }}</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <i class="fas fa-check-circle"></i>
+                    <h3>Harika!</h3>
+                    <p style="color: var(--text-muted);">Şu an teslim tarihi/saati geçmiş ve teslim alınmamış aracınız bulunmuyor.</p>
+                </div>
+            {% endif %}
+
+        {% endif %}
+
+    </div>
+
+    <footer class="footer">
+        &copy; 2026 Zyronova SaaS Sistemleri. Tüm Hakları Saklıdır.<br>
+        <span style="font-size: 0.75rem; opacity: 0.7;">Bu güvenli link sadece size özel üretilmiştir ve 48 saat geçerlidir.</span>
+    </footer>
+
+</body>
+</html>

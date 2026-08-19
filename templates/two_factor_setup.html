@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 2rem auto;">
+    <div class="card">
+        <div class="card-body" style="padding: 2.5rem; text-align: center;">
+            <div style="width: 64px; height: 64px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 1.5rem;">
+                <i class="fas fa-shield-halved"></i>
+            </div>
+            
+            <h2 style="font-size: 1.5rem; font-weight: 800; color: #0f172a; margin-bottom: 1rem;">İki Faktörlü Doğrulamayı Kur</h2>
+            <p style="color: #64748b; line-height: 1.6; margin-bottom: 2rem;">
+                Hesabınızı daha güvenli hale getirmek için Google Authenticator veya Authy gibi bir uygulama kullanarak aşağıdaki QR kodu taratın.
+            </p>
+
+            <div style="background: white; padding: 1.5rem; border-radius: 1.5rem; border: 1px solid #e2e8f0; display: inline-block; margin-bottom: 2rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                <img src="{{ qr_url }}" alt="QR Code" style="width: 200px; height: 200px; display: block;">
+            </div>
+
+            <div style="text-align: left; background: #f8fafc; padding: 1.5rem; border-radius: 1rem; margin-bottom: 2rem;">
+                <p style="font-size: 0.85rem; font-weight: 700; color: #1e293b; margin-bottom: 0.5rem;">Nasıl Yapılır?</p>
+                <ol style="font-size: 0.85rem; color: #64748b; padding-left: 1.25rem; line-height: 1.6;">
+                    <li>Telefonunuza <b>Google Authenticator</b> uygulamasını indirin.</li>
+                    <li>Uygulamada "QR Kod Tarat" seçeneğini seçin.</li>
+                    <li>Yukarıdaki kodu okuttuktan sonra oluşan 6 haneli kodu aşağıya yazın.</li>
+                </ol>
+            </div>
+
+            <form method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <input type="text" name="token" class="form-input" placeholder="6 Haneli Kod" required 
+                           style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem; font-weight: 700; height: 60px; border-radius: 12px;"
+                           maxlength="6" autocomplete="off">
+                </div>
+                <button type="submit" class="btn btn-primary" style="height: 50px; font-weight: 700;">Doğrula ve Aktif Et</button>
+                <a href="{{ url_for('main.profil') }}" class="btn btn-outline" style="height: 50px; display: flex; align-items: center; justify-content: center;">İptal</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% set perms = current_user.get_permissions() %}
+<div class="charts-row three-col">
+  {% if 'revenue' in perms.dashboard.cards or current_user.is_manager %}
+  <div class="card">
+    <div class="card-header">
+      <h3>Araç Bazlı Gelir (Bu Ay)</h3>
+    </div>
+    <div class="card-body">
+      <div class="chart-container">
+        <canvas id="vehicleChart"></canvas>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if 'vehicles' in perms.dashboard.cards or current_user.is_manager %}
+  <div class="card">
+    <div class="card-header">
+      <h3>Hasar Dağılımı</h3>
+    </div>
+    <div class="card-body">
+      <div class="chart-container">
+        <canvas id="hasarChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3>Araç Durumları</h3>
+    </div>
+    <div class="card-body">
+      <div class="chart-container">
+        <canvas id="durumChart"></canvas>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  (function() {
+      // Re-initialize charts
+      const aracGelir = {{ arac_gelir|tojson|safe }};
+      if (aracGelir && aracGelir.length > 0) {
+        const el = document.getElementById('vehicleChart');
+        if (el) {
+          new Chart(el, {
+            type: 'bar',
+            data: {
+              labels: aracGelir.map(d => d.name),
+              datasets: [{
+                label: 'Gelir',
+                data: aracGelir.map(d => d.gelir),
+                backgroundColor: ['#1E3A5F', '#2A4A6F', '#3B5998', '#4A6FA5', '#5B86B8', '#6C9DCB'],
+                borderRadius: 6,
+              }]
+            },
+            options: {
+              indexAxis: 'y',
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { ticks: { callback: v => (v / 1000).toFixed(0) + 'k', font: { size: 11 } }, grid: { color: '#E2E8F0' } },
+                y: { ticks: { font: { size: 10 } }, grid: { display: false } }
+              }
+            }
+          });
+        }
+      }
+
+      const hasarDist = {{ hasar_dist|tojson|safe }};
+      if (hasarDist && hasarDist.length > 0) {
+        const el = document.getElementById('hasarChart');
+        if (el) {
+          new Chart(el, {
+            type: 'pie',
+            data: {
+              labels: hasarDist.map(d => d.name),
+              datasets: [{
+                data: hasarDist.map(d => d.value),
+                backgroundColor: ['#F59E0B', '#F97316', '#EF4444'],
+                borderWidth: 2,
+                borderColor: '#ffffff',
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12, font: { size: 11 } } }
+              }
+            }
+          });
+        }
+      }
+
+      const durumDist = {{ durum_dist|tojson|safe }};
+      if (durumDist && durumDist.length > 0) {
+        const el = document.getElementById('durumChart');
+        if (el) {
+          new Chart(el, {
+            type: 'pie',
+            data: {
+              labels: durumDist.map(d => d.name),
+              datasets: [{
+                data: durumDist.map(d => d.value),
+                backgroundColor: ['#22C55E', '#3B82F6', '#F59E0B', '#94A3B8'],
+                borderWidth: 0,
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12, font: { size: 11 } } }
+              }
+            }
+          });
+        }
+      }
+  })();
+</script>

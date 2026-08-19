@@ -1,0 +1,498 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+  :root {
+    --master-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    --accent-blue: #3b82f6;
+    --accent-light: #eff6ff;
+  }
+
+  .support-header {
+    background: var(--master-gradient);
+    border-radius: 20px;
+    padding: 2.5rem;
+    color: white;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .support-header::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+    z-index: 1;
+  }
+
+  .support-header-content {
+    position: relative;
+    z-index: 2;
+  }
+
+  .support-container {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 1.5rem;
+    height: 650px;
+    margin-bottom: 2rem;
+  }
+
+  /* Left Pane */
+  .ticket-list-pane {
+    background: white;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  }
+
+  .pane-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 1.1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .ticket-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+  }
+
+  .ticket-item {
+    padding: 1.25rem;
+    border-radius: 12px;
+    border: 1px solid #f1f5f9;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+  }
+
+  .ticket-item:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+  }
+
+  .ticket-item.active {
+    background: var(--accent-light);
+    border-color: #bfdbfe;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+  }
+
+  .ticket-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+  }
+
+  .ticket-title {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .ticket-company {
+    font-size: 0.8rem;
+    color: #4f46e5;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .ticket-meta {
+    font-size: 0.75rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  /* Right Pane */
+  .ticket-detail-pane {
+    background: white;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    position: relative;
+  }
+
+  .empty-state {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    z-index: 10;
+    color: #94a3b8;
+  }
+  
+  .empty-state i {
+    font-size: 4rem;
+    color: #cbd5e1;
+    margin-bottom: 1rem;
+  }
+
+  .chat-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem;
+    background: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .msg-wrapper {
+    display: flex;
+    flex-direction: column;
+    max-width: 75%;
+  }
+
+  .msg-wrapper.user {
+    align-self: flex-start;
+  }
+
+  .msg-wrapper.master {
+    align-self: flex-end;
+  }
+
+  .msg-meta {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .msg-wrapper.master .msg-meta {
+    flex-direction: row-reverse;
+  }
+
+  .msg-bubble {
+    padding: 1.25rem;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+  }
+
+  .msg-wrapper.user .msg-bubble {
+    background: white;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+    border-bottom-left-radius: 4px;
+  }
+
+  .msg-wrapper.master .msg-bubble {
+    background: #fef3c7;
+    border-color: #fde68a;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    border-bottom-right-radius: 4px;
+  }
+
+  .chat-input-area {
+    padding: 1.5rem;
+    background: white;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .chat-input-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .chat-textarea {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+    resize: none;
+    outline: none;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+
+  .chat-textarea:focus {
+    border-color: #0f172a;
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
+  }
+
+  .status-badge {
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+
+  .status-acik { background: #fee2e2; color: #dc2626; }
+  .status-yanitlandi { background: #dcfce7; color: #16a34a; }
+  .status-kapali { background: #f1f5f9; color: #64748b; }
+
+  @media (max-width: 992px) {
+    .support-container {
+      grid-template-columns: 1fr;
+      height: auto;
+    }
+    .ticket-list-pane {
+      height: 400px;
+    }
+    .ticket-detail-pane {
+      height: 650px;
+      display: none;
+    }
+    .ticket-detail-pane.active-mobile {
+      display: flex;
+    }
+    .ticket-list-pane.hidden-mobile {
+      display: none;
+    }
+    .mobile-back-btn {
+      display: block !important;
+    }
+  }
+
+  .mobile-back-btn {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    color: #64748b;
+    cursor: pointer;
+    margin-right: 1rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="support-header">
+  <div class="support-header-content">
+    <h1 style="font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem;">Acente Destek Merkezi</h1>
+    <p style="font-size: 1.05rem; opacity: 0.9; max-width: 600px;">Zyronova ağına dahil olan tüm acentelerden gelen destek taleplerini buradan profesyonel bir şekilde yönetin.</p>
+  </div>
+</div>
+
+<div class="support-container">
+  <!-- Sol Panel: Talep Listesi -->
+  <div class="ticket-list-pane" id="ticketListPane">
+    <div class="pane-header">
+      <span>Tüm Talepler</span>
+      <span style="background: #e2e8f0; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.8rem;">{{ tickets|length }}</span>
+    </div>
+    <div class="ticket-list">
+      {% if tickets %}
+        {% for ticket in tickets %}
+          <div class="ticket-item" id="ticket-item-{{ ticket.id }}" onclick="showTicketDetail('{{ ticket.id }}')">
+            <div class="ticket-company">
+              <i class="fas fa-building"></i> {{ ticket.company.name }}
+            </div>
+            <div class="ticket-item-header">
+              <div class="ticket-title">{{ ticket.subject }}</div>
+              <div>
+                {% if ticket.status == 'Açık' %}
+                  <span class="status-badge status-acik">Açık</span>
+                {% elif ticket.status == 'Yanıtlandı' %}
+                  <span class="status-badge status-yanitlandi">Yanıtlandı</span>
+                {% else %}
+                  <span class="status-badge status-kapali">Kapalı</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="ticket-meta">
+              {% if ticket.priority == 'Acil' %}
+                <span style="color: #ef4444; font-weight: 700;"><i class="fas fa-exclamation-circle"></i> Acil</span>
+                <span>&bull;</span>
+              {% endif %}
+              <span>TKT-{{ ticket.id[:6]|upper }}</span>
+              <span>&bull;</span>
+              <span>{{ ticket.updated_at.strftime('%d.%m.%Y %H:%M') }}</span>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div style="text-align: center; padding: 2rem; color: #94a3b8; font-size: 0.9rem;">
+          <i class="fas fa-check-circle" style="font-size: 2rem; margin-bottom: 1rem; color: #10b981;"></i>
+          <p>Şu an açık destek talebi bulunmuyor.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Sağ Panel: Detay ve Chat -->
+  <div class="ticket-detail-pane" id="ticketDetailPane">
+    <div class="empty-state" id="emptyState">
+      <i class="fas fa-headset"></i>
+      <h3 style="font-size: 1.25rem; font-weight: 700; color: #475569;">Talep Seçin</h3>
+      <p>Mesajlara yanıt vermek için soldaki listeden bir talep seçin.</p>
+    </div>
+
+    {% for ticket in tickets %}
+    <div class="ticket-view-content" id="ticket-view-{{ ticket.id }}" style="display: none; height: 100%; flex-direction: column;">
+      <div class="chat-header">
+        <div style="display: flex; align-items: center;">
+          <button class="mobile-back-btn" onclick="hideTicketDetail()"><i class="fas fa-arrow-left"></i></button>
+          <div>
+            <h3 style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #0f172a;">{{ ticket.subject }}</h3>
+            <div style="font-size: 0.8rem; color: #64748b; margin-top: 0.2rem; display: flex; gap: 0.5rem; align-items: center;">
+              <span style="color: #4f46e5; font-weight: 700;"><i class="fas fa-building"></i> {{ ticket.company.name }}</span>
+              <span>&bull;</span>
+              <span><i class="fas fa-user"></i> {{ ticket.user.username }}</span>
+              <span>&bull;</span>
+              <span>TKT-{{ ticket.id[:8]|upper }}</span>
+            </div>
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <form action="{{ url_for('master.master_support_delete', ticket_id=ticket.id) }}" method="POST" onsubmit="return confirm('Bu destek talebini tamamen silmek istediğinize emin misiniz?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" style="background: #fef2f2; color: #ef4444; border: 1px solid #fee2e2; padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'"><i class="fas fa-trash-alt"></i> Talebi Sil</button>
+          </form>
+        </div>
+      </div>
+      
+      <div class="chat-messages" id="chat-messages-{{ ticket.id }}">
+        {% for msg in ticket.messages %}
+          <div class="msg-wrapper {{ 'master' if msg.is_master else 'user' }}">
+            <div class="msg-meta">
+              <i class="fas {{ 'fa-shield-alt' if msg.is_master else 'fa-user' }}"></i>
+              <span style="font-weight: 700;">{{ 'Sistem Yöneticisi' if msg.is_master else (msg.sender.name or msg.sender.username) }}</span>
+              <span style="opacity: 0.7;">{{ msg.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+            </div>
+            <div class="msg-bubble">
+              <div style="white-space: pre-wrap;">{{ msg.message }}</div>
+              {% if msg.attachment_path %}
+              <div style="margin-top: 1rem; border-top: 1px dashed rgba(0,0,0,0.1); padding-top: 0.75rem;">
+                <a href="{{ msg.attachment_path }}" target="_blank" style="color: inherit; font-size: 0.85rem; font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+                  <i class="fas fa-paperclip"></i> Ekli Dosyayı İncele
+                </a>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="chat-input-area">
+        <form action="{{ url_for('master.master_support_reply', ticket_id=ticket.id) }}" method="POST" enctype="multipart/form-data" class="chat-input-form" onsubmit="saveActiveTicket('{{ ticket.id }}')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <textarea name="message" class="chat-textarea" rows="2" placeholder="Acenteye iletilecek mesajınızı yazın..."></textarea>
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <label style="font-size: 0.85rem; font-weight: 700; color: #64748b; cursor: pointer; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fas fa-paperclip"></i> Dosya Ekle
+              <input type="file" name="attachment" style="display: none;" onchange="this.nextElementSibling.style.display='inline'; this.nextElementSibling.textContent = this.files[0].name">
+              <span style="display: none; color: #0f172a; font-size: 0.75rem;"></span>
+            </label>
+            
+            <div style="display: flex; gap: 0.75rem; align-items: center;">
+              <select name="status" style="padding: 0.65rem 1rem; border-radius: 10px; border: 1px solid #cbd5e1; outline: none; font-size: 0.85rem; font-weight: 600; background: #f8fafc;">
+                <option value="Yanıtlandı" {% if ticket.status == 'Yanıtlandı' %}selected{% endif %}>Yanıtlandı Olarak İşaretle</option>
+                <option value="Açık" {% if ticket.status == 'Açık' %}selected{% endif %}>Açık Bırak</option>
+                <option value="Kapalı" {% if ticket.status == 'Kapalı' %}selected{% endif %}>Talebi Kapat</option>
+              </select>
+              <button type="submit" style="padding: 0.75rem 1.5rem; background: #0f172a; color: white; border: none; border-radius: 10px; font-weight: 800; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 0.5rem;" onmouseover="this.style.background='#1e293b'" onmouseout="this.style.background='#0f172a'">
+                Gönder <i class="fas fa-paper-plane"></i>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function saveActiveTicket(id) {
+    localStorage.setItem('masterActiveTicketId', id);
+  }
+
+  function showTicketDetail(id) {
+    document.querySelectorAll('.ticket-view-content').forEach(el => {
+      el.style.display = 'none';
+    });
+    
+    document.getElementById('emptyState').style.display = 'none';
+    
+    const target = document.getElementById('ticket-view-' + id);
+    if (target) {
+      target.style.display = 'flex';
+      const chatMessages = document.getElementById('chat-messages-' + id);
+      if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    }
+    
+    document.querySelectorAll('.ticket-item').forEach(el => {
+      el.classList.remove('active');
+    });
+    const activeItem = document.getElementById('ticket-item-' + id);
+    if (activeItem) {
+      activeItem.classList.add('active');
+    }
+
+    if (window.innerWidth <= 992) {
+      document.getElementById('ticketListPane').classList.add('hidden-mobile');
+      document.getElementById('ticketDetailPane').classList.add('active-mobile');
+    }
+    
+    saveActiveTicket(id);
+  }
+
+  function hideTicketDetail() {
+    document.getElementById('ticketListPane').classList.remove('hidden-mobile');
+    document.getElementById('ticketDetailPane').classList.remove('active-mobile');
+    localStorage.removeItem('masterActiveTicketId');
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const activeId = localStorage.getItem('masterActiveTicketId');
+    if (activeId && document.getElementById('ticket-view-' + activeId)) {
+      showTicketDetail(activeId);
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,23 @@
+Harika bir sistemin parçaları bunlar! 😍 Modelleri inceledim ve desteklenen özellikleri sizin için kısa ve net bir şekilde listeledim:
+
+*   **Şirket ve Lisans Yönetimi** 🏢: Temel şirket bilgileri, lisans takibi ve aktiflik durumu yönetimi.
+*   **Kullanıcı ve Rol Yönetimi** 👤🔐: Kullanıcı hesapları oluşturma, rol tabanlı yetkilendirme (detaylı izinler dahil) ve iki faktörlü kimlik doğrulama (2FA) özelliği.
+*   **Denetim Kayıtları** 📜: Sistemdeki tüm kullanıcı eylemlerinin IP adresi ve zaman damgası ile kaydedilmesi.
+*   **Destek Sistemi** 🧑‍💻: Dahili destek talebi oluşturma, mesajlaşma, dosya ekleme ve taleplerin durum takibi.
+*   **Araç Envanter Yönetimi** 🚗: Araçların marka, model, plaka, yıl, renk gibi detaylarının kaydı ve aktiflik durumu takibi.
+*   **Araç Bakım ve Gider Takibi** 🛠️💸: Araçların bakım durumu, bakımın yapıldığı yer/kişi, kilometre bazlı servis kayıtları ve diğer araç giderlerinin (tür, tutar) detaylı olarak izlenmesi.
+*   **Araç Kiralama Yönetimi** 📝:
+    *   Kiralama sözleşmesi oluşturma ve takibi.
+    *   Müşteri ve sürücü bilgilerinin kaydedilmesi (TC kimlik no ve ehliyet no gibi kişisel verilerin şifrelenerek saklanması dahil).
+    *   Kiralama başlangıç/bitiş tarihleri ve saatleri, teslim ve iade kilometre bilgileri.
+    *   Günlük ve toplam fiyatlandırma, para birimi seçimi.
+    *   Ödeme yöntemleri (nakit/kart) ve tahsilat detayları.
+    *   Dijital sözleşme imzalama (müşteri ve firma imzası).
+    *   Teslimat koordinatları tutulur.
+    *   Gecikmiş kiralama uyarılarının gönderimi.
+*   **Hasar Takibi** ⚠️: Araçta hasar var/yok durumu, açıklaması ve hasar türü (hafif, orta, ağır) kaydedilir.
+*   **Finansal ve Raporlama** 📊💰: Kiralamalar özelinde maliyet (yakıt, bakım, sigorta vb.) ve kar takibi, ciro analizleri ve genel raporlama.
+*   **Özelleştirilebilir Sözleşme Şablonları** 📄: Kiralama sözleşmeleri için önceden tanımlanmış ve düzenlenebilir metin şablonları.
+*   **Bildirim Yönetimi** 🔔: Kullanıcıların almak istemediği belirli bildirimleri kapatma imkanı.
+
+Umarım bu liste işinize yarar! 😊

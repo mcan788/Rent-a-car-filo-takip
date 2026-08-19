@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KVKK Aydınlatma Metni - ZYRONOVA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(17, 24, 39, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(147, 51, 234, 0.1) 0px, transparent 50%);
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 48px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        header {
+            margin-bottom: 32px;
+            text-align: center;
+        }
+
+        .logo {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 16px;
+            color: #ffffff;
+        }
+
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--border-color), transparent);
+            margin: 24px 0;
+        }
+
+        p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+
+        h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-top: 32px;
+            margin-bottom: 12px;
+        }
+
+        ul {
+            list-style-type: none;
+            margin-bottom: 24px;
+        }
+
+        li {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        li::before {
+            content: "•";
+            color: var(--primary);
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        .btn-container {
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .btn-close {
+            display: inline-block;
+            padding: 12px 32px;
+            background: var(--primary);
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-close:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 32px 20px;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">ZYRONOVA</div>
+            <h1>KVKK Aydınlatma Metni</h1>
+            <p style="text-align: center;">6698 Sayılı Kişisel Verilerin Korunması Kanunu Kapsamında Bilgilendirme</p>
+        </header>
+        
+        <div class="divider"></div>
+        
+        <section>
+            <p>
+                6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) uyarınca, web sitemizi ve SaaS uygulamalarımızı ziyaretleriniz ile kullanımlarınız sırasında elde edilen kişisel verileriniz, veri sorumlusu sıfatıyla <strong>Zyronova</strong> ("Şirket") tarafından işlenmektedir.
+            </p>
+
+            <h2>1. Kişisel Verilerin İşlenme Amacı ve Hukuki Sebebi</h2>
+            <p>
+                Sisteme giriş yaptığınızda (Log-in) log kayıtlarınız (IP adresi, giriş zamanı, gerçekleştirilen işlemler), KVKK Madde 5/2(f) uyarınca <em>"ilgili kişinin temel hak ve özgürlüklerine zarar vermemek kaydıyla, veri sorumlusunun meşru menfaatleri için veri işlenmesinin zorunlu olması"</em> ve <em>"bir sözleşmenin kurulması veya ifası"</em> hukuki sebeplerine dayalı olarak aşağıdaki amaçlarla işlenmektedir:
+            </p>
+            <ul>
+                <li>Uygulama güvenlik ve bütünlüğünün denetlenmesi ve sağlanması</li>
+                <li>Yetkisiz erişimlerin engellenmesi ve güvenlik ihlallerinin tespiti</li>
+                <li>SaaS hizmet sözleşmesinin ifa edilmesi ve kullanıcı işlemlerinin kayıt altına alınması</li>
+            </ul>
+
+            <h2>2. Kişisel Veri Sahibinin Hakları</h2>
+            <p>
+                KVKK Madde 11 uyarınca, veri sahibi olarak aşağıdaki haklara sahipsiniz:
+            </p>
+            <ul>
+                <li>Kişisel verilerinizin işlenip işlenmediğini öğrenme</li>
+                <li>Kişisel verileriniz işlenmişse buna ilişkin bilgi talep etme</li>
+                <li>Kişisel verilerinizin işlenme amacını ve bunların amacına uygun kullanılıp kullanılmadığını öğrenme</li>
+                <li>Yurt içinde veya yurt dışında kişisel verilerin aktarıldığı üçüncü kişileri bilme</li>
+                <li>Kişisel verilerin eksik veya yanlış işlenmiş olması hâlinde bunların düzeltilmesini isteme</li>
+                <li>Kanun'da öngörülen şartlar çerçevesinde kişisel verilerin silinmesini veya yok edilmesini isteme</li>
+            </ul>
+
+            <p style="margin-top: 24px; font-style: italic;">
+                Sitemizi ve hizmetlerimizi kullanmaya devam ederek, bu aydınlatma metnini okumuş, anlamış ve teknik çerezlerin (cookies) kullanımına onay vermiş sayılırsınız.
+            </p>
+        </section>
+
+        <div class="btn-container">
+            <button class="btn-close" onclick="window.close();">Pencereyi Kapat</button>
+        </div>
+    </div>
+</body>
+</html>

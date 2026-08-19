@@ -1,0 +1,81 @@
+{% set perms = current_user.get_permissions() %}
+{% if 'revenue' in perms.dashboard.cards or current_user.is_manager %}
+<div class="card mb-4" style="margin-top: 2.5rem;">
+  <div class="card-header">
+    <h3>Dönemsel Analiz</h3>
+  </div>
+  <div class="card-body">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchPeriodTab(this, 'gelir')">Gelir</button>
+      <button class="tab-btn" onclick="switchPeriodTab(this, 'maliyet')">Maliyet</button>
+      <button class="tab-btn" onclick="switchPeriodTab(this, 'kar')">Kar</button>
+    </div>
+
+    <!-- Gelir Tab -->
+    <div class="tab-content active" id="tab-gelir">
+      <div class="period-grid">
+        <div class="period-card">
+          <div class="label"><i class="fas fa-calendar-day"></i> Bugün</div>
+          <div class="value">{{ revenue.gun|currency }}</div>
+        </div>
+        <div class="period-card">
+          <div class="label"><i class="fas fa-calendar-week"></i> Bu Hafta</div>
+          <div class="value">{{ revenue.hafta|currency }}</div>
+        </div>
+        <div class="period-card">
+          <div class="label"><i class="fas fa-calendar"></i> Bu Ay</div>
+          <div class="value">{{ revenue.ay|currency }}</div>
+        </div>
+        <div class="period-card">
+          <div class="label"><i class="fas fa-calendar-alt"></i> Bu Yıl</div>
+          <div class="value">{{ revenue.yil|currency }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Maliyet Tab -->
+    <div class="tab-content" id="tab-maliyet">
+      <div class="period-grid">
+        <div class="period-card">
+          <div class="label"><i class="fas fa-calendar-day"></i> Bugün</div>
+          <div class="value cost">{{ cost.gun|currency }}</div>
+        </div>
+        <div class="period-card">
+          <div class="label"><i class="fas fa-calendar-week"></i> Bu Hafta</div>
+          <div class="value cost">{{ cost.hafta|currency }}</div>
+        </div>
+        <div class="period-card">
+          <div class="label"><i class="fas fa-calendar"></i> Bu Ay</div>
+          <div class="value cost">{{ cost.ay|currency }}</div>
+        </div>
+        <div class="period-card">
+          <div class="label"><i class="fas fa-calendar-alt"></i> Bu Yıl</div>
+          <div class="value cost">{{ cost.yil|currency }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kar Tab -->
+    <div class="tab-content" id="tab-kar">
+      <div class="period-grid">
+        <div class="period-card">
+          <div class="label"><i class="fas fa-calendar-day"></i> Bugün</div>
+          <div class="value {% if profit.gun >= 0 %}text-green{% else %}text-red{% endif %}">{{ profit.gun|currency }}</div>
+        </div>
+        <div class="period-card">
+          <div class="label"><i class="fas fa-calendar-week"></i> Bu Hafta</div>
+          <div class="value {% if profit.hafta >= 0 %}text-green{% else %}text-red{% endif %}">{{ profit.hafta|currency }}</div>
+        </div>
+        <div class="period-card">
+          <div class="label"><i class="fas fa-calendar"></i> Bu Ay</div>
+          <div class="value {% if profit.ay >= 0 %}text-green{% else %}text-red{% endif %}">{{ profit.ay|currency }}</div>
+        </div>
+        <div class="period-card">
+          <div class="label"><i class="fas fa-calendar-alt"></i> Bu Yıl</div>
+          <div class="value {% if profit.yil >= 0 %}text-green{% else %}text-red{% endif %}">{{ profit.yil|currency }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}

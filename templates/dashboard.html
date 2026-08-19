@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="preload" href="{{ HERO_IMAGE }}" as="image" fetchpriority="high">
+<style>
+  @media (max-width: 768px) {
+    /* Hero Banner mobil optimizasyonu */
+    .hero-banner {
+      height: 140px !important;
+    }
+    .hero-content h2 {
+      font-size: 1.5rem !important;
+    }
+    .hero-content p {
+      font-size: 0.85rem !important;
+    }
+
+    /* KPI Kartları Mobil Grid Çökmesi */
+    .kpi-grid {
+      grid-template-columns: 1fr 1fr !important;
+      gap: 0.75rem !important;
+      margin-bottom: 1.5rem !important;
+    }
+    .kpi-card {
+      padding: 0.85rem !important;
+    }
+    .kpi-value {
+      font-size: 1.25rem !important;
+    }
+
+    /* Dönemsel Analiz Kartı */
+    .period-grid {
+      grid-template-columns: 1fr 1fr !important;
+      gap: 0.5rem !important;
+    }
+    .period-card {
+      padding: 0.6rem !important;
+    }
+    .period-card .value {
+      font-size: 0.95rem !important;
+    }
+
+    /* Araç Bazlı Performans Sekmeleri Metrikleri */
+    .vehicle-perf-content > div[style*="display:flex"] {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 1rem !important;
+    }
+    
+    .vehicle-perf-content div[style*="display:flex; gap:1.5rem"],
+    .vehicle-perf-content div[style*="display: flex; gap: 1.5rem"] {
+      display: grid !important;
+      grid-template-columns: repeat(3, 1fr) !important;
+      width: 100% !important;
+      text-align: left !important;
+      gap: 0.5rem !important;
+    }
+    
+    .vehicle-perf-content div[style*="display:flex; gap:1.5rem"] .text-right,
+    .vehicle-perf-content div[style*="display: flex; gap: 1.5rem"] .text-right {
+      text-align: left !important;
+    }
+
+    .vehicle-perf-content div[style*="display:flex; gap:1.5rem"] div[style*="font-size:0.75rem"],
+    .vehicle-perf-content div[style*="display: flex; gap: 1.5rem"] div[style*="font-size:0.75rem"] {
+      font-size: 0.7rem !important;
+    }
+    
+    .vehicle-perf-content div[style*="display:flex; gap:1.5rem"] div[style*="font-weight:600"],
+    .vehicle-perf-content div[style*="display: flex; gap: 1.5rem"] div[style*="font-weight:600"] {
+      font-size: 0.85rem !important;
+    }
+    
+    .card-header[style*="display:flex; justify-content:space-between"],
+    .card-header[style*="display: flex; justify-content: space-between"] {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 0.75rem !important;
+    }
+    
+    .card-header[style*="display:flex; justify-content:space-between"] select,
+    .card-header[style*="display: flex; justify-content: space-between"] select {
+      width: 100% !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .kpi-grid {
+      grid-template-columns: 1fr !important;
+    }
+    .period-grid {
+      grid-template-columns: 1fr !important;
+    }
+    .vehicle-perf-content div[style*="display:flex; gap:1.5rem"],
+    .vehicle-perf-content div[style*="display: flex; gap: 1.5rem"] {
+      grid-template-columns: 1fr !important;
+      gap: 0.75rem !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set perms = current_user.get_permissions() %}
+<!-- Hero Banner -->
+<div class="hero-banner">
+  <!-- Optimized banner image that spans the entire width naturally -->
+  <img src="{{ HERO_IMAGE }}" alt="Dashboard Banner" fetchpriority="high" decoding="async" style="object-fit: cover; width: 100%; height: 100%;">
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <div>
+      <h2>Dashboard</h2>
+      <p>Filo yönetimi ve ciro takibi</p>
+    </div>
+  </div>
+</div>
+
+<div id="kpi-container" class="dashboard-component">
+  {% include 'partials/_dashboard_kpi.html' %}
+</div>
+
+<div id="periods-container" class="dashboard-component">
+  {% include 'partials/_dashboard_periods.html' %}
+</div>
+
+<div id="charts-container" class="dashboard-component">
+  <div class="skeleton-loader skel-charts"></div>
+</div>
+
+<div id="recent-container" class="dashboard-component">
+  <div class="skeleton-loader skel-recent"></div>
+</div>
+
+<div id="vehicles-container" class="dashboard-component">
+  <div class="skeleton-loader skel-vehicles"></div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<style>
+/* Exact skeleton heights to prevent CLS */
+.skeleton-loader {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Desktop skeleton heights */
+.skel-kpi { height: 125px; }
+.skel-periods { height: 260px; margin-top: 40px; }
+.skel-charts { height: 380px; }
+.skel-recent { height: 350px; }
+.skel-vehicles { height: 450px; }
+
+/* Mobile skeleton heights */
+@media (max-width: 768px) {
+  .skel-kpi { height: 230px; }
+  .skel-periods { height: 320px; margin-top: 40px; }
+  .skel-charts { height: 700px; }
+  .skel-recent { height: 450px; }
+  .skel-vehicles { height: 500px; }
+}
+</style>
+
+<script>
+  function setHTMLAndExecute(elementId, htmlString) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.innerHTML = htmlString;
+    el.querySelectorAll('script').forEach(oldScript => {
+      const newScript = document.createElement('script');
+      Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+      newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+      oldScript.parentNode.replaceChild(newScript, oldScript);
+    });
+  }
+
+  function waitForChart(cb, attempts) {
+    attempts = attempts || 0;
+    if (window.Chart) { cb(); }
+    else if (attempts < 40) { setTimeout(() => waitForChart(cb, attempts + 1), 100); }
+  }
+
+  // EARLY FETCH: Fire API requests instantly to fetch data in parallel with CSS/JS downloads.
+  // Waitress threads are now 32, so this will no longer bottleneck the server.
+  const fetchPromises = {
+    recent: fetch(`{{ url_for("main.api_dashboard_recent") }}`).then(r => r.text()),
+    vehicles: fetch(`{{ url_for("main.api_dashboard_vehicles") }}`).then(r => r.text()),
+    charts: fetch(`{{ url_for("main.api_dashboard_charts") }}`).then(r => r.text())
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    fetchPromises.recent.then(html => setHTMLAndExecute('recent-container', html)).catch(err => console.error("Recent Error:", err));
+    fetchPromises.vehicles.then(html => setHTMLAndExecute('vehicles-container', html)).catch(err => console.error("Vehicles Error:", err));
+
+    fetchPromises.charts.then(html => {
+      waitForChart(() => setHTMLAndExecute('charts-container', html));
+    }).catch(err => console.error("Charts Error:", err));
+  });
+
+  window.switchPeriodTab = function(btn, tabId) {
+    const card = btn.closest('.card');
+    card.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    card.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + tabId).classList.add('active');
+  }
+
+  window.switchVehicleTab = function(btn, plaka) {
+    document.querySelectorAll('.vehicle-tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.vehicle-perf-content').forEach(c => c.classList.remove('active'));
+    const target = document.getElementById('v-perf-' + plaka);
+    if(target) target.classList.add('active');
+  }
+</script>
+{% endblock %}

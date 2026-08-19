@@ -1,0 +1,48 @@
+{% set perms = current_user.get_permissions() %}
+{% if current_user.is_manager or 'stats' in perms.get('dashboard', {}).get('cards', []) %}
+<div class="kpi-grid stagger-children">
+  <div class="kpi-card">
+    <div class="kpi-card-top">
+      <div class="kpi-icon navy"><i class="fas fa-car-side"></i></div>
+    </div>
+    <div class="kpi-label">TOPLAM ARAÇ</div>
+    <div class="kpi-value">{{ vehicles|length }}</div>
+    <div class="kpi-sub">{{ kirada_count }} kirada</div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-card-top">
+      <div class="kpi-icon red"><i class="fas fa-exclamation-triangle"></i></div>
+    </div>
+    <div class="kpi-label">HASARLI KİRALAMA</div>
+    <div class="kpi-value">{{ hasarli_count }}</div>
+    <div class="kpi-sub">Kayıtlardaki toplam hasar</div>
+  </div>
+
+  {% if current_user.is_manager %}
+  <div class="kpi-card">
+    <div class="kpi-card-top">
+      <div class="kpi-icon amber"><i class="fas fa-dollar-sign"></i></div>
+    </div>
+    <div class="kpi-label">GELİR ÖZETİ</div>
+    <div class="kpi-value">{{ currency_totals['₺'].gelir|currency('₺') }}</div>
+    <div class="kpi-sub-list">
+      {% if currency_totals['$'].gelir > 0 %}<div class="kpi-sub-item text-navy">{{ currency_totals['$'].gelir|currency('$') }}</div>{% endif %}
+      {% if currency_totals['€'].gelir > 0 %}<div class="kpi-sub-item text-navy">{{ currency_totals['€'].gelir|currency('€') }}</div>{% endif %}
+    </div>
+  </div>
+
+  <div class="kpi-card">
+    <div class="kpi-card-top">
+      <div class="kpi-icon green"><i class="fas fa-chart-line"></i></div>
+    </div>
+    <div class="kpi-label">KAR ÖZETİ</div>
+    <div class="kpi-value {% if currency_totals['₺'].kar < 0 %}text-red{% endif %}">{{ currency_totals['₺'].kar|currency('₺') }}</div>
+    <div class="kpi-sub-list">
+      {% if currency_totals['$'].kar != 0 %}<div class="kpi-sub-item {% if currency_totals['$'].kar >= 0 %}text-green{% else %}text-red{% endif %}">{{ currency_totals['$'].kar|currency('$') }}</div>{% endif %}
+      {% if currency_totals['€'].kar != 0 %}<div class="kpi-sub-item {% if currency_totals['€'].kar >= 0 %}text-green{% else %}text-red{% endif %}">{{ currency_totals['€'].kar|currency('€') }}</div>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}

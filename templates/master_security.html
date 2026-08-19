@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+  .security-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+  }
+  
+  .matrix-card {
+    background: #0a0a0a;
+    border-radius: 20px;
+    padding: 2rem;
+    color: #10b981;
+    font-family: 'JetBrains Mono', monospace;
+    border: 1px solid #064e3b;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .matrix-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, #10b981, transparent);
+    animation: scan 3s linear infinite;
+  }
+  
+  @keyframes scan {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .threat-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid #1e293b;
+    font-size: 0.85rem;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 10px #10b981;
+    display: inline-block;
+    margin-right: 0.5rem;
+  }
+  
+  .stat-val { font-weight: 800; color: white; }
+
+  /* ─── Premium Responsive Overrides ─────────────────────────── */
+  @media (max-width: 1024px) {
+    .security-grid {
+      grid-template-columns: 1fr !important;
+      gap: 1.5rem !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .matrix-card {
+      padding: 1.5rem !important;
+      border-radius: 16px !important;
+    }
+    
+    .matrix-card h3 {
+      font-size: 1rem !important;
+    }
+    
+    .threat-item {
+      padding: 0.75rem 0.5rem !important;
+      font-size: 0.8rem !important;
+    }
+
+    .card {
+      padding: 1.5rem !important;
+      border-radius: 16px !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header" style="margin-bottom: 2rem;">
+  <div>
+    <h2 class="page-title"><i class="fas fa-shield-halved" style="color: #3b82f6; margin-right: 0.75rem;"></i> Güvenlik Merkezi</h2>
+    <p class="page-subtitle">Sistem koruma katmanları ve aktif güvenlik protokolleri</p>
+  </div>
+</div>
+
+<div class="security-grid">
+  <div class="matrix-card">
+    <div style="display: flex; justify-content: space-between; margin-bottom: 2rem;">
+      <h3 style="margin: 0; color: white; font-size: 1.1rem; letter-spacing: 1px;">AKTİF GÜVENLİK AKIŞI</h3>
+      <span style="font-size: 0.75rem;"><span class="status-dot"></span> SISTEM CEVRIMICI</span>
+    </div>
+    
+    <div style="background: #141414; padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem;">
+      <div class="threat-item" style="color: #34d399;">
+        <span>[SQL_INJECTION_PROTECTION]</span>
+        <span class="stat-val">AKTİF</span>
+      </div>
+      <div class="threat-item" style="color: #34d399;">
+        <span>[XSS_FILTER_V2]</span>
+        <span class="stat-val">FİLTRELENİYOR</span>
+      </div>
+      <div class="threat-item" style="color: #34d399;">
+        <span>[CSRF_VALIDATION]</span>
+        <span class="stat-val">GÜVENLİ</span>
+      </div>
+      <div class="threat-item" style="color: #fbbf24;">
+        <span>[SESSION_TIMEOUT]</span>
+        <span class="stat-val">3600s</span>
+      </div>
+    </div>
+    
+    <div style="font-size: 0.8rem; opacity: 0.7;">
+      <p>> Sistem veritabanı şifreleme katmanı: AES-256</p>
+      <p>> Brute-force koruması: Aktif (5 deneme / 15dk)</p>
+      <p>> SSL Sertifikası: Geçerli (Let's Encrypt)</p>
+    </div>
+  </div>
+
+  <div class="card" style="background: #ffffff; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+    <h3 style="margin-top: 0; font-size: 1.1rem; color: #1e293b;">Erişim İstatistikleri</h3>
+    
+    <div style="margin-top: 2rem;">
+      <div style="margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.5rem;">
+          <span>İşlemci (CPU) Kullanımı</span>
+          <span style="font-weight: 700; color: {% if stats.cpu_usage > 80 %}#ef4444{% elif stats.cpu_usage > 50 %}#f59e0b{% else %}#10b981{% endif %};">{{ stats.cpu_usage }}%</span>
+        </div>
+        <div style="height: 6px; background: #f1f5f9; border-radius: 3px;">
+          <div style="width: {{ stats.cpu_usage }}%; height: 100%; background: {% if stats.cpu_usage > 80 %}#ef4444{% elif stats.cpu_usage > 50 %}#f59e0b{% else %}#3b82f6{% endif %}; border-radius: 3px;"></div>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.5rem;">
+          <span>Bellek (RAM) Kullanımı - {{ stats.total_memory_gb }} GB</span>
+          <span style="font-weight: 700; color: {% if stats.ram_usage > 85 %}#ef4444{% elif stats.ram_usage > 65 %}#f59e0b{% else %}#10b981{% endif %};">{{ stats.ram_usage }}%</span>
+        </div>
+        <div style="height: 6px; background: #f1f5f9; border-radius: 3px;">
+          <div style="width: {{ stats.ram_usage }}%; height: 100%; background: {% if stats.ram_usage > 85 %}#ef4444{% elif stats.ram_usage > 65 %}#f59e0b{% else %}#8b5cf6{% endif %}; border-radius: 3px;"></div>
+        </div>
+      </div>
+      
+      <div style="margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.5rem;">
+          <span>Veritabanı Sağlığı (Gecikme: {{ stats.db_latency }}ms)</span>
+          <span style="font-weight: 700; color: {% if stats.db_health < 50 %}#ef4444{% elif stats.db_health < 90 %}#f59e0b{% else %}#10b981{% endif %};">{{ stats.db_health }}%</span>
+        </div>
+        <div style="height: 6px; background: #f1f5f9; border-radius: 3px;">
+          <div style="width: {{ stats.db_health }}%; height: 100%; background: {% if stats.db_health < 50 %}#ef4444{% elif stats.db_health < 90 %}#f59e0b{% else %}#10b981{% endif %}; border-radius: 3px;"></div>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.5rem;">
+          <span>Şüpheli Başarısız Girişler (Son 24s)</span>
+          <span style="font-weight: 700; color: {% if stats.failed_logins_24h > 10 %}#ef4444{% elif stats.failed_logins_24h > 0 %}#f59e0b{% else %}#10b981{% endif %};">{{ stats.failed_logins_24h }} Tespit</span>
+        </div>
+      </div>
+
+      <div style="background: #eff6ff; padding: 1.5rem; border-radius: 12px; margin-top: 3rem;">
+        <i class="fas fa-info-circle" style="color: #3b82f6; margin-bottom: 0.75rem; font-size: 1.2rem;"></i>
+        <p style="margin: 0; font-size: 0.85rem; color: #1e40af; line-height: 1.5;">
+          Tüm sistem erişimleri <strong>Denetim Günlüğü</strong> (Audit Logs) üzerinden saniye saniye takip edilmektedir.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

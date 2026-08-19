@@ -1,0 +1,211 @@
+<div class="card mb-4">
+  <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+    <h3>Araç Bazlı Performans</h3>
+    <select id="vehiclePerfCurrency" class="form-select" style="width: 120px; height:36px; font-size:0.9rem; padding: 0 10px;" onchange="updateVehiclePerfDisplay()">
+      <option value="₺">₺ (TL)</option>
+      <option value="$">$ (USD)</option>
+      <option value="€">€ (EUR)</option>
+    </select>
+  </div>
+  <div class="card-body">
+    {% if top_10_details %}
+    <div class="vehicle-tabs-container">
+      <div class="mb-4" style="display: flex; gap: 0.25rem; background: var(--bg); padding: 0.25rem; border-radius: 0.5rem; overflow-x: auto; white-space: nowrap; align-items: center; width: max-content; max-width: 100%;">
+        {% for item in top_10_details %}
+        <button class="tab-btn vehicle-tab-btn {% if loop.first %}active{% endif %}" 
+                onclick="switchVehicleTab(this, '{{ item.plaka }}')"
+                style="padding: 6px 16px; font-size: 0.85rem; flex-shrink: 0;">
+          {{ item.plaka }}
+        </button>
+        {% endfor %}
+      </div>
+
+      {% for item in top_10_details %}
+      <div class="tab-content vehicle-perf-content {% if loop.first %}active{% endif %}" id="v-perf-{{ item.plaka }}" 
+           data-stats='{{ item.currency_stats|tojson }}'>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem;">
+          <h4 class="font-semibold text-lg" style="color:var(--navy); margin:0;">{{ item.arac_adi }}</h4>
+          <div style="display:flex; gap:1.5rem;">
+            <div class="text-right">
+              <div style="font-size:0.75rem; color:var(--text-muted)">Toplam Gelir</div>
+              <div class="v-total-gelir" style="font-weight:600; color:var(--navy)">{{ item.currency_stats['₺'].gelir|currency('₺') }}</div>
+            </div>
+            <div class="text-right">
+              <div style="font-size:0.75rem; color:var(--text-muted)">Toplam Gider</div>
+              <div class="v-total-gider" style="font-weight:600; color:var(--red)">{{ item.currency_stats['₺'].gider|currency('₺') }}</div>
+            </div>
+            <div class="text-right">
+              <div style="font-size:0.75rem; color:var(--text-muted)">Net Kar</div>
+              <div class="v-net-kar" style="font-weight:600; color:var(--green)">{{ item.currency_stats['₺'].kar|currency('₺') }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tabs mb-3" style="border:none; gap:0.5rem;">
+           <button class="tab-btn active" style="padding:4px 12px; font-size:0.85rem;" onclick="switchInnerTab(this, 'rentals-{{ item.plaka }}')">Kiralamalar</button>
+           <button class="tab-btn" style="padding:4px 12px; font-size:0.85rem;" onclick="switchInnerTab(this, 'expenses-{{ item.plaka }}')">Ek Giderler</button>
+        </div>
+
+        <div id="rentals-{{ item.plaka }}" class="inner-tab-content active">
+          <div class="overflow-x">
+            <div class="table-responsive">
+<table class="data-table mb-0">
+              <thead>
+                <tr>
+                  <th>Müşteri</th>
+                  <th>Tarih</th>
+                  <th class="text-right">KM</th>
+                  <th class="text-right">Gelir</th>
+                  <th class="text-right">Kar</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for r in item.rentals %}
+                <tr class="rental-row" data-currency="{{ r.paraBirimi }}">
+                  <td>{{ r.musteriAdi }}</td>
+                  <td class="text-sm text-muted">{{ r.baslangicTarihi|fdate }} - {{ r.bitisTarihi|fdate }}</td>
+                  <td class="text-right text-sm">{{ r.kullanilanKm|km }}</td>
+                  <td class="text-right font-semibold text-green">{{ r.toplamFiyat|currency(r.paraBirimi) }}</td>
+                  <td class="text-right font-semibold {% if r.kar >= 0 %}text-green{% else %}text-red{% endif %}">
+                    {{ r.kar|currency(r.paraBirimi) }}
+                  </td>
+                </tr>
+                {% endfor %}
+                <tr class="rental-empty-state" style="display:none;">
+                  <td colspan="5" class="empty-state text-center">
+                    <p class="text-muted">Seçilen para biriminde kiralama kaydı bulunamadı.</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+</div>
+          </div>
+        </div>
+
+        <div id="expenses-{{ item.plaka }}" class="inner-tab-content" style="display:none;">
+          <div class="overflow-x">
+            <div class="table-responsive">
+<table class="data-table mb-0">
+              <thead>
+                <tr>
+                  <th>Gider Tipi</th>
+                  <th>Tarih</th>
+                  <th>Notlar</th>
+                  <th class="text-right">Tutar</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for e in item.expenses %}
+                <tr class="expense-row" data-currency="{{ e.paraBirimi }}">
+                  <td class="font-medium">{{ e.gider_tipi }}</td>
+                  <td class="text-sm text-muted">{{ e.tarih|fdate }}</td>
+                  <td class="text-sm">{{ e.notlar or '-' }}</td>
+                  <td class="text-right font-semibold text-red">{{ e.tutar|currency(e.paraBirimi) }}</td>
+                </tr>
+                {% endfor %}
+                <tr class="expense-empty-state" style="display:none;">
+                  <td colspan="4" class="empty-state text-center">
+                    <p class="text-muted">Seçilen para biriminde ek gider kaydı bulunamadı.</p>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      
+      <script>
+        function switchInnerTab(btn, contentId) {
+            const container = btn.closest('.tab-content');
+            container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            container.querySelectorAll('.inner-tab-content').forEach(c => c.style.display = 'none');
+            
+            btn.classList.add('active');
+            document.getElementById(contentId).style.display = 'block';
+        }
+
+        function formatCurrencyJS(value, pb) {
+            const formatter = new Intl.NumberFormat('tr-TR', {
+                style: 'currency',
+                currency: pb === '₺' ? 'TRY' : (pb === '$' ? 'USD' : 'EUR'),
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            });
+            let result = formatter.format(value);
+            if (pb === '₺') result = result.replace('₺', '₺');
+            return result;
+        }
+
+        function updateVehiclePerfDisplay() {
+            const pb = document.getElementById('vehiclePerfCurrency').value;
+            document.querySelectorAll('.vehicle-perf-content').forEach(container => {
+                const stats = JSON.parse(container.getAttribute('data-stats'));
+                const curStats = stats[pb] || {gelir: 0, gider: 0, kar: 0};
+                
+                const gelirEl = container.querySelector('.v-total-gelir');
+                const giderEl = container.querySelector('.v-total-gider');
+                const karEl = container.querySelector('.v-net-kar');
+                
+                gelirEl.textContent = formatCurrencyJS(curStats.gelir, pb);
+                giderEl.textContent = formatCurrencyJS(curStats.gider, pb);
+                karEl.textContent = formatCurrencyJS(curStats.kar, pb);
+                
+                // Kar rengini güncelle
+                if (curStats.kar >= 0) {
+                    karEl.style.color = 'var(--green)';
+                } else {
+                    karEl.style.color = 'var(--red)';
+                }
+
+                // Kiralamaları para birimine göre filtrele
+                let visibleRentals = 0;
+                container.querySelectorAll('.rental-row').forEach(row => {
+                    if (row.getAttribute('data-currency') === pb) {
+                        row.style.display = '';
+                        visibleRentals++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // Kiralama boş durum satırını göster/gizle
+                const rentalEmptyRow = container.querySelector('.rental-empty-state');
+                if (rentalEmptyRow) {
+                    rentalEmptyRow.style.display = (visibleRentals === 0) ? '' : 'none';
+                }
+
+                // Giderleri para birimine göre filtrele
+                let visibleExpenses = 0;
+                container.querySelectorAll('.expense-row').forEach(row => {
+                    if (row.getAttribute('data-currency') === pb) {
+                        row.style.display = '';
+                        visibleExpenses++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                // Gider boş durum satırını göster/gizle
+                const expenseEmptyRow = container.querySelector('.expense-empty-state');
+                if (expenseEmptyRow) {
+                    expenseEmptyRow.style.display = (visibleExpenses === 0) ? '' : 'none';
+                }
+            });
+        }
+
+        // Sayfa yüklendiğinde varsayılan filtrelemeyi uygula
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(updateVehiclePerfDisplay, 100);
+        });
+      </script>
+    </div>
+    {% else %}
+    <div class="empty-state p-4 text-center">
+      <i class="fas fa-car-side text-muted mb-2" style="font-size: 2rem;"></i>
+      <p>Henüz yeterli kiralama verisi bulunamadı.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>

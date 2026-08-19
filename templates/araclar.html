@@ -1,0 +1,521 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+  @media (max-width: 768px) {
+    /* Başlık ve Buton Satırı */
+    .page-header-row {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 1rem !important;
+    }
+    .page-header-row button,
+    .page-header-row .btn {
+      width: 100% !important;
+      justify-content: center !important;
+    }
+
+    /* Filtreleme ve Arama Barı */
+    .filter-bar {
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 0.75rem !important;
+      padding: 1rem !important;
+    }
+    .search-wrapper {
+      width: 100% !important;
+      min-width: unset !important;
+    }
+    .filter-select {
+      width: 100% !important;
+    }
+
+    /* Modal Form Alanları */
+    .form-grid-2, .form-grid-3, .form-grid-4 {
+      grid-template-columns: 1fr !important;
+      gap: 0.75rem !important;
+    }
+    
+    .modal-backdrop {
+      padding: 0.75rem !important;
+    }
+
+    .modal-footer {
+      flex-direction: column !important;
+      gap: 0.75rem !important;
+    }
+    .modal-footer button,
+    .modal-footer .btn {
+      width: 100% !important;
+      margin: 0 !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set perms = current_user.get_permissions() %}
+<!-- Header -->
+<div class="page-header">
+  <div class="page-header-row">
+    <div>
+      <h2 class="page-title">Araçlar</h2>
+      <p class="page-subtitle">Filonuzdaki tüm araçları yönetin</p>
+    </div>
+    {% if 'add' in perms.araclar.actions or current_user.is_manager %}
+    <button class="btn btn-primary" onclick="openAddModal()">
+      <i class="fas fa-plus"></i> Yeni Araç Ekle
+    </button>
+    {% endif %}
+  </div>
+
+  <!-- Filter Bar -->
+  <div class="filter-bar">
+    <div class="search-wrapper">
+      <i class="fas fa-search"></i>
+      <input type="text" class="form-input" id="searchInput" placeholder="Plaka, marka veya model ara..."
+        value="{{ search }}" onkeyup="filterVehicles()">
+    </div>
+    <select class="form-select filter-select" id="durumFilter" onchange="filterVehicles()">
+      <option value="hepsi" {{ 'selected' if durum_filter=='hepsi' }}>Tüm Durumlar</option>
+      <option value="bosta" {{ 'selected' if durum_filter=='bosta' }}>Boşta (Ofiste)</option>
+      <option value="kirada" {{ 'selected' if durum_filter=='kirada' }}>Kirada</option>
+      <option value="bakimda" {{ 'selected' if durum_filter=='bakimda' }}>Bakımda</option>
+      <option value="pasif" {{ 'selected' if durum_filter=='pasif' }}>Pasif</option>
+    </select>
+  </div>
+</div>
+
+<!-- Vehicles Table -->
+<div class="card">
+  <div class="card-body p-0">
+    <div class="overflow-x">
+      <div class="table-responsive">
+<table class="data-table">
+        <thead>
+          <tr>
+            <th>Plaka</th>
+            <th>Marka</th>
+            <th>Model</th>
+            <th class="hide-mobile">Yıl</th>
+            <th class="hide-mobile">Renk</th>
+            <th class="text-center">Alış KM</th>
+            <th class="text-center">Güncel KM</th>
+            <th class="text-center">Günlük Kira</th>
+            <th class="text-center">Durum</th>
+            <th class="text-center">İşlemler</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in vehicles %}
+          <tr>
+            <td class="font-semibold" style="display: flex; align-items: center; gap: 0.5rem;">
+              {{ v.plaka }}
+              {% if v.guncelKm >= (v.bakimYapildigiKm or 0) + 10000 and v.durum != 'bakimda' %}
+              <i class="fas fa-exclamation-triangle text-red" title="Bakım KM'sini geçmiş!"
+                style="font-size: 0.875rem;"></i>
+              {% endif %}
+            </td>
+            <td>{{ v.marka }}</td>
+            <td>{{ v.model }}</td>
+            <td class="text-muted hide-mobile">{{ v.yil }}</td>
+            <td class="hide-mobile">{{ v.renk }}</td>
+            <td class="text-center">{{ "{:,.0f}".format(v.alisKm or 0).replace(',', '.') }}</td>
+            <td class="text-center">{{ "{:,.0f}".format(v.guncelKm or 0).replace(',', '.') }}</td>
+            <td class="text-center font-semibold text-blue">{{ v.gunlukUcret|currency }}</td>
+            <td class="text-center">
+              <span
+                class="badge {{ 'green' if v.durum == 'bosta' else 'blue' if v.durum == 'kirada' else 'amber' if v.durum == 'bakimda' else 'gray' }}">
+                {{ DURUM_LABELS.get(v.durum, v.durum) }}
+              </span>
+            </td>
+            <td class="text-center">
+              <div class="action-dropdown">
+                <button class="action-btn" onclick="toggleActionMenu(this, event)" title="İşlemler">
+                  <i class="fas fa-ellipsis-vertical"></i>
+                </button>
+                <div class="action-menu">
+                  {% if 'edit' in perms.araclar.actions or current_user.is_manager %}
+                  <button class="action-item" onclick="openEditModal('{{ v.id }}', '{{ v.plaka }}', '{{ v.marka }}', '{{ v.model }}', {{ v.yil }}, '{{ v.renk }}', '{{ 'true' if v.is_active else 'false' }}', {{ v.alisKm or 0 }}, '{{ v.sigortaBitisTarihi or '' }}', '{{ v.vizeBitisTarihi or '' }}', {{ v.sigortaMaliyeti or 0 }}, {{ v.vizeMaliyeti or 0 }}, {{ v.gunlukUcret or 0 }})">
+                    <i class="fas fa-edit text-amber"></i> Düzenle
+                  </button>
+                  <button class="action-item" onclick="openExpenseModal('{{ v.id }}', '{{ v.plaka }}')">
+                    <i class="fas fa-wallet text-blue"></i> Gider Ekle
+                  </button>
+                  {% if v.durum != 'bakimda' and v.durum != 'kirada' %}
+                  <button class="action-item" onclick="openBakimaGonderModal('{{ v.id }}', '{{ v.plaka }}', '{{ v.guncelKm or 0 }}')">
+                    <i class="fas fa-wrench text-orange"></i> Bakıma Gönder
+                  </button>
+                  {% endif %}
+                  {% endif %}
+                  <div style="border-top:1px solid var(--border); margin:4px 0;"></div>
+                  {% if 'delete' in perms.araclar.actions or current_user.is_manager %}
+                  <button class="action-item danger" onclick="openDeleteModal('{{ v.id }}', '{{ v.plaka }}')">
+                    <i class="fas fa-trash"></i> Aracı Sil
+                  </button>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not vehicles %}
+          <tr>
+            <td colspan="8" class="empty-state">
+              <i class="fas fa-car-side"></i>
+              <p>Araç bulunamadı</p>
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+</div>
+    </div>
+    {% if pages > 1 %}
+    <div class="pagination">
+      <a href="{{ url_for('fleet.araclar', page=page-1, search=search, durum=durum_filter) }}" 
+         class="pagination-btn" {{ 'disabled' if not has_prev else '' }} 
+         onclick="{{ 'return false;' if not has_prev else '' }}">
+        <i class="fas fa-chevron-left"></i>
+      </a>
+      
+      {% for p in range(1, pages + 1) %}
+        {% if p == 1 or p == pages or (p >= page - 2 and p <= page + 2) %}
+          <a href="{{ url_for('fleet.araclar', page=p, search=search, durum=durum_filter) }}" 
+             class="pagination-btn {{ 'active' if p == page else '' }}">
+            {{ p }}
+          </a>
+        {% elif p == page - 3 or p == page + 3 %}
+          <span class="pagination-info">...</span>
+        {% endif %}
+      {% endfor %}
+      
+      <a href="{{ url_for('fleet.araclar', page=page+1, search=search, durum=durum_filter) }}" 
+         class="pagination-btn" {{ 'disabled' if not has_next else '' }}
+         onclick="{{ 'return false;' if not has_next else '' }}">
+        <i class="fas fa-chevron-right"></i>
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+
+{% endblock %}
+
+{% block modals %}
+<!-- Add/Edit Modal -->
+<div class="modal-backdrop" id="vehicleModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Yeni Araç</h3>
+      <button class="modal-close" onclick="closeModal('vehicleModal')">&times;</button>
+    </div>
+    <form id="vehicleForm" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-body">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Plaka *</label>
+            <input type="text" class="form-input" name="plaka" id="f_plaka" placeholder="34 ABC 123" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Marka *</label>
+            <input type="text" class="form-input" name="marka" id="f_marka" placeholder="Toyota" required>
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Model</label>
+            <input type="text" class="form-input" name="model" id="f_model" placeholder="Corolla">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Yıl</label>
+            <input type="number" class="form-input" name="yil" id="f_yil" value="2026" min="2000" max="2099" oninput="if(this.value.length > 4) this.value = this.value.slice(0, 4);">
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Renk</label>
+            <input type="text" class="form-input" name="renk" id="f_renk" placeholder="Beyaz">
+          </div>
+          <div class="form-group" id="f_durum_group" style="display: none;">
+            <label class="form-label">Araç Durumu</label>
+            <select class="form-select" name="is_active" id="f_is_active">
+              <option value="true">Kullanımda (Sistem Belirler)</option>
+              <option value="false">Kullanım Dışı (Pasife Al)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid-1">
+          <div class="form-group">
+            <label class="form-label">Alış Kilometresi</label>
+            <input type="number" class="form-input" name="alisKm" id="f_alisKm" placeholder="0">
+          </div>
+        </div>
+        <div class="form-section-title">Kiralama Bilgileri</div>
+        <div class="form-grid-1">
+          <div class="form-group">
+            <label class="form-label">Günlük Kiralama Bedeli (₺) *</label>
+            <input type="number" step="0.01" class="form-input" name="gunlukUcret" id="f_gunlukUcret" placeholder="0.00" required>
+          </div>
+        </div>
+        <div class="form-section-title">Evrak Tarihleri & Maliyetler</div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Sigorta Bitiş Tarihi</label>
+            <input type="date" class="form-input" name="sigortaBitisTarihi" id="f_sigortaBitisTarihi" max="2099-12-31">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Vize (Muayene) Bitiş</label>
+            <input type="date" class="form-input" name="vizeBitisTarihi" id="f_vizeBitisTarihi" max="2099-12-31">
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Sigorta Maliyeti (₺)</label>
+            <input type="number" step="0.01" class="form-input" name="sigortaMaliyeti" id="f_sigortaMaliyeti" placeholder="0.00">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Vize Maliyeti (₺)</label>
+            <input type="number" step="0.01" class="form-input" name="vizeMaliyeti" id="f_vizeMaliyeti" placeholder="0.00">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('vehicleModal')">İptal</button>
+        <button type="submit" class="btn btn-primary" id="submitBtn">Kaydet</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- Bakıma Gönder Modal -->
+<div class="modal-backdrop" id="bakimaGonderModal">
+  <div class="modal" style="max-width: 500px;">
+    <div class="modal-header">
+      <h3>Aracı Bakıma Gönder</h3>
+      <button class="modal-close" type="button" onclick="closeModal('bakimaGonderModal')">&times;</button>
+    </div>
+    <form id="bakimaGonderForm" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-body">
+        <p class="mb-4"><strong><span id="bakimAraciPlaka"></span></strong> plakalı aracı bakıma gönderiyorsunuz.</p>
+        <p class="text-sm text-muted mb-4" style="color: #6b7280; margin-bottom: 1rem; font-size: 0.875rem;">Aşağıdaki
+          alanları bu aşamada doldurabilir veya aracı bakımdan çıkarırken tamamlayabilirsiniz.</p>
+        <div class="form-grid-2 mb-3">
+          <div class="form-group">
+            <label class="form-label">Gidiş KM *</label>
+            <input type="number" class="form-input" name="bakim_gidis_km" id="bakim_gidis_km" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Gidiş Tarihi *</label>
+            <input type="date" class="form-input" name="bakim_gidis_tarihi" id="bakim_gidis_tarihi" required>
+          </div>
+        </div>
+        <div class="form-group mb-3">
+          <label class="form-label">Bakıma Götüren Kişi (Personel) <span class="text-red">*</span></label>
+          <input type="text" class="form-input" name="bakim_gonderen" placeholder="Örn: Ahmet Yılmaz" required>
+        </div>
+        <div class="form-group mb-3">
+          <label class="form-label">Servis Adı / Yeri *</label>
+          <input type="text" class="form-input" name="bakim_yeri" placeholder="Örn: Bosch Car Service" required>
+        </div>
+        <div class="form-group mb-3">
+          <label class="form-label">Bakım Nedeni / Notlar (İsteğe Bağlı)</label>
+          <textarea class="form-input" name="bakim_nedeni" rows="3"
+            placeholder="Aracın bakıma gitme nedeni..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('bakimaGonderModal')">İptal</button>
+        <button type="submit" class="btn btn-warning" style="background-color: var(--amber); color: white;">Bakıma
+          Gönder</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Expense Modal (Sigorta, Vize, Vergi vb.) -->
+<div class="modal-backdrop" id="expenseModal">
+  <div class="modal" style="max-width: 500px;">
+    <div class="modal-header">
+      <h3>Yeni Gider Kaydı</h3>
+      <button class="modal-close" type="button" onclick="closeModal('expenseModal')">&times;</button>
+    </div>
+    <form action="{{ url_for('fleet.gider_ekle') }}" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="modal-body">
+        <input type="hidden" name="arac_id" id="exp_arac_id">
+        <input type="hidden" name="plaka" id="exp_plaka_hidden">
+        
+        <p class="mb-4"><strong><span id="exp_plaka_display"></span></strong> plakalı araç için yeni bir gider saniyeler içinde kaydediyorsunuz.</p>
+        
+        <div class="form-group mb-3">
+          <label class="form-label">Gider Türü</label>
+          <select class="form-select" name="gider_tipi" id="exp_gider_tipi" onchange="toggleExpiryDate(this.value)" required>
+            <option value="Sigorta">Sigorta (Kasko/Trafik)</option>
+            <option value="Vize">Vize (Muayene)</option>
+            <option value="Vergi">MTV (Motorlu Taşıtlar Vergisi)</option>
+            <option value="Diğer">Diğer Genel Giderler</option>
+          </select>
+        </div>
+
+        <div id="expiryDateGroup" class="form-group mb-3">
+          <label class="form-label">Yeni Bitiş Tarihi (Evrak Yenileme)</label>
+          <input type="date" class="form-input" name="yeni_bitis_tarihi" id="exp_yeni_bitis_tarihi">
+          <p class="text-xs text-muted mt-1" style="font-size: 0.75rem; color: #6b7280;">Bu tarih aracın ana bilgilerindeki bitiş tarihini güncelleyecektir.</p>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Tutar</label>
+            <div style="display: flex; gap: 0.5rem;">
+              <select class="form-select" name="paraBirimi" style="width: 80px; flex-shrink: 0;">
+                <option value="₺">₺</option>
+                <option value="$">$</option>
+                <option value="€">€</option>
+              </select>
+              <input type="number" step="0.01" class="form-input" name="tutar" placeholder="0.00" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ödeme Tarihi</label>
+            <input type="date" class="form-input" name="tarih" value="{{ now.strftime('%Y-%m-%d') }}" required>
+          </div>
+        </div>
+
+        <div class="form-group mb-3">
+          <label class="form-label">Notlar / Açıklama</label>
+          <textarea class="form-input" name="notlar" rows="2" placeholder="Örn: 2026 yılı kasko yenilemesi"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeModal('expenseModal')">İptal</button>
+        <button type="submit" class="btn btn-primary">Gideri Sisteme İşle</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function openAddModal() {
+    document.getElementById('modalTitle').textContent = 'Yeni Araç';
+    document.getElementById('submitBtn').textContent = 'Kaydet';
+    document.getElementById('vehicleForm').action = '{{ url_for("fleet.arac_ekle") }}';
+    document.getElementById('f_plaka').value = '';
+    document.getElementById('f_marka').value = '';
+    document.getElementById('f_model').value = '';
+    document.getElementById('f_yil').value = '2026';
+    document.getElementById('f_renk').value = '';
+    document.getElementById('f_alisKm').value = '';
+    document.getElementById('f_sigortaBitisTarihi').value = '';
+    document.getElementById('f_vizeBitisTarihi').value = '';
+    document.getElementById('f_sigortaMaliyeti').value = '';
+    document.getElementById('f_vizeMaliyeti').value = '';
+    document.getElementById('f_gunlukUcret').value = '';
+    document.getElementById('f_durum_group').style.display = 'none';
+    document.getElementById('vehicleModal').classList.add('active');
+  }
+
+  function openEditModal(id, plaka, marka, model, yil, renk, isActive, alisKm, sigortaTarih, vizeTarih, sigortaMaliyet, vizeMaliyet, gunlukUcret) {
+    document.getElementById('modalTitle').textContent = 'Araç Güncelle';
+    document.getElementById('submitBtn').textContent = 'Güncelle';
+    document.getElementById('f_plaka').value = plaka;
+    document.getElementById('f_marka').value = marka;
+    document.getElementById('f_model').value = model;
+    document.getElementById('f_yil').value = yil;
+    document.getElementById('f_renk').value = renk;
+    document.getElementById('f_durum_group').style.display = 'block';
+    document.getElementById('f_is_active').value = isActive;
+    document.getElementById('f_alisKm').value = alisKm;
+    document.getElementById('f_sigortaBitisTarihi').value = sigortaTarih;
+    document.getElementById('f_vizeBitisTarihi').value = vizeTarih;
+    document.getElementById('f_sigortaMaliyeti').value = sigortaMaliyet;
+    document.getElementById('f_vizeMaliyeti').value = vizeMaliyet;
+    document.getElementById('f_gunlukUcret').value = gunlukUcret;
+    document.getElementById('vehicleForm').action = '/araclar/guncelle/' + id;
+    document.getElementById('vehicleModal').classList.add('active');
+  }
+
+  function openExpenseModal(id, plaka) {
+    document.getElementById('exp_arac_id').value = id;
+    document.getElementById('exp_plaka_hidden').value = plaka;
+    document.getElementById('exp_plaka_display').textContent = plaka;
+    document.getElementById('exp_gider_tipi').value = 'Sigorta';
+    toggleExpiryDate('Sigorta');
+    document.getElementById('expenseModal').classList.add('active');
+  }
+
+  function toggleExpiryDate(val) {
+    const group = document.getElementById('expiryDateGroup');
+    if (val === 'Sigorta' || val === 'Vize') {
+      group.style.display = 'block';
+    } else {
+      group.style.display = 'none';
+      document.getElementById('exp_yeni_bitis_tarihi').value = '';
+    }
+  }
+
+  function openDeleteModal(id, plaka) {
+    showConfirm(
+      'Aracı Sil',
+      `"${plaka}" plakalı aracı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.`,
+      () => {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/araclar/sil/' + id;
+        
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        form.appendChild(csrfInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+      },
+      true
+    );
+  }
+
+  function openBakimaGonderModal(id, plaka, guncelKm) {
+    document.getElementById('bakimAraciPlaka').textContent = plaka;
+    document.getElementById('bakimaGonderForm').action = '/araclar/bakima_al/' + id;
+    document.getElementById('bakim_gidis_km').value = guncelKm;
+    document.getElementById('bakim_gidis_tarihi').value = new Date().toISOString().split('T')[0];
+    document.getElementById('bakimaGonderModal').classList.add('active');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('active');
+  }
+
+  function filterVehicles() {
+    const search = document.getElementById('searchInput').value;
+    const durum = document.getElementById('durumFilter').value;
+    window.location.href = '{{ url_for("fleet.araclar") }}?search=' + encodeURIComponent(search) + '&durum=' + durum;
+  }
+
+  // Debounce search
+  let searchTimeout;
+  document.getElementById('searchInput').addEventListener('keyup', function (e) {
+    clearTimeout(searchTimeout);
+    if (e.key === 'Enter') {
+      filterVehicles();
+    } else {
+      searchTimeout = setTimeout(filterVehicles, 600);
+    }
+  });
+
+  // Close modal on backdrop click
+  document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+    backdrop.addEventListener('click', function (e) {
+      if (e.target === this) this.classList.remove('active');
+    });
+  });
+</script>
+{% endblock %}
