@@ -43,7 +43,7 @@ def dashboard():
             Company.license_expires_at <= thirty_days_later,
             Company.license_expires_at >= now_local.replace(hour=0, minute=0, second=0, microsecond=0)
         ).count()
-        return render_template('master_dashboard.html', active_page='master_dashboard', companies=companies, expiring_soon=expiring_soon, now=now_local)
+        return render_template('master_dashboard.html', active_page='master_dashboard', companies=companies, expiring_soon=expiring_soon, now=now_local, perms=current_user.get_permissions())
 
     if not g.current_company: 
         return "Şirket bulunamadı", 404
