@@ -16,7 +16,7 @@ module.exports = {
     name   : "turtakip-arayuz",
     script : "serve",
     env: {
-      PM2_SERVE_PATH: "C:\\SUNUCU_PAKETI\\TurTakip_Arayuz\\client\\dist",
+      PM2_SERVE_PATH: "C:\\SUNUCU_PAKETI\\TurTakip_Arayuz\\dist",
       PM2_SERVE_PORT: 5173,
       PM2_SERVE_SPA: "true"
     }
