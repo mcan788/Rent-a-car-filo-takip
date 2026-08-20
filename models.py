@@ -217,7 +217,16 @@ class User(UserMixin, db.Model):
                 "system_logs": {"all": True},
                 "system_settings": {"all": True},
                 "support_access": {"all": True},
-                "tur_takip_manage": {"all": True}
+                "tur_takip_manage": {"all": True},
+                # Fleet keys required by base.html (disabled for master users)
+                "araclar": {"all": False},
+                "kiralamalar": {"all": False},
+                "ciro_analiz": {"all": False},
+                "rapor": {"all": False},
+                "servis": {"all": False},
+                "excel": {"all": False},
+                "logs": {"all": False},
+                "ayarlar": {"all": False},
             }
         else:
             defaults = {
