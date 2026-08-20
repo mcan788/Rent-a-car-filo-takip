@@ -129,17 +129,17 @@ class User(UserMixin, db.Model):
 
     @property
     def is_super_admin(self):
-        return self.role_id == 11
+        return self.role_id in (1, 11)
 
     @property
     def is_manager(self):
         """Yönetici seviyesinde mi? (M1, M2, R1, T1)"""
-        return self.role_id in (11, 12, 21, 31)
+        return self.role_id in (1, 11, 12, 21, 31)
 
     @property
     def is_master_user(self):
         """Master panel kullanıcısı mı? (M1, M2, M3)"""
-        return self.role_id in (11, 12, 13)
+        return self.role_id in (1, 11, 12, 13)
 
     @property
     def is_rentacar_user(self):
@@ -154,14 +154,14 @@ class User(UserMixin, db.Model):
     @property
     def role_code(self):
         """Rol kodunu döndürür (M1, M2, R1, R2, T1, T2 vb.)"""
-        codes = {11: 'M1', 12: 'M2', 13: 'M3', 21: 'R1', 22: 'R2', 31: 'T1', 32: 'T2'}
+        codes = {1: 'M1', 11: 'M1', 12: 'M2', 13: 'M3', 21: 'R1', 22: 'R2', 31: 'T1', 32: 'T2'}
         return codes.get(self.role_id, 'R2')
 
     @property
     def role_display_name(self):
         """Rolün kullanıcı dostu adını döndürür"""
         names = {
-            11: 'Süper Admin', 12: 'Admin', 13: 'Personel',
+            1: 'Süper Admin', 11: 'Süper Admin', 12: 'Admin', 13: 'Personel',
             21: 'Yönetici', 22: 'Personel',
             31: 'Yönetici', 32: 'Personel'
         }
@@ -170,7 +170,7 @@ class User(UserMixin, db.Model):
     @property
     def role_panel_name(self):
         """Rolün ait olduğu panel adını döndürür"""
-        if self.role_id in (11, 12, 13):
+        if self.role_id in (1, 11, 12, 13):
             return 'Master Panel'
         elif self.role_id in (21, 22):
             return 'Rent A Car'
