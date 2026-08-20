@@ -30,7 +30,7 @@ def dashboard():
     # Log action
     log_action(current_user, 'login', 'Kullanıcı dashboarda giriş yaptı.')
 
-    if current_user.company_id == 1:
+    if current_user.is_master_user:
         # Master Dashboard Logic (SaaS Yönetim Paneli)
         if not current_user.get_permissions().get('master_dashboard', {}).get('all') and not current_user.is_manager:
             flash('Bu sayfaya erişim yetkiniz bulunmamaktadır.', 'error')
@@ -268,7 +268,7 @@ def personel_yetki_guncelle(id):
     user = User.query.filter_by(id=id, company_id=g.current_company.id).first_or_404()
     import json
     perms = {}
-    if user.company_id == 1:
+    if user.is_master_user:
         perms = {
             "master_dashboard": {"all": 'p_master_dashboard_all' in request.form, "actions": request.form.getlist('p_master_dashboard_actions')},
             "company_manage": {"all": 'p_company_manage_all' in request.form, "actions": request.form.getlist('p_company_manage_actions')},
@@ -326,7 +326,7 @@ def ciro_analiz():
 @main_bp.route('/logs')
 @login_required
 def logs():
-    is_master = current_user.company_id == 1
+    is_master = current_user.is_master_user
     perm_key = 'system_logs' if is_master else 'logs'
     if not current_user.get_permissions().get(perm_key, {}).get('all') and not current_user.is_manager:
         flash('Bu sayfaya erişim yetkiniz bulunmamaktadır.', 'error')
