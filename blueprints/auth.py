@@ -222,7 +222,7 @@ def sso_login():
 def login():
     import os
     import urllib.parse
-    portal_url = os.getenv('PORTAL_URL', 'http://localhost:3000/')
+    portal_url = os.getenv('PORTAL_URL', 'https://zyronova.com/')
     if current_user.is_authenticated:
         if current_user.role_id in (11, 12, 13, 21, 22):
             return redirect(url_for('main.dashboard'))
@@ -492,5 +492,5 @@ def sifre_degistir():
 def logout():
     import os
     logout_user()
-    portal_url = os.getenv('PORTAL_URL', 'http://localhost:5000/')
+    portal_url = os.getenv('PORTAL_URL', 'https://zyronova.com/')
     return redirect(portal_url)

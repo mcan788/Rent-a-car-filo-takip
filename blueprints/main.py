@@ -23,7 +23,7 @@ def dashboard():
 
     # STRICT ROUTING BASED ON ROLE ID
     if current_user.company_id == 3:
-        portal_url = os.getenv('PORTAL_URL', 'http://localhost:3000/')
+        portal_url = os.getenv('PORTAL_URL', 'https://zyronova.com/')
         flash("Erişim Reddedildi. Tur Takip kullanıcıları sadece Tur Takip paneline giriş yapabilir.", "error")
         return redirect(portal_url.rstrip('/') + '/agency')
 
