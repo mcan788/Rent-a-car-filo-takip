@@ -32,3 +32,4 @@ requests>=2.31.0
 bcrypt
 psutil
 python-json-logger
+gunicorn==23.0.0
